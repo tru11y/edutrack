@@ -8,21 +8,29 @@ export default function CreateProfesseur() {
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [matieres, setMatieres] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-  setLoading(true);
+    try {
+      setLoading(true);
 
-  const profId = await createProfesseur(data);
+      const data = {
+        nom: nom.trim(),
+        prenom: prenom.trim(),
+        matieres: matieres.split(",").map(m => m.trim()),
+      };
 
-  await createUserProfile(firebaseUid, "prof", {
-    professeurId: profId,
-  });
+      await createProfesseur(data);
 
-  toast.success("Professeur créé");
-  navigate(-1);
-
-  setLoading(false);
-};
+      alert("Professeur créé");
+      navigate(-1);
+    } catch (error) {
+      alert("Erreur création professeur");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -40,7 +48,9 @@ export default function CreateProfesseur() {
         onChange={(e) => setMatieres(e.target.value)}
       />
 
-      <button onClick={handleSubmit}>Enregistrer</button>
+      <button onClick={handleSubmit} disabled={loading}>
+        {loading ? "Enregistrement..." : "Enregistrer"}
+      </button>
     </div>
   );
 }

@@ -1,59 +1,43 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import {
-  getPaiementsByEleve,
-} from "./paiement.service";
-import { getEleveById } from "../eleves/eleve.service";
-import { exportRecuPaiementPDF } from "./paiement.pdf";
 import { useAuth } from "../../context/AuthContext";
-import type { Paiement } from "./paiement.types";
+import { getPaiementsByEleve } from "../paiements/paiement.service";
+import { exportRecuPaiementPDF } from "../paiements/paiement.pdf";
 
-export default function PaiementEleve() {
-  const { id } = useParams<{ id: string }>();
+export default function ParentPaiements() {
   const { user } = useAuth();
-
-  const [paiements, setPaiements] = useState<Paiement[]>([]);
-  const [eleve, setEleve] = useState<any>(null);
+  const [paiements, setPaiements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
+    if (!user?.eleveId) return;
 
-    const load = async () => {
-      const [p, e] = await Promise.all([
-        getPaiementsByEleve(id),
-        getEleveById(id),
-      ]);
-
+    getPaiementsByEleve(user.eleveId).then((p) => {
       setPaiements(p);
-      setEleve(e);
       setLoading(false);
-    };
-
-    load();
-  }, [id]);
+    });
+  }, [user]);
 
   if (loading) return <div className="p-6">Chargement…</div>;
-  if (!eleve) return <div className="p-6">Élève introuvable</div>;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-4">
       <h1 className="text-xl font-bold">
-        💰 Paiements — {eleve.prenom} {eleve.nom}
+        💰 Paiements & reçus
       </h1>
 
       {paiements.length === 0 ? (
-        <p className="text-gray-500">Aucun paiement</p>
+        <p className="text-gray-500">
+          Aucun paiement
+        </p>
       ) : (
         <table className="w-full border">
           <thead className="bg-gray-100">
             <tr>
               <th className="border p-2">Mois</th>
-              <th className="border p-2">Total</th>
               <th className="border p-2">Payé</th>
               <th className="border p-2">Restant</th>
               <th className="border p-2">Statut</th>
-              <th className="border p-2">Actions</th>
+              <th className="border p-2">Reçu</th>
             </tr>
           </thead>
 
@@ -61,26 +45,22 @@ export default function PaiementEleve() {
             {paiements.map((p) => (
               <tr key={p.id}>
                 <td className="border p-2">{p.mois}</td>
-                <td className="border p-2">{p.montantTotal}</td>
                 <td className="border p-2">{p.montantPaye}</td>
                 <td className="border p-2">{p.montantRestant}</td>
                 <td className="border p-2">{p.statut}</td>
-                <td className="border p-2 space-x-2">
-
+                <td className="border p-2">
                   <button
                     onClick={() =>
                       exportRecuPaiementPDF(p, {
-                        eleveNom: eleve.nom,
-                        elevePrenom: eleve.prenom,
-                        classe: eleve.classe,
-                        adminNom: user?.email || "Administration",
+                        eleveNom: user?.email?.split("@")[0] || "Élève",
+                        elevePrenom: "",
+                        classe: "N/A",
                       })
                     }
                     className="text-blue-600 underline"
                   >
-                    📄 Reçu PDF
+                    📄 PDF
                   </button>
-
                 </td>
               </tr>
             ))}

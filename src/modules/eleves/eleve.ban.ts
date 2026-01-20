@@ -5,6 +5,6 @@ export async function banEleve(eleveId: string) {
   await updateEleve(eleveId, {
     isBanned: true,
     banReason: "Non paiement",
-    banDate: serverTimestamp(),
+    banDate: serverTimestamp() as any,
   });
 }

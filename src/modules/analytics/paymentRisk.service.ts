@@ -27,7 +27,7 @@ export async function banElevesNonPayesApres10() {
       await updateEleve(eleve.id, {
         isBanned: true,
         banReason: "Non paiement avant le 10",
-        banDate: serverTimestamp(),
+        banDate: serverTimestamp() as any,
       });
 
       await notifyAdmin({

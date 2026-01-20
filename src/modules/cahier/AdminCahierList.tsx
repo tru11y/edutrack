@@ -48,7 +48,7 @@ export default function AdminCahierList() {
       } else if (coursId) {
         data = await getCahierByCours(coursId);
       } else {
-        const snap = await getDocs(collection(db, "cahierTexte"));
+        const snap = await getDocs(collection(db, "cahier"));
         data = snap.docs.map((d) => ({
           id: d.id,
           ...(d.data() as any),
@@ -70,9 +70,9 @@ export default function AdminCahierList() {
       <h1 className="text-xl font-bold">📘 Cahier de texte (Admin)</h1>
 
       {/* FILTRES */}
-      <div className="flex gap-4">
-
+      <div className="flex gap-4 flex-wrap">
         <select
+          aria-label="Filtrer par classe"
           value={classe}
           onChange={(e) => {
             setClasse(e.target.value);
@@ -89,6 +89,7 @@ export default function AdminCahierList() {
         </select>
 
         <select
+          aria-label="Filtrer par cours"
           value={coursId}
           onChange={(e) => {
             setCoursId(e.target.value);
@@ -104,22 +105,22 @@ export default function AdminCahierList() {
           ))}
         </select>
 
+        <button
+          onClick={() =>
+            exportCahierToPDF(entries, {
+              titre: "Cahier de texte – EDUTRACK",
+              periode: classe
+                ? `Classe : ${classe}`
+                : coursId
+                ? `Cours : ${coursId}`
+                : "",
+            })
+          }
+          className="bg-black text-white px-3 py-2 rounded text-sm"
+        >
+          📄 Exporter PDF
+        </button>
       </div>
-<button
-  onClick={() =>
-    exportCahierToPDF(entries, {
-      titre: "Cahier de texte – EDUTRACK",
-      periode: classe
-        ? `Classe : ${classe}`
-        : coursId
-        ? `Cours : ${coursId}`
-        : "",
-    })
-  }
-  className="bg-black text-white px-3 py-2 rounded text-sm"
->
-  📄 Exporter PDF
-</button>
 
       {/* LISTE */}
       {entries.length === 0 ? (
@@ -135,6 +136,7 @@ export default function AdminCahierList() {
               <th className="border p-2">Élèves</th>
               <th className="border p-2">Contenu</th>
               <th className="border p-2">Devoirs</th>
+              <th className="border p-2">Signature</th>
             </tr>
           </thead>
 
@@ -154,12 +156,18 @@ export default function AdminCahierList() {
                 <td className="border p-2 whitespace-pre-wrap">
                   {e.devoirs || "—"}
                 </td>
+                <td className="border p-2">
+                  {e.isSigned ? (
+                    <span className="text-green-600 font-semibold">✔ Signé</span>
+                  ) : (
+                    <span className="text-red-600 font-semibold">⏳ Non signé</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
-
     </div>
   );
 }

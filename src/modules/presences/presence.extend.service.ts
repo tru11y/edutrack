@@ -1,10 +1,10 @@
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "../../services/firebase";
-import type { Presence } from "./presence.types";
+import type { PresenceItem } from "./presence.types";
 
 export async function ajouterEleveAPresence(
   presenceDocId: string,
-  presence: Presence
+  presence: PresenceItem
 ) {
   const ref = doc(db, "presences", presenceDocId);
 

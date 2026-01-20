@@ -1,4 +1,3 @@
-
 import { Outlet, NavLink } from "react-router-dom";
 import { t, setLang } from "../i18n";
 

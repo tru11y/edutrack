@@ -5,10 +5,10 @@ import { getAllEleves } from "../eleves/eleve.service";
 import { getElevesEligibles } from "../eleves/eleve.select.service";
 
 import { savePresencesForCours } from "./presence.service";
-import { saveCahierEntry } from "../cahier/cahier.service";
+import { createCahierEntry } from "../cahier/cahier.service";
 import { banEleveByProf } from "../eleves/eleve.ban.service";
 
-import type { Presence } from "./presence.types";
+import type { PresenceItem } from "./presence.types";
 
 interface Props {
   coursId: string;
@@ -19,7 +19,7 @@ export default function PresenceAppel({ coursId, classe }: Props) {
   const { user } = useAuth();
 
   const [eleves, setEleves] = useState<any[]>([]);
-  const [presences, setPresences] = useState<Presence[]>([]);
+  const [presences, setPresences] = useState<PresenceItem[]>([]);
   const [allEleves, setAllEleves] = useState<any[]>([]);
 
   const [selectedEleveId, setSelectedEleveId] = useState("");
@@ -39,7 +39,10 @@ export default function PresenceAppel({ coursId, classe }: Props) {
       setPresences(
         filtres.map((e) => ({
           eleveId: e.id,
-          statut: "present",
+          statut: "present" as const,
+          facturable: true,
+          statutMetier: "autorise" as const,
+          message: "",
         }))
       );
     });
@@ -118,11 +121,12 @@ export default function PresenceAppel({ coursId, classe }: Props) {
     });
 
     // 2) écriture auto dans le cahier de texte
-    await saveCahierEntry({
+    await createCahierEntry({
       coursId,
       date,
       classe,
       profId: user!.uid,
+      profNom: user!.uid,
       eleves: presents,
       contenu: contenu.trim(),
       devoirs: devoirs.trim() || undefined,

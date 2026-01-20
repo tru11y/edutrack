@@ -32,7 +32,6 @@ import EleveDashboard from "./modules/eleves/EleveDashboard";
 import EleveEmploiDuTemps from "./modules/eleves/EleveEmploiDuTemps";
 import ElevePresences from "./modules/eleves/ElevePresences";
 import ElevePaiements from "./modules/eleves/ElevePaiements";
-
 /* ========== LOGIN ========== */
 
 function Login() {
