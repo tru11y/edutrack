@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ======================
+       HELPERS
+    ====================== */
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(role) {
+      return signedIn() && userDoc().role == role && userDoc().isActive == true;
+    }
+
+    function isAdmin() { return hasRole("admin"); }
+    function isProf() { return hasRole("prof"); }
+    function isEleve() { return hasRole("eleve"); }
+    function isParent() { return hasRole("parent"); }
+
+    /* ======================
+       USERS
+    ====================== */
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if isAdmin();
+    }
+
+    /* ======================
+       ÉLÈVES
+    ====================== */
+    match /eleves/{eleveId} {
+      allow read: if isAdmin()
+        || (isEleve() && userDoc().eleveId == eleveId)
+        || (isParent() && userDoc().eleveId == eleveId);
+
+      allow write: if isAdmin();
+    }
+
+    /* ======================
+       PROFESSEURS
+    ====================== */
+    match /professeurs/{profId} {
+      allow read: if isAdmin()
+        || (isProf() && userDoc().professeurId == profId);
+
+      allow write: if isAdmin();
+    }
+
+    /* ======================
+       COURS
+    ====================== */
+    match /cours/{coursId} {
+      allow read: if isAdmin() || isProf() || isEleve() || isParent();
+
+      allow create, update, delete: if isAdmin();
+    }
+
+    /* ======================
+       PRÉSENCES
+    ====================== */
+    match /presences/{presenceId} {
+      allow read: if isAdmin()
+        || isProf()
+        || (isEleve() && resource.data.eleveId == userDoc().eleveId)
+        || (isParent() && resource.data.eleveId == userDoc().eleveId);
+
+      allow write: if isAdmin() || isProf();
+    }
+
+    /* ======================
+       PAIEMENTS
+    ====================== */
+    match /paiements/{paiementId} {
+      allow read: if isAdmin()
+        || (isEleve() && resource.data.eleveId == userDoc().eleveId)
+        || (isParent() && resource.data.eleveId == userDoc().eleveId);
+
+      allow write: if isAdmin();
+    }
+  }
+}

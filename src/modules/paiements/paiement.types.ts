@@ -1,0 +1,28 @@
+export type MethodePaiement = "especes" | "mobile_money" | "virement";
+
+export type StatutPaiement = "impaye" | "partiel" | "paye";
+
+export interface Versement {
+  montant: number;
+  methode: MethodePaiement;
+  date: Date;
+}
+
+export interface Paiement {
+  id?: string;
+
+  eleveId: string;
+  eleveNom: string;
+
+  mois: string; // YYYY-MM
+
+  montantTotal: number;
+  montantPaye: number;
+  montantRestant: number;
+
+  statut: StatutPaiement;
+
+  versements: Versement[];
+
+  createdAt?: any;
+}
