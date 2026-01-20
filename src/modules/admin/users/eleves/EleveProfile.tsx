@@ -1,7 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getEleveById } from "./eleve.service";
-import ElevePaiements from "../paiements/ElevePaiements";
 
 export default function EleveProfile() {
   const { id } = useParams();
@@ -24,7 +23,4 @@ export default function EleveProfile() {
       <p><b>Statut :</b> {eleve.statut}</p>
     </div>
   );
-
 }
-
-<ElevePaiements eleveId={eleve.id} />

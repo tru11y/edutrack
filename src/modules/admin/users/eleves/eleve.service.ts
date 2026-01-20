@@ -1,6 +1,6 @@
 import { collection, addDoc, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
-import { db } from "../../services/firebase";
-import { Eleve } from "./eleve.types";
+import { db } from "../../../../services/firebase";
+import type { Eleve } from "./eleve.types";
 
 const COLLECTION = "eleves";
 

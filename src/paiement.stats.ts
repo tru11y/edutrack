@@ -1,4 +1,4 @@
-import { getAllPaiements } from "./paiement.service";
+import { getAllPaiements } from "./modules/paiements/paiement.service";
 
 export const getPaiementStats = async () => {
   const paiements = await getAllPaiements();

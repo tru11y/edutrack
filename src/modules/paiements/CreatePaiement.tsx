@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { ajouterVersement } from "./paiement.service";
+import { updateDoc, doc } from "firebase/firestore";
+import { db } from "../../services/firebase";
+
+// Fonction d'ajout de versement - intégrée depuis paiement.service
+async function ajouterVersement(paiementId: string, versement: any, paiement: any) {
+  const ref = doc(db, "paiements", paiementId);
+  const versements = paiement.versements ?? [];
+  await updateDoc(ref, { versements: [...versements, versement] });
+}
 
 export default function CreatePaiement({ paiement }: any) {
   const [montant, setMontant] = useState(0);

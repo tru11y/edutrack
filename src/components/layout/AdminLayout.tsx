@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { t, setLang } from "../i18n";
+import { t, setLang } from "../../i18n";
 import "../design/components.css";
 
 export default function AdminLayout() {

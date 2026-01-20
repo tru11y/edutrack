@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { db } from "../../services/firebase";
-import { assignProfesseurToCours } from "./cours.service";
+
+// Fonction d'assignation de professeur - intégrée depuis cours.service
+async function assignProfesseurToCours(coursId: string, profId: string) {
+  const ref = doc(db, "cours", coursId);
+  await updateDoc(ref, { profId });
+}
 
 export default function CoursAssignProf() {
   const { id } = useParams();
@@ -25,7 +30,7 @@ export default function CoursAssignProf() {
     const prof = profs.find((p) => p.id === profId);
     if (!prof || !id) return;
 
-    await assignProfesseurToCours(id, profId, prof.nom);
+    await assignProfesseurToCours(id, profId);
     navigate("/admin/cours");
   };
 

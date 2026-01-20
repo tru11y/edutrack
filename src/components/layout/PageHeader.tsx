@@ -1,9 +1,21 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
-export default function Page({ children }: { children: ReactNode }) {
+interface PageHeaderProps {
+  title?: string;
+  subtitle?: string;
+  children?: ReactNode;
+  action?: ReactNode;
+}
+
+export default function PageHeader({ title, subtitle, children, action }: PageHeaderProps) {
   return (
-    <div className="min-h-screen bg-gray-50 px-8 py-6">
-      {children}
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div>
+        {title && <h1 style={{ fontSize: 28 }}>{title}</h1>}
+        {subtitle && <p style={{ color: 'var(--muted)' }}>{subtitle}</p>}
+        {children}
+      </div>
+      {action}
     </div>
   );
 }

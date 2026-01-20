@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { db } from "../../../services/firebase";
 import type { UserRole } from "../../../types/User";
 

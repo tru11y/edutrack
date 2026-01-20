@@ -20,11 +20,12 @@ export default function CreateEleve() {
 
     await createEleve({
       ...form,
+      sexe: (form.sexe === "M" || form.sexe === "F" ? form.sexe : "M") as "M" | "F",
       matricule,
       statut: "actif",
       dateInscription: new Date(),
       createdAt: new Date(),
-    });
+    } as any);
 
     alert("Élève enregistré");
   };

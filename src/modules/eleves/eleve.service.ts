@@ -21,22 +21,19 @@ function normalizeEleve(data: Partial<Eleve>): Eleve {
   return {
     nom: data.nom ?? "",
     prenom: data.prenom ?? "",
-    sexe: data.sexe ?? "M",
+    sexe: (data.sexe === "M" || data.sexe === "F" ? data.sexe : "M") as "M" | "F",
     classe: data.classe ?? "",
     statut: data.statut ?? "actif",
 
     // 🔒 JAMAIS undefined
     parents: Array.isArray(data.parents) ? data.parents : [],
-    contactUrgence: data.contactUrgence ?? null,
+    contactUrgence: data.contactUrgence ?? undefined,
 
     ecoleOrigine: data.ecoleOrigine ?? "",
-    adresse: data.adresse ?? "",
-    quartier: data.quartier ?? "",
-    commune: data.commune ?? "",
-    ville: data.ville ?? "",
+    adresse: data.adresse ?? undefined,
 
-    createdAt: data.createdAt ?? serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    createdAt: data.createdAt ?? (serverTimestamp() as any),
+    updatedAt: serverTimestamp() as any,
   };
 }
 
