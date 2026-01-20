@@ -18,23 +18,27 @@ const elevesRef = collection(db, "eleves");
 ====================== */
 
 function normalizeEleve(data: Partial<Eleve>): Eleve {
-  return {
+  const normalized: Eleve = {
     nom: data.nom ?? "",
     prenom: data.prenom ?? "",
     sexe: (data.sexe === "M" || data.sexe === "F" ? data.sexe : "M") as "M" | "F",
     classe: data.classe ?? "",
     statut: data.statut ?? "actif",
-
-    // 🔒 JAMAIS undefined
     parents: Array.isArray(data.parents) ? data.parents : [],
-    contactUrgence: data.contactUrgence ?? undefined,
-
     ecoleOrigine: data.ecoleOrigine ?? "",
-    adresse: data.adresse ?? undefined,
-
     createdAt: data.createdAt ?? (serverTimestamp() as any),
     updatedAt: serverTimestamp() as any,
   };
+
+  // ✅ Firestore: omit undefined, use null for optional fields
+  if (data.contactUrgence !== undefined) {
+    normalized.contactUrgence = data.contactUrgence;
+  }
+  if (data.adresse !== undefined) {
+    normalized.adresse = data.adresse;
+  }
+
+  return normalized;
 }
 
 /* ======================
