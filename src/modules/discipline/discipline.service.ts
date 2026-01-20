@@ -7,7 +7,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../../services/firebase";
-import type { DisciplineRecord } from "./discipline.types";
+import type { DisciplineRecord } from "./discipline.type";
 
 const disciplineRef = collection(db, "discipline");
 

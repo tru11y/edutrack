@@ -169,6 +169,7 @@ export default function PresenceAppel({ coursId, classe }: Props) {
           value={selectedEleveId}
           onChange={(e) => setSelectedEleveId(e.target.value)}
           className="border p-2 rounded w-64"
+          aria-label="Sélectionner un élève à ajouter"
         >
           <option value="">➕ Ajouter un élève...</option>
           {allEleves.map((e) => (
@@ -210,6 +211,7 @@ export default function PresenceAppel({ coursId, classe }: Props) {
                   type="radio"
                   name={e.id}
                   defaultChecked
+                  aria-label={`Présent - ${e.prenom} ${e.nom}`}
                   onChange={() =>
                     updatePresence(e.id, "present")
                   }
@@ -220,6 +222,7 @@ export default function PresenceAppel({ coursId, classe }: Props) {
                 <input
                   type="radio"
                   name={e.id}
+                  aria-label={`Absent - ${e.prenom} ${e.nom}`}
                   onChange={() =>
                     updatePresence(e.id, "absent")
                   }
@@ -230,6 +233,7 @@ export default function PresenceAppel({ coursId, classe }: Props) {
                 <input
                   type="radio"
                   name={e.id}
+                  aria-label={`Retard - ${e.prenom} ${e.nom}`}
                   onChange={() =>
                     updatePresence(e.id, "retard", 5)
                   }
@@ -241,6 +245,7 @@ export default function PresenceAppel({ coursId, classe }: Props) {
                   type="number"
                   min={0}
                   className="w-16 border p-1 rounded"
+                  aria-label={`Minutes de retard - ${e.prenom} ${e.nom}`}
                   onChange={(ev) =>
                     updatePresence(
                       e.id,

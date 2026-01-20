@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { DisciplineRecord } from "./discipline.types";
+import type { DisciplineRecord } from "./discipline.type";
 
 export function exportDisciplinePDF(records: DisciplineRecord[]) {
   const doc = new jsPDF();
