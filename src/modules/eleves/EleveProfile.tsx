@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getEleveById } from "./eleve.service";
+import { getEleveById, updateEleve } from "./eleve.service";
+import { banElevesNonPayesApres10 } from "../analytics/paymentRisk.service";
 import type { Eleve } from "./eleve.types";
 
 export default function EleveProfile() {
@@ -10,6 +11,16 @@ export default function EleveProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  /* =====================
+     AUTO-BAN CHECK (GLOBAL)
+  ===================== */
+  useEffect(() => {
+    banElevesNonPayesApres10();
+  }, []);
+
+  /* =====================
+     LOAD ELEVE
+  ===================== */
   useEffect(() => {
     if (!id) return;
 
@@ -27,6 +38,22 @@ export default function EleveProfile() {
         setLoading(false);
       });
   }, [id]);
+
+  /* =====================
+     UNBAN (ADMIN)
+  ===================== */
+  const handleUnban = async () => {
+    if (!eleve?.id) return;
+
+    await updateEleve(eleve.id, {
+      isBanned: false,
+      banReason: null,
+      banDate: null,
+    });
+
+    const refreshed = await getEleveById(eleve.id);
+    setEleve(refreshed);
+  };
 
   /* =====================
      STATES
@@ -66,29 +93,60 @@ export default function EleveProfile() {
         </Link>
       </div>
 
+      {/* BAN BLOCK */}
+      {eleve.isBanned && (
+        <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded">
+          <p className="font-bold">🚫 Élève banni</p>
+          <p>Raison : {eleve.banReason || "Non paiement"}</p>
+          <p>
+            Date :{" "}
+            {eleve.banDate
+              ? new Date(eleve.banDate.seconds * 1000).toLocaleDateString()
+              : "—"}
+          </p>
+
+          <button
+            onClick={handleUnban}
+            className="mt-3 bg-black text-white px-3 py-1 rounded"
+          >
+            Lever le bannissement
+          </button>
+        </div>
+      )}
+
       {/* Infos */}
       <div className="grid grid-cols-2 gap-4 text-sm">
-        <p><b>Classe :</b> {eleve.classe}</p>
-        <p><b>Sexe :</b> {eleve.sexe}</p>
-        <p><b>Statut :</b> {eleve.statut}</p>
+        <p>
+          <b>Classe :</b> {eleve.classe}
+        </p>
+        <p>
+          <b>Sexe :</b> {eleve.sexe}
+        </p>
+        <p>
+          <b>Statut :</b>{" "}
+          {eleve.isBanned ? (
+            <span className="text-red-600 font-bold">BANNI</span>
+          ) : (
+            eleve.statut
+          )}
+        </p>
       </div>
 
       {/* Parents */}
       <div>
-       <h2 className="font-semibold mt-4">Parents</h2>
+        <h2 className="font-semibold mt-4">Parents</h2>
 
-{Array.isArray(eleve.parents) && eleve.parents.length > 0 ? (
-  <ul className="list-disc pl-6">
-    {eleve.parents.map((p, i) => (
-      <li key={i}>
-        {p.nom} — {p.telephone} ({p.lien})
-      </li>
-    ))}
-  </ul>
-) : (
-  <p className="text-gray-500">Aucun parent renseigné</p>
-)}
-
+        {Array.isArray(parents) && parents.length > 0 ? (
+          <ul className="list-disc pl-6">
+            {parents.map((p, i) => (
+              <li key={i}>
+                {p.nom} — {p.telephone} ({p.lien})
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-500">Aucun parent renseigné</p>
+        )}
       </div>
     </div>
   );

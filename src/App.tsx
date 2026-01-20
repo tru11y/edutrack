@@ -6,6 +6,7 @@ import { ProtectedRoute } from "./routes/ProtectedRoute";
 /* ========== ADMIN ========== */
 import AdminLayout from "./Layout/AdminLayout";
 import AdminDashboard from "./Pages/AdminDashboard";
+import AdminCahierList from "./modules/cahier/AdminCahierList";
 
 import ElevesList from "./modules/eleves/ElevesList";
 import CreateEleve from "./modules/eleves/CreateEleve";
@@ -32,9 +33,7 @@ import EleveEmploiDuTemps from "./modules/eleves/EleveEmploiDuTemps";
 import ElevePresences from "./modules/eleves/ElevePresences";
 import ElevePaiements from "./modules/eleves/ElevePaiements";
 
-/* =========================
-   LOGIN
-========================= */
+/* ========== LOGIN ========== */
 
 function Login() {
   const { login, user } = useAuth();
@@ -59,7 +58,6 @@ function Login() {
       setError("");
       setLoading(true);
       await login(email, password);
-      // ❌ PAS DE navigate ICI
     } catch {
       setError("Identifiants invalides");
       setLoading(false);
@@ -67,29 +65,35 @@ function Login() {
   };
 
   return (
-    <div style={{ padding: 40, maxWidth: 400, margin: "0 auto" }}>
-      <h1>EDUTRACK – Connexion</h1>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow">
+        <h1 className="text-2xl font-bold mb-6">EDUTRACK – Connexion</h1>
 
-      <input
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <br /><br />
+        <input
+          className="w-full px-3 py-2 border border-gray-300 rounded mb-4"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-      <input
-        type="password"
-        placeholder="Mot de passe"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <br /><br />
+        <input
+          type="password"
+          className="w-full px-3 py-2 border border-gray-300 rounded mb-6"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      <button onClick={handleLogin} disabled={loading}>
-        {loading ? "Connexion..." : "Se connecter"}
-      </button>
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          className="w-full bg-black text-white py-2 rounded font-semibold disabled:opacity-50"
+        >
+          {loading ? "Connexion..." : "Se connecter"}
+        </button>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p className="text-red-600 mt-4">{error}</p>}
+      </div>
     </div>
   );
 }
@@ -103,7 +107,6 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-
           {/* PUBLIC */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
@@ -135,6 +138,9 @@ export default function App() {
 
             {/* Paiements */}
             <Route path="paiements" element={<PaiementsList />} />
+
+            {/* Cahier */}
+            <Route path="cahier" element={<AdminCahierList />} />
           </Route>
 
           {/* ================= PROFESSEUR ================= */}
@@ -167,7 +173,6 @@ export default function App() {
 
           {/* FALLBACK */}
           <Route path="*" element={<div>Page introuvable</div>} />
-
         </Routes>
       </BrowserRouter>
     </AuthProvider>
