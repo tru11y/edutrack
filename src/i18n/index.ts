@@ -1,7 +1,7 @@
-import * as frData from "./fr.json";
-import * as enData from "./en.json";
+import fr from "./fr.json";
+import en from "./en.json";
 
-const langs: any = { fr: frData.default, en: enData.default };
+const langs: any = { fr, en };
 let current = "fr";
 
 export function t(key: string) {

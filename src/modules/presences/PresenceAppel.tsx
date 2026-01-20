@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { getAllEleves } from "../eleves/eleve.service";
 import { savePresencesForCours } from "./presence.service";
-import type { Presence } from "./presence.types";
+import { computeStatutMetier } from "./presence.rules";
+import { banEleve } from "../eleves/eleve.ban";
 
 interface Props {
   coursId: string;
@@ -9,136 +10,133 @@ interface Props {
 }
 
 export default function PresenceAppel({ coursId, classe }: Props) {
-  const [eleves, setEleves] = useState<{ id: string; nom: string; prenom: string }[]>([]);
-  const [presences, setPresences] = useState<Presence[]>([]);
-  const [saving, setSaving] = useState(false);
+  const [eleves, setEleves] = useState<any[]>([]);
+  const [presences, setPresences] = useState<any[]>([]);
+  const [metier, setMetier] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    getAllEleves().then((data) => {
-      const filtres = data.filter((e) => e.classe === classe && e.id);
+    const load = async () => {
+      const data = await getAllEleves();
+      const filtres = data.filter((e) => e.classe === classe);
 
-      setEleves(
-        filtres.map((e) => ({
-          id: e.id!,
-          nom: e.nom,
-          prenom: e.prenom,
-        }))
-      );
+      const metierMap: any = {};
+      for (const e of filtres) {
+        if (e.id) {
+          metierMap[e.id] = await computeStatutMetier(e.id);
+        }
+      }
 
+      setEleves(filtres);
+      setMetier(metierMap);
       setPresences(
         filtres.map((e) => ({
-          eleveId: e.id!,
+          eleveId: e.id,
           statut: "present",
           minutesRetard: 0,
         }))
       );
-    });
+    };
+
+    load();
   }, [classe]);
 
-  const updatePresence = (
-    eleveId: string,
-    statut: "present" | "absent" | "retard",
-    minutesRetard = 0
-  ) => {
+  const updatePresence = (eleveId: string, statut: string, minutesRetard = 0) => {
     setPresences((prev) =>
       prev.map((p) =>
-        p.eleveId === eleveId
-          ? { ...p, statut, minutesRetard }
-          : p
+        p.eleveId === eleveId ? { ...p, statut, minutesRetard } : p
       )
     );
   };
 
+  const handleExclude = async (eleveId: string) => {
+    await banEleve(eleveId);
+    alert("Élève exclu (non paiement)");
+  };
+
   const handleSave = async () => {
-    try {
-      setSaving(true);
+    await savePresencesForCours({
+      coursId,
+      classe,
+      date: new Date().toISOString().split("T")[0],
+      presences,
+    });
 
-      await savePresencesForCours({
-        coursId,
-        classe,
-        date: new Date().toISOString().split("T")[0],
-        presences,
-      });
-
-      alert("Présences enregistrées");
-    } catch {
-      alert("Erreur lors de l’enregistrement");
-    } finally {
-      setSaving(false);
-    }
+    alert("Présences enregistrées");
   };
 
   return (
-    <div className="mt-6">
-      <h3 className="text-lg font-semibold mb-3">📋 Appel des élèves</h3>
+    <div className="space-y-4">
+      <h3 className="text-lg font-bold">📋 Appel — Classe {classe}</h3>
 
       <table className="w-full border">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border p-2">Élève</th>
-            <th className="border p-2">Présent</th>
-            <th className="border p-2">Absent</th>
-            <th className="border p-2">Retard</th>
-            <th className="border p-2">Minutes</th>
+            <th>Élève</th>
+            <th>Statut</th>
+            <th>Métier</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {eleves.map((e) => (
-            <tr key={e.id}>
-              <td className="border p-2">
-                {e.prenom} {e.nom}
-              </td>
+          {eleves.map((e) => {
+            const m = metier[e.id];
 
-              <td className="border p-2 text-center">
-                <input
-                  type="radio"
-                  name={e.id}
-                  defaultChecked
-                  onChange={() => updatePresence(e.id, "present")}
-                />
-              </td>
+            return (
+              <tr key={e.id}>
+                <td className="p-2 border">
+                  {e.prenom} {e.nom}
+                </td>
 
-              <td className="border p-2 text-center">
-                <input
-                  type="radio"
-                  name={e.id}
-                  onChange={() => updatePresence(e.id, "absent")}
-                />
-              </td>
+                <td className="p-2 border">
+                  <select                    aria-label={`Statut de présence pour ${e.prenom} ${e.nom}`}                    value={
+                      presences.find((p) => p.eleveId === e.id)?.statut || "present"
+                    }
+                    onChange={(ev) =>
+                      updatePresence(e.id, ev.target.value)
+                    }
+                  >
+                    <option value="present">Présent</option>
+                    <option value="absent">Absent</option>
+                    <option value="retard">Retard</option>
+                  </select>
+                </td>
 
-              <td className="border p-2 text-center">
-                <input
-                  type="radio"
-                  name={e.id}
-                  onChange={() => updatePresence(e.id, "retard", 5)}
-                />
-              </td>
+                <td className="p-2 border">
+                  {m?.statutMetier === "banni" && (
+                    <span className="text-red-600">🚫 Banni</span>
+                  )}
+                  {m?.statutMetier === "essai" && (
+                    <span className="text-orange-600">🧪 Essai</span>
+                  )}
+                  {m?.statutMetier === "a_renvoyer" && (
+                    <span className="text-red-600">💰 Paiement requis</span>
+                  )}
+                  {m?.statutMetier === "autorise" && (
+                    <span className="text-green-600">✅ Autorisé</span>
+                  )}
+                </td>
 
-              <td className="border p-2">
-                <input
-                  type="number"
-                  min={0}
-                  className="border p-1 w-20"
-                  onChange={(ev) =>
-                    updatePresence(
-                      e.id,
-                      "retard",
-                      Number(ev.target.value)
-                    )
-                  }
-                />
-              </td>
-            </tr>
-          ))}
+                <td className="p-2 border">
+                  {m?.statutMetier === "a_renvoyer" && (
+                    <button
+                      onClick={() => handleExclude(e.id)}
+                      className="text-red-600 underline"
+                    >
+                      Exclure
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
       <button
         onClick={handleSave}
-        disabled={saving}
-        className="mt-4 bg-black text-white px-4 py-2 rounded disabled:opacity-50"
+        className="bg-black text-white px-4 py-2 rounded"
       >
-        {saving ? "Enregistrement..." : "💾 Enregistrer l’appel"}
+        💾 Enregistrer l'appel
       </button>
     </div>
   );

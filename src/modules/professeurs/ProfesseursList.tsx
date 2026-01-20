@@ -29,7 +29,7 @@ export default function ProfesseursList() {
               <td className="border p-2">
                 {p.prenom} {p.nom}
               </td>
-              <td className="border p-2">{p.matiere}</td>
+              <td className="border p-2">{p.matieres?.join(", ") || "-"}</td>
               <td className="border p-2">{p.statut}</td>
             </tr>
           ))}

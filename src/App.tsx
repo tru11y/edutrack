@@ -4,8 +4,8 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 
 /* ========== ADMIN ========== */
-import AdminLayout from "./layout/AdminLayout";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminLayout from "./Layout/AdminLayout";
+import AdminDashboard from "./Pages/AdminDashboard";
 
 import ElevesList from "./modules/eleves/ElevesList";
 import CreateEleve from "./modules/eleves/CreateEleve";
@@ -18,7 +18,7 @@ import CreateCours from "./modules/cours/CreateCours";
 import CoursDetail from "./modules/cours/CoursDetail";
 
 import PaiementsList from "./modules/paiements/PaiementsList";
-import PaiementEleve from "./modules/paiements/PaiementEleve";
+import PaiementEleve from "./modules/paiements/paiementEleve";
 
 /* ========== PROFESSEUR ========== */
 import ProfesseurLayout from "./modules/professeurs/ProfesseurLayout";
@@ -26,7 +26,7 @@ import ProfesseurDashboard from "./modules/professeurs/ProfesseurDashboard";
 import ProfCoursDetail from "./modules/professeurs/ProfCoursDetail";
 
 /* ========== ELEVE ========== */
-import EleveLayout from "./layout/EleveLayout";
+import EleveLayout from "./Layout/EleveLayout";
 import EleveDashboard from "./modules/eleves/EleveDashboard";
 import EleveEmploiDuTemps from "./modules/eleves/EleveEmploiDuTemps";
 import ElevePresences from "./modules/eleves/ElevePresences";

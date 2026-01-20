@@ -4,7 +4,7 @@ import PageHeader from "../../components/layout/PageHeader";
 export default function ElevePaiements() {
   return (
     <Page>
-      <PageHeader title="Paiements" />
+      <PageHeader>💳 Paiements</PageHeader>
       <p>Historique des paiements.</p>
     </Page>
   );

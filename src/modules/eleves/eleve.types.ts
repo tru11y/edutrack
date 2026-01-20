@@ -39,6 +39,13 @@ export interface Eleve {
 
   statut: StatutEleve;
 
+  // ======================
+  // MÉTIER
+  // ======================
+  isBanned?: boolean;
+  banReason?: string | null;
+  banDate?: Timestamp | null;
+
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

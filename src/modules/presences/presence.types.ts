@@ -1,15 +1,23 @@
-export type StatutPresence = "present" | "absent" | "retard";
+// presence.types.ts
+export type StatutMetier =
+  | "essai"
+  | "autorise"
+  | "a_renvoyer"
+  | "banni";
 
-export interface Presence {
+export interface PresenceItem {
   eleveId: string;
-  statut: StatutPresence;
+  statut: "present" | "absent" | "retard";
   minutesRetard?: number;
+
+  facturable: boolean;
+  statutMetier: StatutMetier;
+  message: string;
 }
 
 export interface PresenceCoursPayload {
   coursId: string;
   classe: string;
-  date: string; // YYYY-MM-DD
-  presences: Presence[];
-  createdAt?: any;
+  date: string;
+  presences: PresenceItem[];
 }

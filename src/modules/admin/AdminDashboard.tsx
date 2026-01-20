@@ -71,10 +71,6 @@ export default function AdminDashboard() {
   );
 }
 
-/* =========================
-   COMPONENT
-========================= */
-
 function StatCard({
   label,
   value,
@@ -91,9 +87,9 @@ function StatCard({
         <p className="text-3xl font-bold">{value}</p>
       </div>
       <div
-        className={`w-12 h-12 rounded-full ${color} flex items-center justify-center text-white text-xl`}
+        className={`w-12 h-12 rounded-full ${color} flex items-center justify-center text-white text-xl font-bold`}
       >
-        ●
+        {label.charAt(0)}
       </div>
     </div>
   );

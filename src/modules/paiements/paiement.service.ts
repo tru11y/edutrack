@@ -72,6 +72,7 @@ export const createPaiementMensuel = async (
    ENREGISTRER UN VERSEMENT
 ========================= */
 
+
 export const enregistrerVersement = async (
   paiement: Paiement,
   montant: number,
@@ -99,4 +100,20 @@ export const enregistrerVersement = async (
       },
     ],
   });
+
+  // 🔓 DÉBAN AUTO SI SOLDÉ
+  if (statut === "paye") {
+    await unbanEleve(paiement.eleveId);
+  }
 };
+
+// paiement.service.ts
+import { updateEleve } from "../eleves/eleve.service";
+
+export async function unbanEleve(eleveId: string) {
+  await updateEleve(eleveId, {
+    isBanned: false,
+    banReason: null,
+    banDate: null,
+  });
+}
