@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createProfesseur } from "./professeur.service";
+import { useAuth } from "../../context/AuthContext";
 
 export default function CreateProfesseur() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
@@ -14,13 +16,16 @@ export default function CreateProfesseur() {
     try {
       setLoading(true);
 
+      if (!user?.uid) return alert("Utilisateur non identifié");
+
       const data = {
         nom: nom.trim(),
         prenom: prenom.trim(),
         matieres: matieres.split(",").map(m => m.trim()),
+        statut: "actif" as const,
       };
 
-      await createProfesseur(data);
+      await createProfesseur(user.uid, data as any);
 
       alert("Professeur créé");
       navigate(-1);

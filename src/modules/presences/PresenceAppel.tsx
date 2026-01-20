@@ -38,7 +38,7 @@ export default function PresenceAppel({ coursId, classe }: Props) {
 
       setPresences(
         filtres.map((e) => ({
-          eleveId: e.id,
+          eleveId: e.id || "",
           statut: "present" as const,
           facturable: true,
           statutMetier: "autorise" as const,
@@ -96,7 +96,10 @@ export default function PresenceAppel({ coursId, classe }: Props) {
       ...prev,
       {
         eleveId: eleve.id,
-        statut: "present",
+        statut: "present" as const,
+        facturable: true,
+        statutMetier: "autorise" as const,
+        message: "",
       },
     ]);
 

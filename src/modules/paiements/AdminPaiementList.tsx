@@ -13,7 +13,7 @@ export default function AdminPaiementsList() {
   }, []);
 
   const handleExport = () => {
-    exportPaiementsPDF(paiements);
+    alert("Export PDF en construction");
   };
 
   if (loading) return <div className="p-6">Chargement…</div>;
