@@ -50,7 +50,7 @@ export default function PresenceAppel({ coursId, classe }: Props) {
     getElevesEligibles().then(setAllEleves);
   }, [classe]);
 
-  const updatePresence = (
+  const _updatePresence = (
     eleveId: string,
     statut: "present" | "absent" | "retard",
     minutesRetard = 0
@@ -64,7 +64,7 @@ export default function PresenceAppel({ coursId, classe }: Props) {
     );
   };
 
-  const handleExclude = async (eleveId: string) => {
+  const _handleExclude = async (eleveId: string) => {
     const confirm = window.confirm(
       "Exclure cet élève pour non paiement ?"
     );
@@ -200,72 +200,59 @@ export default function PresenceAppel({ coursId, classe }: Props) {
           </tr>
         </thead>
         <tbody>
-          {eleves.map((e) => (
-            <tr key={e.id}>
+        {presences.map((presence) => {
+          const eleve = eleves.find(e => e.id === presence.eleveId);
+          if (!eleve) return null;
+          
+          return (
+            <tr key={presence.eleveId}>
+              <td className="border p-2">{eleve.prenom} {eleve.nom}</td>
+              <td className="border p-2 text-center">
+                <input
+                  type="radio"
+                  name={`statut-${presence.eleveId}`}
+                  checked={presence.statut === "present"}
+                  onChange={() => _updatePresence(presence.eleveId, "present")}
+                />
+              </td>
+              <td className="border p-2 text-center">
+                <input
+                  type="radio"
+                  name={`statut-${presence.eleveId}`}
+                  checked={presence.statut === "absent"}
+                  onChange={() => _updatePresence(presence.eleveId, "absent")}
+                />
+              </td>
+              <td className="border p-2 text-center">
+                <input
+                  type="radio"
+                  name={`statut-${presence.eleveId}`}
+                  checked={presence.statut === "retard"}
+                  onChange={() => _updatePresence(presence.eleveId, "retard")}
+                />
+              </td>
               <td className="border p-2">
-                {e.prenom} {e.nom} ({e.classe})
+                {presence.statut === "retard" && (
+                  <input
+                    type="number"
+                    min="0"
+                    value={presence.minutesRetard || 0}
+                    onChange={(e) => _updatePresence(presence.eleveId, "retard", parseInt(e.target.value))}
+                    className="border p-1 rounded w-16"
+                  />
+                )}
               </td>
-
-              <td className="border p-2 text-center">
-                <input
-                  type="radio"
-                  name={e.id}
-                  defaultChecked
-                  aria-label={`Présent - ${e.prenom} ${e.nom}`}
-                  onChange={() =>
-                    updatePresence(e.id, "present")
-                  }
-                />
-              </td>
-
-              <td className="border p-2 text-center">
-                <input
-                  type="radio"
-                  name={e.id}
-                  aria-label={`Absent - ${e.prenom} ${e.nom}`}
-                  onChange={() =>
-                    updatePresence(e.id, "absent")
-                  }
-                />
-              </td>
-
-              <td className="border p-2 text-center">
-                <input
-                  type="radio"
-                  name={e.id}
-                  aria-label={`Retard - ${e.prenom} ${e.nom}`}
-                  onChange={() =>
-                    updatePresence(e.id, "retard", 5)
-                  }
-                />
-              </td>
-
-              <td className="border p-2 text-center">
-                <input
-                  type="number"
-                  min={0}
-                  className="w-16 border p-1 rounded"
-                  aria-label={`Minutes de retard - ${e.prenom} ${e.nom}`}
-                  onChange={(ev) =>
-                    updatePresence(
-                      e.id,
-                      "retard",
-                      Number(ev.target.value)
-                    )
-                  }
-                />
-              </td>
-
-              <td className="border p-2 text-center">
+              <td className="border p-2">
                 <button
-                  onClick={() => handleExclude(e.id)}
-                  className="bg-red-600 text-white px-2 py-1 rounded text-sm"
+                  onClick={() => _handleExclude(presence.eleveId)}
+                  className="bg-red-500 text-white text-xs px-2 py-1 rounded"
                 >
-                  🚫 Exclure
+                  Exclure
                 </button>
               </td>
             </tr>
-          ))}
+          );
+        })}
         </tbody>
       </table>
 
@@ -282,3 +269,4 @@ export default function PresenceAppel({ coursId, classe }: Props) {
     </div>
   );
 }
+

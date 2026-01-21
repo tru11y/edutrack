@@ -8,4 +8,6 @@ export interface AppUser {
 
   eleveId?: string;
   professeurId?: string;
+  
+  isBanned?: boolean;
 }

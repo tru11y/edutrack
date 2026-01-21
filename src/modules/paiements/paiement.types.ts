@@ -1,4 +1,4 @@
-export type MethodePaiement = "especes" | "mobile_money" | "virement";
+export type MethodePaiement = "especes" | "mobile_money" | "virement" | "cheque";
 
 export type StatutPaiement = "impaye" | "partiel" | "paye";
 

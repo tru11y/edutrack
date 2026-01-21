@@ -35,6 +35,7 @@ export default function ElevesList() {
             <th className="p-2 border">Nom</th>
             <th className="p-2 border">Prénom</th>
             <th className="p-2 border">Classe</th>
+            <th className="p-2 border">Parents</th>
             <th className="p-2 border">Statut</th>
             <th className="p-2 border">Actions</th>
           </tr>
@@ -45,6 +46,20 @@ export default function ElevesList() {
               <td className="p-2 border">{e.nom}</td>
               <td className="p-2 border">{e.prenom}</td>
               <td className="p-2 border">{e.classe}</td>
+              <td className="p-2 border">
+                {Array.isArray(e.parents) && e.parents.length > 0 ? (
+                  <ul className="text-xs">
+                    {e.parents.map((p, i) => (
+                      <li key={i}>
+                        <span className="font-semibold">{p.nom}</span> ({p.lien})<br />
+                        <span className="text-gray-600">{p.telephone}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </td>
               <td className="p-2 border">
                 {e.isBanned ? (
                   <span className="text-red-600 font-bold">🚫 BANNI</span>

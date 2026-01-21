@@ -1,16 +1,18 @@
-import Page from "../../components/layout/Page";
-import PageHeader from "../../components/layout/PageHeader";
+import EleveDashboardUX from "../../components/ux_dashboards_appleSchool/EleveDashboardUX";
 
 export default function EleveDashboard() {
   return (
-    <Page>
-      <PageHeader title="Mon espace" subtitle="Résumé rapide" />
+    <div className="space-y-6">
+      <EleveDashboardUX />
 
-      <ul>
-        <li>📅 Prochain cours : —</li>
-        <li>✅ Taux de présence : —</li>
-        <li>💰 Solde : —</li>
-      </ul>
-    </Page>
+      {/* ZONE DONNÉES RÉELLES PLUS TARD */}
+      <div className="p-6 bg-white rounded-xl shadow">
+        <ul className="space-y-2 text-sm">
+          <li>📅 Prochain cours : —</li>
+          <li>✅ Taux de présence : —</li>
+          <li>💰 Solde : —</li>
+        </ul>
+      </div>
+    </div>
   );
 }

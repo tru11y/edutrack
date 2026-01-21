@@ -31,6 +31,7 @@ export interface AppUser {
   isActive: boolean;
   eleveId?: string;
   professeurId?: string;
+  isBanned?: boolean;
 }
 
 /* =========================

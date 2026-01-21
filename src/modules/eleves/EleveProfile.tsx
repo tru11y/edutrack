@@ -1,153 +1,113 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getEleveById, updateEleve } from "./eleve.service";
-import { banElevesNonPayesApres10 } from "../analytics/paymentRisk.service";
-import type { Eleve } from "./eleve.types";
+import { getEleveById } from "./eleve.service";
 
 export default function EleveProfile() {
   const { id } = useParams<{ id: string }>();
 
-  const [eleve, setEleve] = useState<Eleve | null>(null);
+  const [eleve, setEleve] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  /* =====================
-     AUTO-BAN CHECK (GLOBAL)
-  ===================== */
-  useEffect(() => {
-    banElevesNonPayesApres10();
-  }, []);
-
-  /* =====================
-     LOAD ELEVE
-  ===================== */
   useEffect(() => {
     if (!id) return;
 
-    setLoading(true);
-    setError("");
-
     getEleveById(id)
       .then((data) => {
-        setEleve(data);
+        if (!data) {
+          setError("Élève introuvable");
+        } else {
+          setEleve(data);
+        }
+        setLoading(false);
       })
       .catch(() => {
-        setError("Impossible de charger l’élève");
-      })
-      .finally(() => {
+        setError("Erreur lors du chargement");
         setLoading(false);
       });
   }, [id]);
 
-  /* =====================
-     UNBAN (ADMIN)
-  ===================== */
-  const handleUnban = async () => {
-    if (!eleve?.id) return;
-
-    await updateEleve(eleve.id, {
-      isBanned: false,
-      banReason: null,
-      banDate: null,
-    });
-
-    const refreshed = await getEleveById(eleve.id);
-    setEleve(refreshed);
-  };
-
-  /* =====================
-     STATES
-  ===================== */
-
-  if (loading) {
-    return <div className="p-6 text-gray-500">Chargement…</div>;
-  }
-
-  if (error) {
-    return <div className="p-6 text-red-600">{error}</div>;
-  }
-
-  if (!eleve) {
-    return <div className="p-6 text-gray-500">Élève introuvable</div>;
-  }
-
-  const parents = eleve.parents ?? [];
-
-  /* =====================
-     UI
-  ===================== */
+  if (loading) return <div className="p-6">Chargement…</div>;
+  if (error) return <div className="p-6 text-red-600">{error}</div>;
+  if (!eleve) return <div className="p-6 text-red-600">Élève introuvable</div>;
 
   return (
-    <div className="p-6 max-w-2xl space-y-6">
-      {/* Header */}
+    <div className="p-6 max-w-3xl space-y-6">
+
+      {/* HEADER */}
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">
-          {eleve.prenom} {eleve.nom}
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold">
+            👨‍🎓 {eleve.prenom} {eleve.nom}
+          </h1>
+          <p className="text-gray-500">
+            Classe : {eleve.classe}
+          </p>
+        </div>
+
+        {eleve.isBanned && (
+          <span className="px-3 py-1 rounded bg-red-100 text-red-700 text-sm font-semibold">
+            🚫 Banni
+          </span>
+        )}
+      </div>
+
+      {/* INFOS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <Info label="Nom" value={eleve.nom} />
+        <Info label="Prénom" value={eleve.prenom} />
+        <Info label="Sexe" value={eleve.sexe} />
+        <Info label="Classe" value={eleve.classe} />
+        <Info label="Statut" value={eleve.statut} />
+        <Info label="École d’origine" value={eleve.ecoleOrigine || "—"} />
+
+      </div>
+
+      {/* ACTIONS */}
+      <div className="flex gap-4">
 
         <Link
           to={`/admin/eleves/${eleve.id}/paiements`}
-          className="px-3 py-1 rounded bg-gray-900 text-white text-sm"
+          className="px-4 py-2 rounded bg-black text-white"
         >
           💰 Paiements
         </Link>
+
+        <Link
+          to={`/admin/eleves`}
+          className="px-4 py-2 rounded border"
+        >
+          ⬅ Retour
+        </Link>
+
       </div>
 
-      {/* BAN BLOCK */}
+      {/* BANNISSEMENT */}
       {eleve.isBanned && (
-        <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded">
-          <p className="font-bold">🚫 Élève banni</p>
-          <p>Raison : {eleve.banReason || "Non paiement"}</p>
-          <p>
-            Date :{" "}
-            {eleve.banDate
-              ? new Date(eleve.banDate.seconds * 1000).toLocaleDateString()
-              : "—"}
+        <div className="p-4 rounded bg-red-50 border border-red-200">
+          <p className="text-red-700 font-semibold">
+            Élève suspendu
           </p>
-
-          <button
-            onClick={handleUnban}
-            className="mt-3 bg-black text-white px-3 py-1 rounded"
-          >
-            Lever le bannissement
-          </button>
+          <p className="text-sm text-red-600">
+            Raison : {eleve.banReason || "—"}
+          </p>
         </div>
       )}
 
-      {/* Infos */}
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <p>
-          <b>Classe :</b> {eleve.classe}
-        </p>
-        <p>
-          <b>Sexe :</b> {eleve.sexe}
-        </p>
-        <p>
-          <b>Statut :</b>{" "}
-          {eleve.isBanned ? (
-            <span className="text-red-600 font-bold">BANNI</span>
-          ) : (
-            eleve.statut
-          )}
-        </p>
-      </div>
+    </div>
+  );
+}
 
-      {/* Parents */}
-      <div>
-        <h2 className="font-semibold mt-4">Parents</h2>
+/* ======================
+   UI COMPONENT
+====================== */
 
-        {Array.isArray(parents) && parents.length > 0 ? (
-          <ul className="list-disc pl-6">
-            {parents.map((p, i) => (
-              <li key={i}>
-                {p.nom} — {p.telephone} ({p.lien})
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-500">Aucun parent renseigné</p>
-        )}
-      </div>
+function Info({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="p-4 rounded border bg-white">
+      <p className="text-sm text-gray-500">{label}</p>
+      <p className="font-semibold">{value || "—"}</p>
     </div>
   );
 }

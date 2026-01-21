@@ -2,11 +2,15 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+import CompteSuspendu from "./Pages/CompteSuspendu";
 
 /* ========== ADMIN ========== */
 import AdminLayout from "./Layout/AdminLayout";
 import AdminDashboard from "./Pages/AdminDashboard";
 import AdminCahierList from "./modules/cahier/AdminCahierList";
+import CreateProfesseur from "./modules/professeurs/CreateProfesseur";
+import CreateAdmin from "./modules/admin/CreateAdmin";
+import AdminBanList from "./modules/eleves/AdminBanList";
 
 import ElevesList from "./modules/eleves/ElevesList";
 import CreateEleve from "./modules/eleves/CreateEleve";
@@ -32,7 +36,10 @@ import EleveDashboard from "./modules/eleves/EleveDashboard";
 import EleveEmploiDuTemps from "./modules/eleves/EleveEmploiDuTemps";
 import ElevePresences from "./modules/eleves/ElevePresences";
 import ElevePaiements from "./modules/eleves/ElevePaiements";
-/* ========== LOGIN ========== */
+
+/* =========================
+   LOGIN
+========================= */
 
 function Login() {
   const { login, user } = useAuth();
@@ -43,7 +50,7 @@ function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔁 REDIRECTION PROPRE APRÈS LOGIN (ROLE-BASED)
+  // 🔁 REDIRECTION AUTO APRÈS LOGIN
   useEffect(() => {
     if (!user) return;
 
@@ -106,7 +113,9 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+
           {/* PUBLIC */}
+          <Route path="/compte-suspendu" element={<CompteSuspendu />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
 
@@ -121,6 +130,8 @@ export default function App() {
           >
             <Route index element={<AdminDashboard />} />
 
+            <Route path="bans" element={<AdminBanList />} />
+
             {/* Élèves */}
             <Route path="eleves" element={<ElevesList />} />
             <Route path="eleves/create" element={<CreateEleve />} />
@@ -129,6 +140,10 @@ export default function App() {
 
             {/* Professeurs */}
             <Route path="professeurs" element={<ProfesseursList />} />
+            <Route path="professeurs/create" element={<CreateProfesseur />} />
+
+            {/* Admins */}
+            <Route path="admins/create" element={<CreateAdmin />} />
 
             {/* Cours */}
             <Route path="cours" element={<CoursList />} />
@@ -172,6 +187,7 @@ export default function App() {
 
           {/* FALLBACK */}
           <Route path="*" element={<div>Page introuvable</div>} />
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>

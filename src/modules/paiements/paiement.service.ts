@@ -12,8 +12,30 @@ import {
 import { db } from "../../services/firebase";
 import { calculerPaiement } from "./paiement.logic";
 import type { Paiement, MethodePaiement } from "./paiement.types";
+import { updateEleveSystem } from "../eleves/eleve.service";
 
 const paiementsRef = collection(db, "paiements");
+
+/* =========================
+   HELPERS
+========================= */
+
+export async function unbanEleve(eleveId: string) {
+  await updateEleveSystem(eleveId, {
+    isBanned: false,
+    banReason: null,
+    banDate: null,
+  });
+}
+
+async function unbanEleveIfFullyPaid(
+  eleveId: string,
+  montantRestant: number
+) {
+  if (montantRestant <= 0) {
+    await unbanEleve(eleveId);
+  }
+}
 
 /* =========================
    GETTERS
@@ -42,7 +64,6 @@ export const createPaiementMensuel = async (
     "id" | "statut" | "montantRestant" | "createdAt" | "versements"
   >
 ) => {
-  // 🔒 Anti-doublon (élève + mois)
   const q = query(
     paiementsRef,
     where("eleveId", "==", data.eleveId),
@@ -72,7 +93,6 @@ export const createPaiementMensuel = async (
    ENREGISTRER UN VERSEMENT
 ========================= */
 
-
 export const enregistrerVersement = async (
   paiement: Paiement,
   montant: number,
@@ -101,19 +121,8 @@ export const enregistrerVersement = async (
     ],
   });
 
-  // 🔓 DÉBAN AUTO SI SOLDÉ
-  if (statut === "paye") {
-    await unbanEleve(paiement.eleveId);
-  }
+  await unbanEleveIfFullyPaid(
+    paiement.eleveId,
+    montantRestant
+  );
 };
-
-// paiement.service.ts
-import { updateEleve } from "../eleves/eleve.service";
-
-export async function unbanEleve(eleveId: string) {
-  await updateEleve(eleveId, {
-    isBanned: false,
-    banReason: null,
-    banDate: null,
-  });
-}

@@ -9,10 +9,6 @@ export function validateProfesseur(data: Partial<Professeur>) {
     throw new Error("Prénom professeur invalide");
   }
 
-  if (!data.email || !data.email.includes("@")) {
-    throw new Error("Email professeur invalide");
-  }
-
   if (!data.matieres || data.matieres.length === 0) {
     throw new Error("Au moins une matière est requise");
   }

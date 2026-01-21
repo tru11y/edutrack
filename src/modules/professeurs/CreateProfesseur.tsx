@@ -1,61 +1,162 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createProfesseur } from "./professeur.service";
-import { useAuth } from "../../context/AuthContext";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../../services/firebase";
 
 export default function CreateProfesseur() {
   const navigate = useNavigate();
-  const { user } = useAuth();
 
-  const [nom, setNom] = useState("");
-  const [prenom, setPrenom] = useState("");
-  const [matieres, setMatieres] = useState("");
+  const [form, setForm] = useState({
+    nom: "",
+    prenom: "",
+    email: "",
+    telephone: "",
+    specialite: "",
+  });
+
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = async () => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!form.nom || !form.prenom || !form.email) {
+      setError("Nom, prénom et email sont obligatoires");
+      return;
+    }
+
     try {
       setLoading(true);
+      setError("");
 
-      if (!user?.uid) return alert("Utilisateur non identifié");
+      // 1) Créer le prof dans la collection professeurs
+      await addDoc(collection(db, "professeurs"), {
+        ...form,
+        isActive: true,
+        createdAt: serverTimestamp(),
+      });
 
-      const data = {
-        nom: nom.trim(),
-        prenom: prenom.trim(),
-        matieres: matieres.split(",").map(m => m.trim()),
-        statut: "actif" as const,
-      };
+      // 2) Créer l'utilisateur dans la collection users
+      await addDoc(collection(db, "users"), {
+        email: form.email,
+        role: "prof",
+        isActive: true,
+        createdAt: serverTimestamp(),
+      });
 
-      await createProfesseur(user.uid, data as any);
-
-      alert("Professeur créé");
-      navigate(-1);
-    } catch (error) {
-      alert("Erreur création professeur");
-      console.error(error);
+      navigate("/admin/professeurs");
+    } catch (e) {
+      console.error(e);
+      setError("Erreur lors de la création du professeur");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div>
-      <h1>Créer un professeur</h1>
+    <div className="p-6 max-w-xl">
+      <h1 className="text-2xl font-bold mb-6">➕ Ajouter un professeur</h1>
 
-      <input placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} />
-      <input
-        placeholder="Prénom"
-        value={prenom}
-        onChange={(e) => setPrenom(e.target.value)}
-      />
-      <input
-        placeholder="Matières (séparées par ,)"
-        value={matieres}
-        onChange={(e) => setMatieres(e.target.value)}
-      />
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white border border-gray-200 rounded-2xl p-6 space-y-5 shadow-sm"
+      >
+        <Field
+          label="Nom"
+          name="nom"
+          value={form.nom}
+          onChange={handleChange}
+        />
 
-      <button onClick={handleSubmit} disabled={loading}>
-        {loading ? "Enregistrement..." : "Enregistrer"}
-      </button>
+        <Field
+          label="Prénom"
+          name="prenom"
+          value={form.prenom}
+          onChange={handleChange}
+        />
+
+        <Field
+          label="Email"
+          name="email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+        />
+
+        <Field
+          label="Téléphone"
+          name="telephone"
+          value={form.telephone}
+          onChange={handleChange}
+        />
+
+        <Field
+          label="Spécialité"
+          name="specialite"
+          value={form.specialite}
+          onChange={handleChange}
+        />
+
+        {error && (
+          <p className="text-red-600 text-sm">{error}</p>
+        )}
+
+        <div className="flex gap-3 pt-4">
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-5 py-2 rounded-xl bg-black text-white font-medium hover:bg-gray-800 disabled:opacity-50"
+          >
+            {loading ? "Création..." : "Créer le professeur"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="px-5 py-2 rounded-xl border border-gray-300 font-medium hover:bg-gray-50"
+          >
+            Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* =========================
+   UI FIELD
+========================= */
+
+function Field({
+  label,
+  name,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium">{label}</label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+      />
     </div>
   );
 }

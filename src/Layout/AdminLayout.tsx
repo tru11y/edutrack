@@ -1,56 +1,103 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { t, setLang } from "../i18n";
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminLayout() {
+  const { logout, user } = useAuth();
+  // 🌗 Thème clair / sombre
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDark]);
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", minHeight: "100vh" }}>
-      {/* Sidebar */}
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        backgroundColor: "var(--bg)",
+        color: "var(--text)",
+        transition: "background-color 0.3s ease, color 0.3s ease"
+      }}
+    >
+      {/* SIDEBAR */}
       <aside
         style={{
-          background: "var(--surface)",
+          width: "16rem",
+          padding: "1.5rem",
           borderRight: "1px solid var(--border)",
-          padding: 24,
+          backgroundColor: "var(--card)",
+          color: "var(--text)"
         }}
       >
-        <h2 style={{ marginBottom: 24 }}>EDUTRACK</h2>
+        {/* LOGO */}
+        <h1 className="text-xl font-bold mb-8">🎓 EDUTRACK</h1>
 
-        <nav style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <NavItem to="/admin" label={t("dashboard")} />
-          <NavItem to="/admin/eleves" label={t("students")} />
+        {/* NAV */}
+        <nav className="flex flex-col gap-3">
+
+          <NavItem to="/admin" label="Dashboard" />
+          <NavItem to="/admin/eleves" label="Élèves" />
           <NavItem to="/admin/professeurs" label="Professeurs" />
           <NavItem to="/admin/cours" label="Cours" />
-          <NavItem to="/admin/paiements" label={t("payments")} />
+          <NavItem to="/admin/paiements" label="Paiements" />
+          <NavItem to="/admin/bans" label="Bannis" />
+
         </nav>
 
-        <div style={{ marginTop: 32, display: "flex", gap: 8 }}>
-          <button className="btn secondary" onClick={() => setLang("fr")}>
-            FR
+        {/* FOOTER SIDEBAR */}
+        <div style={{ marginTop: "2.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+
+        {/* Toggle thème */}
+          <button
+            onClick={() => setIsDark((v) => !v)}
+            style={{
+              width: "100%",
+              padding: "0.5rem 0.75rem",
+              borderRadius: "0.375rem",
+              fontSize: "0.875rem",
+              fontWeight: "500",
+              border: "none",
+              cursor: "pointer",
+              backgroundColor: "var(--primary-soft)",
+              color: "var(--text)",
+              transition: "background-color 0.2s ease"
+            }}
+          >
+            {isDark ? "☀️ Mode clair" : "🌙 Mode sombre"}
           </button>
-          <button className="btn secondary" onClick={() => setLang("en")}>
-            EN
-          </button>
+
         </div>
       </aside>
 
-      {/* Main */}
-      <main style={{ background: "var(--bg)" }}>
+      {/* MAIN */}
+      <main className="flex-1 p-8 overflow-y-auto">
         <Outlet />
       </main>
     </div>
   );
 }
 
+/* ======================
+   NAV ITEM
+====================== */
+
 function NavItem({ to, label }: { to: string; label: string }) {
   return (
     <NavLink
       to={to}
-      style={({ isActive }) => ({
-        padding: "10px 12px",
-        borderRadius: 10,
-        background: isActive ? "#f0f0f0" : "transparent",
-        fontWeight: 500,
-        display: "block",
-      })}
+      className={({ isActive }) =>
+        `px-3 py-2 rounded font-medium transition ${
+          isActive
+            ? "bg-black text-white"
+            : "text-gray-600 hover:bg-gray-100"
+        }`
+      }
     >
       {label}
     </NavLink>

@@ -1,40 +1,46 @@
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  serverTimestamp,
-} from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
 import { db } from "../../services/firebase";
-import type { DisciplineRecord } from "./discipline.type";
+import { updateEleveSystem } from "../eleves/eleve.service";
 
-const disciplineRef = collection(db, "discipline");
+/* =========================
+   EXCLURE / BANNIR UN ÉLÈVE
+========================= */
 
-export async function logDisciplineIncident(
-  data: Omit<DisciplineRecord, "id" | "createdAt">
+export async function exclureEleve(
+  eleveId: string,
+  reason: string,
+  auteur?: string
 ) {
-  await addDoc(disciplineRef, {
-    ...data,
+  // 🔒 Bannissement officiel
+  await updateEleveSystem(eleveId, {
+    isBanned: true,
+    banReason: reason,
+    banDate: serverTimestamp() as any,
+  });
+
+  // 📝 Optionnel : log discipline
+  const ref = doc(db, "discipline_logs", `${eleveId}_${Date.now()}`);
+
+  await updateDoc(ref, {
+    eleveId,
+    reason,
+    auteur: auteur || "professeur",
     createdAt: serverTimestamp(),
+  }).catch(() => {
+    // Si la collection n'existe pas encore → on ignore sans bloquer
   });
 }
 
-export async function getDisciplineByEleve(eleveId: string) {
-  const q = query(disciplineRef, where("eleveId", "==", eleveId));
-  const snap = await getDocs(q);
+/* =========================
+   GET ALL DISCIPLINE LOGS
+========================= */
 
-  return snap.docs.map((d) => ({
-    id: d.id,
-    ...(d.data() as DisciplineRecord),
-  }));
-}
-
-export async function getAllDiscipline() {
-  const snap = await getDocs(disciplineRef);
-
-  return snap.docs.map((d) => ({
-    id: d.id,
-    ...(d.data() as DisciplineRecord),
-  }));
+export async function getAllDiscipline(): Promise<any[]> {
+  try {
+    const logsRef = collection(db, "discipline_logs");
+    const snapshot = await getDocs(logsRef);
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch {
+    return [];
+  }
 }

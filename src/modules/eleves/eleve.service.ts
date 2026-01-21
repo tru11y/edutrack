@@ -6,15 +6,23 @@ import {
   updateDoc,
   doc,
   serverTimestamp,
+  query,
+  where,
 } from "firebase/firestore";
-import { db } from "../../services/firebase";
+
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { db, auth } from "../../services/firebase";
 import type { Eleve } from "./eleve.types";
 import { validateEleve } from "./eleve.validators";
+
+/* ======================
+   COLLECTION
+====================== */
 
 const elevesRef = collection(db, "eleves");
 
 /* ======================
-   HELPERS (UX SAFE)
+   HELPERS
 ====================== */
 
 function normalizeEleve(data: Partial<Eleve>): Eleve {
@@ -26,14 +34,15 @@ function normalizeEleve(data: Partial<Eleve>): Eleve {
     statut: data.statut ?? "actif",
     parents: Array.isArray(data.parents) ? data.parents : [],
     ecoleOrigine: data.ecoleOrigine ?? "",
+    isBanned: false,
     createdAt: data.createdAt ?? (serverTimestamp() as any),
     updatedAt: serverTimestamp() as any,
   };
 
-  // ✅ Firestore: omit undefined, use null for optional fields
   if (data.contactUrgence !== undefined) {
     normalized.contactUrgence = data.contactUrgence;
   }
+
   if (data.adresse !== undefined) {
     normalized.adresse = data.adresse;
   }
@@ -68,8 +77,18 @@ export async function getEleveById(id: string): Promise<Eleve | null> {
   });
 }
 
+export async function getElevesBannis() {
+  const q = query(elevesRef, where("isBanned", "==", true));
+  const snap = await getDocs(q);
+
+  return snap.docs.map((d) => ({
+    id: d.id,
+    ...(d.data() as any),
+  }));
+}
+
 /* ======================
-   CREATE
+   CREATE SIMPLE
 ====================== */
 
 export async function createEleve(data: Partial<Eleve>): Promise<string> {
@@ -78,17 +97,71 @@ export async function createEleve(data: Partial<Eleve>): Promise<string> {
   const payload = normalizeEleve(data);
 
   const docRef = await addDoc(elevesRef, payload);
-  return docRef.id; // 🔥 UX: retour immédiat
+  return docRef.id;
 }
 
 /* ======================
-   UPDATE
+   CREATE AVEC COMPTE FIREBASE
+====================== */
+
+export async function createEleveWithAccount(data: {
+  email: string;
+  password: string;
+  nom: string;
+  prenom: string;
+  classe: string;
+  sexe: "M" | "F";
+  parents?: import("./eleve.types").ParentContact[];
+}) {
+  // 1️⃣ Création Auth
+  await createUserWithEmailAndPassword(
+    auth,
+    data.email,
+    data.password
+  );
+
+  // 2️⃣ Création Firestore
+
+  const elevePayload: Eleve = {
+    nom: data.nom,
+    prenom: data.prenom,
+    sexe: data.sexe,
+    classe: data.classe,
+    statut: "actif",
+    parents: Array.isArray(data.parents) ? data.parents : [],
+    ecoleOrigine: "",
+    isBanned: false,
+    createdAt: serverTimestamp() as any,
+    updatedAt: serverTimestamp() as any,
+  };
+
+  const ref = await addDoc(elevesRef, elevePayload);
+
+  return ref.id;
+}
+
+/* ======================
+   UPDATE STANDARD (UI)
 ====================== */
 
 export async function updateEleve(id: string, data: Partial<Eleve>) {
   validateEleve(data);
 
   const ref = doc(db, "eleves", id);
+
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/* ======================
+   UPDATE SYSTEM (PAIEMENT / BAN / AUTO)
+====================== */
+
+export async function updateEleveSystem(id: string, data: Partial<Eleve>) {
+  const ref = doc(db, "eleves", id);
+
   await updateDoc(ref, {
     ...data,
     updatedAt: serverTimestamp(),
@@ -101,6 +174,7 @@ export async function updateEleve(id: string, data: Partial<Eleve>) {
 
 export async function desactiverEleve(id: string) {
   const ref = doc(db, "eleves", id);
+
   await updateDoc(ref, {
     statut: "inactif",
     updatedAt: serverTimestamp(),

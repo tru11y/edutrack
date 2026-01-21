@@ -29,3 +29,22 @@ export interface DisciplineRecord {
   isSystem: boolean; // déclenché automatiquement
   createdAt?: Timestamp;
 }
+
+export interface DisciplineEntry {
+  id?: string;
+
+  eleveId: string;
+  eleveNom: string;
+  elevePrenom: string;
+  classe: string;
+
+  coursId: string;
+
+  motif: string;
+  auteurId: string;      // profId
+  auteurNom: string;    // nom du prof
+
+  type: "exclusion";
+
+  createdAt?: Timestamp;
+}

@@ -1,22 +1,27 @@
-import { describe, it, expect } from "vitest";
 import { calculerPaiement } from "./paiement.logic";
 
 describe("calculerPaiement", () => {
-  it("doit marquer payé si montant exact", () => {
-    const res = calculerPaiement(10000, 10000);
-    expect(res.statut).toBe("paye");
-    expect(res.montantRestant).toBe(0);
+  test("paiement complet", () => {
+    const result = calculerPaiement(10000, 10000);
+    expect(result.statut).toBe("paye");
+    expect(result.montantRestant).toBe(0);
   });
 
-  it("doit marquer partiel si insuffisant", () => {
-    const res = calculerPaiement(10000, 6000);
-    expect(res.statut).toBe("partiel");
-    expect(res.montantRestant).toBe(4000);
+  test("paiement partiel", () => {
+    const result = calculerPaiement(10000, 4000);
+    expect(result.statut).toBe("partiel");
+    expect(result.montantRestant).toBe(6000);
   });
 
-  it("doit marquer impayé si zéro", () => {
-    const res = calculerPaiement(10000, 0);
-    expect(res.statut).toBe("impaye");
-    expect(res.montantRestant).toBe(10000);
+  test("aucun paiement", () => {
+    const result = calculerPaiement(10000, 0);
+    expect(result.statut).toBe("impaye");
+    expect(result.montantRestant).toBe(10000);
+  });
+
+  test("surpaiement", () => {
+    const result = calculerPaiement(10000, 12000);
+    expect(result.statut).toBe("paye");
+    expect(result.montantRestant).toBe(0);
   });
 });

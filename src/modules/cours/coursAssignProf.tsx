@@ -1,62 +1,91 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
-import { db } from "../../services/firebase";
-
-// Fonction d'assignation de professeur - intégrée depuis cours.service
-async function assignProfesseurToCours(coursId: string, profId: string) {
-  const ref = doc(db, "cours", coursId);
-  await updateDoc(ref, { profId });
-}
+import { getCoursById } from "./cours.service";
+import { getAllProfesseurs } from "../professeurs/professeur.service";
+import { assignProfesseurToCours } from "./cours.service";
 
 export default function CoursAssignProf() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const [cours, setCours] = useState<any>(null);
   const [profs, setProfs] = useState<any[]>([]);
   const [profId, setProfId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getDocs(collection(db, "professeurs")).then((snap) => {
-      setProfs(
-        snap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }))
-      );
-    });
-  }, []);
+    const load = async () => {
+      try {
+        if (!id) return;
+
+        const c = await getCoursById(id);
+        const p = await getAllProfesseurs();
+
+        setCours(c);
+        setProfs(p);
+      } catch {
+        setError("Erreur de chargement");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [id]);
 
   const handleAssign = async () => {
-    const prof = profs.find((p) => p.id === profId);
-    if (!prof || !id) return;
+    try {
+      if (!id || !profId) return;
 
-    await assignProfesseurToCours(id, profId);
-    navigate("/admin/cours");
+      const prof = profs.find((p) => p.id === profId);
+      if (!prof) return;
+
+      await assignProfesseurToCours(
+        id,
+        prof.id,
+        `${prof.prenom} ${prof.nom}`
+      );
+
+      navigate(`/admin/cours/${id}`);
+    } catch {
+      setError("Impossible d’assigner le professeur");
+    }
   };
 
+  if (loading) return <div className="p-6">Chargement…</div>;
+  if (!cours) return <div className="p-6">Cours introuvable</div>;
+
   return (
-    <div className="p-6 max-w-md">
-      <h1 className="text-xl font-bold mb-4">👨‍🏫 Assigner un professeur</h1>
+    <div className="p-6 max-w-xl space-y-4">
+      <h1 className="text-xl font-bold">👨‍🏫 Assigner un professeur</h1>
+
+      <p>
+        <b>Cours :</b> {cours.nom} — {cours.classe}
+      </p>
 
       <select
-        className="w-full border p-2 mb-4"
         value={profId}
         onChange={(e) => setProfId(e.target.value)}
+        className="w-full border p-2 rounded"
       >
-        <option value="">-- Choisir un professeur --</option>
+        <option value="">— Choisir un professeur —</option>
         {profs.map((p) => (
           <option key={p.id} value={p.id}>
-            {p.nom}
+            {p.prenom} {p.nom} ({p.classes?.join(", ")})
           </option>
         ))}
       </select>
 
       <button
         onClick={handleAssign}
-        className="bg-black text-white px-4 py-2 rounded w-full"
+        disabled={!profId}
+        className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
       >
         Assigner
       </button>
+
+      {error && <p className="text-red-600">{error}</p>}
     </div>
   );
 }
