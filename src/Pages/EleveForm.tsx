@@ -80,7 +80,13 @@ export default function EleveForm() {
       return;
     }
 
+    // Validate parents - at least one complete parent required
     const validParents = parents.filter((p) => p.nom.trim() && p.telephone.trim());
+
+    if (validParents.length === 0) {
+      setError("Au moins un parent avec nom et telephone est requis");
+      return;
+    }
 
     try {
       setLoading(true);
