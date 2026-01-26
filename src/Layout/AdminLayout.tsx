@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 interface NavItem {
@@ -31,16 +31,38 @@ const icons: Record<string, React.ReactNode> = {
   chart: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 16V9M7 16V5M12 16V11M17 16V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   settings: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 1V3M10 17V19M1 10H3M17 10H19M3.93 3.93L5.34 5.34M14.66 14.66L16.07 16.07M3.93 16.07L5.34 14.66M14.66 5.34L16.07 3.93" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   message: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M18 10C18 14.42 14.42 18 10 18C8.57 18 7.22 17.64 6.04 17L2 18L3 14C2.36 12.81 2 11.45 2 10C2 5.58 5.58 2 10 2C14.42 2 18 5.58 18 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  menu: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
+  close: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
 };
 
 export default function AdminLayout() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [profMode, setProfMode] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
   const actualRole = user?.role || "admin";
   const userRole = (actualRole === "admin" && profMode) ? "prof" : actualRole;
   const isProf = userRole === "prof";
   const canSwitchMode = actualRole === "admin";
+
+  // Handle resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) setSidebarOpen(false);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Close sidebar on navigation (mobile)
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [location.pathname, isMobile]);
 
   const handleLogout = async () => {
     await logout();
@@ -49,39 +71,121 @@ export default function AdminLayout() {
 
   const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole as "admin" | "prof"));
 
+  const sidebarWidth = 260;
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
+      {/* Mobile Header */}
+      {isMobile && (
+        <header style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 60,
+          background: "#fff",
+          borderBottom: "1px solid #e2e8f0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 16px",
+          zIndex: 50,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", padding: 4 }}
+              aria-label="Ouvrir menu"
+            >
+              {icons.menu}
+            </button>
+            <div style={{
+              width: 32,
+              height: 32,
+              background: isProf ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              borderRadius: 8,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}>
+              <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>E</span>
+            </div>
+            <span style={{ fontWeight: 600, color: "#1e293b", fontSize: 16 }}>EDUTRACK</span>
+          </div>
+          <div style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: isProf ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 13
+          }}>
+            {user?.email?.[0]?.toUpperCase() || "A"}
+          </div>
+        </header>
+      )}
+
+      {/* Overlay */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 55,
+          }}
+        />
+      )}
+
       {/* Sidebar */}
       <aside style={{
-        width: 260,
+        width: sidebarWidth,
         background: "#fff",
         borderRight: "1px solid #e2e8f0",
         display: "flex",
         flexDirection: "column",
         position: "fixed",
         top: 0,
-        left: 0,
+        left: isMobile ? (sidebarOpen ? 0 : -sidebarWidth) : 0,
         bottom: 0,
-        zIndex: 40
+        zIndex: 60,
+        transition: "left 0.3s ease-in-out",
+        boxShadow: isMobile && sidebarOpen ? "4px 0 20px rgba(0,0,0,0.1)" : "none",
       }}>
         {/* Logo */}
         <div style={{ padding: "24px 20px", borderBottom: "1px solid #e2e8f0" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{
-              width: 42,
-              height: 42,
-              background: isProf ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              borderRadius: 12,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
-              <span style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>E</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{
+                width: 42,
+                height: 42,
+                background: isProf ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                borderRadius: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}>
+                <span style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>E</span>
+              </div>
+              <div>
+                <h1 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", margin: 0 }}>EDUTRACK</h1>
+                <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}>{isProf ? "Espace Professeur" : "Gestion scolaire"}</p>
+              </div>
             </div>
-            <div>
-              <h1 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", margin: 0 }}>EDUTRACK</h1>
-              <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}>{isProf ? "Espace Professeur" : "Gestion scolaire"}</p>
-            </div>
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", padding: 4 }}
+                aria-label="Fermer menu"
+              >
+                {icons.close}
+              </button>
+            )}
           </div>
           {canSwitchMode && (
             <button
@@ -144,11 +248,7 @@ export default function AdminLayout() {
 
         {/* User */}
         <div style={{ padding: 16, borderTop: "1px solid #e2e8f0" }}>
-          <div style={{
-            padding: 16,
-            background: "#f8fafc",
-            borderRadius: 12
-          }}>
+          <div style={{ padding: 16, background: "#f8fafc", borderRadius: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
               <div style={{
                 width: 40,
@@ -222,8 +322,14 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main */}
-      <main style={{ flex: 1, marginLeft: 260, minHeight: "100vh" }}>
-        <div style={{ padding: 32, maxWidth: 1400, margin: "0 auto" }}>
+      <main style={{
+        flex: 1,
+        marginLeft: isMobile ? 0 : sidebarWidth,
+        marginTop: isMobile ? 60 : 0,
+        minHeight: isMobile ? "calc(100vh - 60px)" : "100vh",
+        transition: "margin-left 0.3s ease-in-out"
+      }}>
+        <div style={{ padding: isMobile ? 16 : 32, maxWidth: 1400, margin: "0 auto" }}>
           <Outlet />
         </div>
       </main>
