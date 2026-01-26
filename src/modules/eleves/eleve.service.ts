@@ -26,9 +26,9 @@ const elevesRef = collection(db, "eleves");
    HELPERS
 ====================== */
 
-function normalizeEleve(data: Partial<Eleve>): Eleve {
-  const normalized: Eleve = {
-    id: data.id,
+function normalizeEleve(data: Partial<Eleve>): Omit<Eleve, "id"> & { id?: string } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const normalized: Record<string, any> = {
     nom: data.nom ?? "",
     prenom: data.prenom ?? "",
     sexe: (data.sexe === "M" || data.sexe === "F" ? data.sexe : "M") as "M" | "F",
@@ -41,6 +41,20 @@ function normalizeEleve(data: Partial<Eleve>): Eleve {
     updatedAt: serverTimestamp(),
   };
 
+  // Only include id if it exists (for reads, not creates)
+  if (data.id !== undefined) {
+    normalized.id = data.id;
+  }
+
+  // Only include matricule if provided
+  if (data.matricule !== undefined && data.matricule !== "") {
+    normalized.matricule = data.matricule;
+  }
+
+  if (data.dateNaissance !== undefined && data.dateNaissance !== "") {
+    normalized.dateNaissance = data.dateNaissance;
+  }
+
   if (data.contactUrgence !== undefined) {
     normalized.contactUrgence = data.contactUrgence;
   }
@@ -49,7 +63,7 @@ function normalizeEleve(data: Partial<Eleve>): Eleve {
     normalized.adresse = data.adresse;
   }
 
-  return normalized;
+  return normalized as Eleve;
 }
 
 /* ======================

@@ -17,6 +17,8 @@ export default function EleveForm() {
     prenom: "",
     sexe: "M" as "M" | "F",
     classe: "",
+    matricule: "",
+    dateNaissance: "",
     ecoleOrigine: "",
     quartier: "",
     commune: "",
@@ -36,6 +38,8 @@ export default function EleveForm() {
             prenom: data.prenom || "",
             sexe: data.sexe || "M",
             classe: data.classe || "",
+            matricule: data.matricule || "",
+            dateNaissance: data.dateNaissance || "",
             ecoleOrigine: data.ecoleOrigine || "",
             quartier: data.adresse?.quartier || "",
             commune: data.adresse?.commune || "",
@@ -103,6 +107,14 @@ export default function EleveForm() {
       };
 
       // Only add optional fields if they have values
+      if (form.matricule.trim()) {
+        payload.matricule = form.matricule.trim();
+      }
+
+      if (form.dateNaissance) {
+        payload.dateNaissance = form.dateNaissance;
+      }
+
       if (form.ecoleOrigine.trim()) {
         payload.ecoleOrigine = form.ecoleOrigine.trim();
       }
@@ -157,7 +169,7 @@ export default function EleveForm() {
         <form onSubmit={handleSubmit}>
           <h2 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: "0 0 20px" }}>Informations personnelles</h2>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 20 }}>
             <div>
               <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Prenom *</label>
               <input type="text" name="prenom" value={form.prenom} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
@@ -172,6 +184,17 @@ export default function EleveForm() {
                 <option value="M">Masculin</option>
                 <option value="F">Feminin</option>
               </select>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Date de naissance</label>
+              <input type="date" name="dateNaissance" value={form.dateNaissance} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Matricule</label>
+              <input type="text" name="matricule" value={form.matricule} onChange={handleChange} placeholder="Ex: 2024-001" style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
             </div>
           </div>
 
