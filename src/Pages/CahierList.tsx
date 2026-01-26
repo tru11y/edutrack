@@ -101,6 +101,14 @@ export default function CahierList() {
           aria-label="Filtrer par date"
           style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff" }}
         />
+        {(search || filterClasse || filterDate) && (
+          <button
+            onClick={() => { setSearch(""); setFilterClasse(""); setFilterDate(""); }}
+            style={{ padding: "12px 16px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, fontSize: 14, cursor: "pointer" }}
+          >
+            Effacer
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (

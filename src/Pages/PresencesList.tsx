@@ -11,6 +11,7 @@ export default function PresencesList() {
   const [presences, setPresences] = useState<PresenceDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterClasse, setFilterClasse] = useState("");
+  const [filterDate, setFilterDate] = useState("");
 
   useEffect(() => {
     getAllPresences().then((data) => {
@@ -20,7 +21,11 @@ export default function PresencesList() {
   }, []);
 
   const classes = [...new Set(presences.map((p) => p.classe).filter(Boolean))];
-  const filtered = presences.filter((p) => !filterClasse || p.classe === filterClasse);
+  const filtered = presences.filter((p) => {
+    const matchClasse = !filterClasse || p.classe === filterClasse;
+    const matchDate = !filterDate || p.date === filterDate;
+    return matchClasse && matchDate;
+  });
 
   const getStats = (items: PresenceDoc["presences"]) => {
     const presents = items.filter((i) => i.statut === "present").length;
@@ -63,11 +68,26 @@ export default function PresencesList() {
         </div>
       </div>
 
-      <div style={{ marginBottom: 24 }}>
-        <select value={filterClasse} onChange={(e) => setFilterClasse(e.target.value)} aria-label="Filtrer par classe" style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", minWidth: 200 }}>
+      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+        <select value={filterClasse} onChange={(e) => setFilterClasse(e.target.value)} aria-label="Filtrer par classe" style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", minWidth: 180 }}>
           <option value="">Toutes les classes</option>
           {classes.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
+        <input
+          type="date"
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+          aria-label="Filtrer par date"
+          style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff" }}
+        />
+        {(filterClasse || filterDate) && (
+          <button
+            onClick={() => { setFilterClasse(""); setFilterDate(""); }}
+            style={{ padding: "12px 16px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, fontSize: 14, cursor: "pointer" }}
+          >
+            Effacer filtres
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
