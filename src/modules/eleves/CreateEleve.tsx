@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ParentContact } from "./eleve.types";
 import { useNavigate } from "react-router-dom";
-import { createEleveWithAccount } from "./eleve.service";
+import { createEleve, createEleveWithAccount } from "./eleve.service";
 
 export default function CreateEleve() {
   const navigate = useNavigate();
@@ -18,6 +18,7 @@ export default function CreateEleve() {
     ] as ParentContact[],
   });
 
+  const [createAccount, setCreateAccount] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -55,15 +56,39 @@ export default function CreateEleve() {
       setLoading(true);
       setError("");
 
-      await createEleveWithAccount({
-        nom: form.nom,
-        prenom: form.prenom,
-        classe: form.classe,
-        sexe: form.sexe as "M" | "F",
-        email: form.email,
-        password: form.password,
-        parents: form.parents,
-      });
+      // Validation basique
+      if (!form.nom.trim() || !form.prenom.trim() || !form.classe.trim()) {
+        throw new Error("Nom, prénom et classe sont obligatoires");
+      }
+
+      // Si on veut créer un compte, vérifier email et password
+      if (createAccount) {
+        if (!form.email.trim() || !form.password.trim()) {
+          throw new Error("Email et mot de passe requis pour créer un compte");
+        }
+        if (form.password.length < 6) {
+          throw new Error("Le mot de passe doit avoir au moins 6 caractères");
+        }
+
+        await createEleveWithAccount({
+          nom: form.nom,
+          prenom: form.prenom,
+          classe: form.classe,
+          sexe: form.sexe as "M" | "F",
+          email: form.email,
+          password: form.password,
+          parents: form.parents.filter(p => p.nom.trim() && p.telephone.trim()),
+        });
+      } else {
+        // Créer seulement l'élève sans compte Firebase Auth
+        await createEleve({
+          nom: form.nom,
+          prenom: form.prenom,
+          classe: form.classe,
+          sexe: form.sexe as "M" | "F",
+          parents: form.parents.filter(p => p.nom.trim() && p.telephone.trim()),
+        });
+      }
 
       navigate("/admin/eleves");
     } catch (e: any) {
@@ -158,27 +183,47 @@ export default function CreateEleve() {
       </div>
       <hr />
 
-      <input
-        name="email"
-        placeholder="Email élève"
-        value={form.email}
-        onChange={handleChange}
-        className="w-full border p-2 rounded"
-      />
+      {/* Option pour créer un compte */}
+      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+        <input
+          type="checkbox"
+          id="createAccount"
+          checked={createAccount}
+          onChange={(e) => setCreateAccount(e.target.checked)}
+          className="w-4 h-4"
+        />
+        <label htmlFor="createAccount" className="text-sm text-gray-700">
+          Créer un compte de connexion pour cet élève (optionnel)
+        </label>
+      </div>
 
-      <input
-        type="password"
-        name="password"
-        placeholder="Mot de passe"
-        value={form.password}
-        onChange={handleChange}
-        className="w-full border p-2 rounded"
-      />
+      {createAccount && (
+        <div className="space-y-3 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+          <p className="text-sm text-blue-700 font-medium">Identifiants de connexion</p>
+          <input
+            name="email"
+            type="email"
+            placeholder="Email élève"
+            value={form.email}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Mot de passe (min. 6 caractères)"
+            value={form.password}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+          />
+        </div>
+      )}
 
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
+        className="w-full rounded-2xl px-6 py-3 font-semibold text-white shadow-lg bg-gradient-to-tr from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 transition text-lg mt-4 disabled:opacity-50"
+        style={{ letterSpacing: 1 }}
       >
         {loading ? "Création..." : "Créer l’élève"}
       </button>

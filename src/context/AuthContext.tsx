@@ -22,7 +22,7 @@ import { auth, db } from "../services/firebase";
    TYPES
 ========================= */
 
-export type UserRole = "admin" | "prof" | "eleve";
+export type UserRole = "admin" | "prof" | "eleve" | "parent";
 
 export interface AppUser {
   uid: string;
@@ -31,6 +31,7 @@ export interface AppUser {
   isActive: boolean;
   eleveId?: string;
   professeurId?: string;
+  enfantsIds?: string[];
   isBanned?: boolean;
 }
 
@@ -84,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isActive: data.isActive,
           eleveId: data.eleveId,
           professeurId: data.professeurId,
+          enfantsIds: data.enfantsIds,
         });
 
         setLoading(false);

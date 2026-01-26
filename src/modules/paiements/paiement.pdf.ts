@@ -1,6 +1,16 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import type { Timestamp } from "firebase/firestore";
 import type { Paiement } from "./paiement.types";
+
+function toDate(date: Date | Timestamp): Date {
+  if (date instanceof Date) return date;
+  // Firestore Timestamp
+  if (typeof (date as Timestamp).toDate === "function") {
+    return (date as Timestamp).toDate();
+  }
+  return new Date();
+}
 
 interface RecuOptions {
   eleveNom: string;
@@ -39,7 +49,7 @@ export function exportRecuPaiementPDF(
     startY: 94,
     head: [["Date", "Montant", "Méthode"]],
     body: (paiement.versements || []).map((v) => [
-      new Date(v.date).toLocaleDateString(),
+      toDate(v.date).toLocaleDateString(),
       `${v.montant} FCFA`,
       v.methode,
     ]),

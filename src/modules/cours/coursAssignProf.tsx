@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getCoursById } from "./cours.service";
+import { getCoursById, assignProfesseurToCours } from "./cours.service";
 import { getAllProfesseurs } from "../professeurs/professeur.service";
-import { assignProfesseurToCours } from "./cours.service";
+import type { Cours } from "./cours.types";
+import type { Professeur } from "../professeurs/professeur.types";
+
+interface ProfesseurWithId extends Professeur {
+  id: string;
+}
 
 export default function CoursAssignProf() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [cours, setCours] = useState<any>(null);
-  const [profs, setProfs] = useState<any[]>([]);
+  const [cours, setCours] = useState<Cours | null>(null);
+  const [profs, setProfs] = useState<ProfesseurWithId[]>([]);
   const [profId, setProfId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,7 +28,7 @@ export default function CoursAssignProf() {
         const p = await getAllProfesseurs();
 
         setCours(c);
-        setProfs(p);
+        setProfs(p as ProfesseurWithId[]);
       } catch {
         setError("Erreur de chargement");
       } finally {
@@ -49,19 +54,19 @@ export default function CoursAssignProf() {
 
       navigate(`/admin/cours/${id}`);
     } catch {
-      setError("Impossible d’assigner le professeur");
+      setError("Impossible d'assigner le professeur");
     }
   };
 
-  if (loading) return <div className="p-6">Chargement…</div>;
+  if (loading) return <div className="p-6">Chargement...</div>;
   if (!cours) return <div className="p-6">Cours introuvable</div>;
 
   return (
     <div className="p-6 max-w-xl space-y-4">
-      <h1 className="text-xl font-bold">👨‍🏫 Assigner un professeur</h1>
+      <h1 className="text-xl font-bold">Assigner un professeur</h1>
 
       <p>
-        <b>Cours :</b> {cours.nom} — {cours.classe}
+        <b>Cours :</b> {cours.matiere} - {cours.classe}
       </p>
 
       <select
@@ -69,7 +74,7 @@ export default function CoursAssignProf() {
         onChange={(e) => setProfId(e.target.value)}
         className="w-full border p-2 rounded"
       >
-        <option value="">— Choisir un professeur —</option>
+        <option value="">- Choisir un professeur -</option>
         {profs.map((p) => (
           <option key={p.id} value={p.id}>
             {p.prenom} {p.nom} ({p.classes?.join(", ")})

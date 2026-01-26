@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { createCours } from "./cours.service";
+import type { Cours, TypeCours } from "./cours.types";
 import toast from "react-hot-toast";
 
 export default function CreateCours() {
@@ -12,12 +13,12 @@ export default function CreateCours() {
     date: "",
     heureDebut: "",
     heureFin: "",
-    type: "renforcement" as const,
+    type: "renforcement" as TypeCours,
   });
 
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: any) =>
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async () => {
@@ -28,7 +29,15 @@ export default function CreateCours() {
 
     setLoading(true);
     try {
-      await createCours(form as any);
+      const coursData: Omit<Cours, "id" | "statut" | "createdAt" | "updatedAt"> = {
+        classe: form.classe,
+        matiere: form.matiere,
+        date: form.date,
+        heureDebut: form.heureDebut,
+        heureFin: form.heureFin,
+        type: form.type,
+      };
+      await createCours(coursData as Cours);
       toast.success("Cours créé");
       navigate("/admin/cours");
     } catch {
@@ -40,20 +49,46 @@ export default function CreateCours() {
 
   return (
     <div className="max-w-xl p-6 space-y-4">
-      <h1 className="text-xl font-bold">➕ Nouveau cours</h1>
+      <h1 className="text-xl font-bold">Nouveau cours</h1>
 
-      <input name="matiere" placeholder="Matière" onChange={handleChange} />
-      <input name="classe" placeholder="Classe" onChange={handleChange} />
-      <input type="date" name="date" onChange={handleChange} />
-      <input type="time" name="heureDebut" onChange={handleChange} />
-      <input type="time" name="heureFin" onChange={handleChange} />
+      <input
+        name="matiere"
+        placeholder="Matière"
+        className="w-full border p-2 rounded"
+        onChange={handleChange}
+      />
+      <input
+        name="classe"
+        placeholder="Classe"
+        className="w-full border p-2 rounded"
+        onChange={handleChange}
+      />
+      <input
+        type="date"
+        name="date"
+        className="w-full border p-2 rounded"
+        onChange={handleChange}
+      />
+      <input
+        type="time"
+        name="heureDebut"
+        className="w-full border p-2 rounded"
+        onChange={handleChange}
+      />
+      <input
+        type="time"
+        name="heureFin"
+        className="w-full border p-2 rounded"
+        onChange={handleChange}
+      />
 
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="bg-black text-white px-4 py-2 rounded"
+        className="w-full rounded-2xl px-6 py-3 font-semibold text-white shadow-lg bg-gradient-to-tr from-purple-600 to-purple-400 hover:from-purple-700 hover:to-purple-500 transition text-lg mt-4 disabled:opacity-50"
+        style={{ letterSpacing: 1 }}
       >
-        {loading ? "Création…" : "Créer"}
+        {loading ? "Création..." : "Créer"}
       </button>
     </div>
   );

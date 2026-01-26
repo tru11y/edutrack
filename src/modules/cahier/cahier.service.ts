@@ -4,6 +4,7 @@ import {
   getDocs,
   getDoc,
   updateDoc,
+  deleteDoc,
   doc,
   serverTimestamp,
   query,
@@ -121,4 +122,53 @@ export async function updateCahierEntry(
     ...data,
     updatedAt: serverTimestamp(),
   });
+}
+
+/* =========================
+   GET BY ID
+========================= */
+
+export async function getCahierById(id: string): Promise<CahierEntry | null> {
+  const ref = doc(db, "cahier", id);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) return null;
+
+  return {
+    id: snap.id,
+    ...(snap.data() as CahierEntry),
+  };
+}
+
+/* =========================
+   DELETE
+========================= */
+
+export async function deleteCahierEntry(id: string): Promise<void> {
+  const ref = doc(db, "cahier", id);
+  await deleteDoc(ref);
+}
+
+/* =========================
+   MOVE TO TRASH
+========================= */
+
+export async function moveCahierToTrash(id: string): Promise<void> {
+  const ref = doc(db, "cahier", id);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) throw new Error("Entrée introuvable");
+
+  const data = snap.data() as CahierEntry;
+
+  // Save to trash collection
+  await addDoc(collection(db, "corbeille"), {
+    type: "cahier",
+    originalId: id,
+    data: data,
+    deletedAt: serverTimestamp(),
+  });
+
+  // Delete from cahier
+  await deleteDoc(ref);
 }

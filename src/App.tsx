@@ -1,46 +1,55 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { ProtectedRoute } from "./routes/ProtectedRoute";
-import CompteSuspendu from "./Pages/CompteSuspendu";
 
-/* ========== ADMIN ========== */
-import AdminLayout from "./Layout/AdminLayout";
-import AdminDashboard from "./Pages/AdminDashboard";
-import AdminCahierList from "./modules/cahier/AdminCahierList";
-import CreateProfesseur from "./modules/professeurs/CreateProfesseur";
-import CreateAdmin from "./modules/admin/CreateAdmin";
-import AdminBanList from "./modules/eleves/AdminBanList";
+/* ========== LOADING ========== */
+function PageLoader() {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "100vh",
+      background: "#f8fafc"
+    }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{
+          width: 48,
+          height: 48,
+          border: "3px solid #e2e8f0",
+          borderTopColor: "#6366f1",
+          borderRadius: "50%",
+          animation: "spin 0.8s linear infinite",
+          margin: "0 auto 16px"
+        }} />
+        <p style={{ color: "#64748b", fontSize: 14 }}>Chargement...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    </div>
+  );
+}
 
-import ElevesList from "./modules/eleves/ElevesList";
-import CreateEleve from "./modules/eleves/CreateEleve";
-import EleveProfile from "./modules/eleves/EleveProfile";
+/* ========== LAZY IMPORTS ========== */
+const AdminLayout = lazy(() => import("./Layout/AdminLayout"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const ElevesList = lazy(() => import("./pages/ElevesList"));
+const EleveForm = lazy(() => import("./pages/EleveForm"));
+const EleveDetail = lazy(() => import("./pages/EleveDetail"));
+const MesEleves = lazy(() => import("./pages/MesEleves"));
+const PresencesList = lazy(() => import("./pages/PresencesList"));
+const PresenceAppel = lazy(() => import("./pages/PresenceAppel"));
+const CahierList = lazy(() => import("./pages/CahierList"));
+const CahierForm = lazy(() => import("./pages/CahierForm"));
+const PaiementsList = lazy(() => import("./pages/PaiementsList"));
+const PaiementForm = lazy(() => import("./pages/PaiementForm"));
+const Stats = lazy(() => import("./pages/Stats"));
+const Messages = lazy(() => import("./pages/Messages"));
+const Profil = lazy(() => import("./pages/Profil"));
+const Users = lazy(() => import("./pages/Users"));
+const Classes = lazy(() => import("./pages/Classes"));
+const Corbeille = lazy(() => import("./pages/Corbeille"));
 
-import ProfesseursList from "./modules/professeurs/ProfesseursList";
-
-import CoursList from "./modules/cours/CoursList";
-import CreateCours from "./modules/cours/CreateCours";
-import CoursDetail from "./modules/cours/CoursDetail";
-
-import PaiementsList from "./modules/paiements/PaiementsList";
-import PaiementEleve from "./modules/paiements/paiementEleve";
-
-/* ========== PROFESSEUR ========== */
-import ProfesseurLayout from "./modules/professeurs/ProfesseurLayout";
-import ProfesseurDashboard from "./modules/professeurs/ProfesseurDashboard";
-import ProfCoursDetail from "./modules/professeurs/ProfCoursDetail";
-
-/* ========== ELEVE ========== */
-import EleveLayout from "./Layout/EleveLayout";
-import EleveDashboard from "./modules/eleves/EleveDashboard";
-import EleveEmploiDuTemps from "./modules/eleves/EleveEmploiDuTemps";
-import ElevePresences from "./modules/eleves/ElevePresences";
-import ElevePaiements from "./modules/eleves/ElevePaiements";
-
-/* =========================
-   LOGIN
-========================= */
-
+/* ========== LOGIN ========== */
 function Login() {
   const { login, user } = useAuth();
   const navigate = useNavigate();
@@ -50,145 +59,236 @@ function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔁 REDIRECTION AUTO APRÈS LOGIN
   useEffect(() => {
-    if (!user) return;
-
-    if (user.role === "admin") navigate("/admin", { replace: true });
-    if (user.role === "prof") navigate("/prof", { replace: true });
-    if (user.role === "eleve") navigate("/eleve", { replace: true });
+    if (user) navigate("/", { replace: true });
   }, [user, navigate]);
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       setError("");
       setLoading(true);
       await login(email, password);
     } catch {
       setError("Identifiants invalides");
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow">
-        <h1 className="text-2xl font-bold mb-6">EDUTRACK – Connexion</h1>
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+    }}>
+      <div style={{
+        width: "100%",
+        maxWidth: 420,
+        padding: 40,
+        background: "#fff",
+        borderRadius: 20,
+        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)"
+      }}>
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div style={{
+            width: 64,
+            height: 64,
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            borderRadius: 16,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 16px"
+          }}>
+            <span style={{ color: "#fff", fontSize: 28, fontWeight: 700 }}>E</span>
+          </div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1e293b", margin: 0 }}>EDUTRACK</h1>
+          <p style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>Gestion scolaire simplifiee</p>
+        </div>
 
-        <input
-          className="w-full px-3 py-2 border border-gray-300 rounded mb-4"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <form onSubmit={handleLogin}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                border: "1px solid #e2e8f0",
+                borderRadius: 10,
+                fontSize: 15,
+                outline: "none",
+                boxSizing: "border-box",
+                transition: "border-color 0.2s"
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#6366f1"}
+              onBlur={(e) => e.target.style.borderColor = "#e2e8f0"}
+            />
+          </div>
 
-        <input
-          type="password"
-          className="w-full px-3 py-2 border border-gray-300 rounded mb-6"
-          placeholder="Mot de passe"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+              Mot de passe
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                border: "1px solid #e2e8f0",
+                borderRadius: 10,
+                fontSize: 15,
+                outline: "none",
+                boxSizing: "border-box",
+                transition: "border-color 0.2s"
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#6366f1"}
+              onBlur={(e) => e.target.style.borderColor = "#e2e8f0"}
+            />
+          </div>
 
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          className="w-full bg-black text-white py-2 rounded font-semibold disabled:opacity-50"
-        >
-          {loading ? "Connexion..." : "Se connecter"}
-        </button>
+          {error && (
+            <div style={{
+              padding: "12px 16px",
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              borderRadius: 10,
+              marginBottom: 16
+            }}>
+              <p style={{ fontSize: 14, color: "#dc2626", margin: 0 }}>{error}</p>
+            </div>
+          )}
 
-        {error && <p className="text-red-600 mt-4">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: "100%",
+              padding: "14px 24px",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: loading ? "not-allowed" : "pointer",
+              opacity: loading ? 0.7 : 1,
+              transition: "transform 0.2s, box-shadow 0.2s",
+              boxShadow: "0 4px 14px -3px rgba(102, 126, 234, 0.5)"
+            }}
+          >
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+        </form>
       </div>
     </div>
   );
 }
 
-/* =========================
-   APP ROOT
-========================= */
+/* ========== PROTECTED ROUTE ========== */
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
 
+  if (loading) return <PageLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  return <>{children}</>;
+}
+
+/* ========== ADMIN ONLY ROUTE ========== */
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+
+  if (user?.role === "prof") {
+    return <Navigate to="/presences" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+/* ========== PROF REDIRECT ========== */
+function ProfRedirect() {
+  const { user } = useAuth();
+
+  if (user?.role === "prof") {
+    return <Navigate to="/presences" replace />;
+  }
+
+  return <Dashboard />;
+}
+
+/* ========== APP ========== */
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          {/* PUBLIC */}
-          <Route path="/compte-suspendu" element={<CompteSuspendu />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-
-          {/* ================= ADMIN ================= */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute roles={["admin"]}>
+            <Route path="/" element={
+              <ProtectedRoute>
                 <AdminLayout />
               </ProtectedRoute>
-            }
-          >
-            <Route index element={<AdminDashboard />} />
+            }>
+              <Route index element={<ProfRedirect />} />
 
-            <Route path="bans" element={<AdminBanList />} />
+              {/* Eleves - Admin only */}
+              <Route path="eleves" element={<AdminRoute><ElevesList /></AdminRoute>} />
+              <Route path="eleves/nouveau" element={<AdminRoute><EleveForm /></AdminRoute>} />
+              <Route path="eleves/:id" element={<AdminRoute><EleveDetail /></AdminRoute>} />
+              <Route path="eleves/:id/modifier" element={<AdminRoute><EleveForm /></AdminRoute>} />
 
-            {/* Élèves */}
-            <Route path="eleves" element={<ElevesList />} />
-            <Route path="eleves/create" element={<CreateEleve />} />
-            <Route path="eleves/:id" element={<EleveProfile />} />
-            <Route path="eleves/:id/paiements" element={<PaiementEleve />} />
+              {/* Classes - Admin only */}
+              <Route path="classes" element={<AdminRoute><Classes /></AdminRoute>} />
 
-            {/* Professeurs */}
-            <Route path="professeurs" element={<ProfesseursList />} />
-            <Route path="professeurs/create" element={<CreateProfesseur />} />
+              {/* Mes eleves - Prof only */}
+              <Route path="mes-eleves" element={<MesEleves />} />
 
-            {/* Admins */}
-            <Route path="admins/create" element={<CreateAdmin />} />
+              {/* Presences - All */}
+              <Route path="presences" element={<PresencesList />} />
+              <Route path="presences/appel" element={<PresenceAppel />} />
 
-            {/* Cours */}
-            <Route path="cours" element={<CoursList />} />
-            <Route path="cours/create" element={<CreateCours />} />
-            <Route path="cours/:id" element={<CoursDetail />} />
+              {/* Cahier de texte - All */}
+              <Route path="cahier" element={<CahierList />} />
+              <Route path="cahier/nouveau" element={<CahierForm />} />
+              <Route path="cahier/:id/modifier" element={<CahierForm />} />
 
-            {/* Paiements */}
-            <Route path="paiements" element={<PaiementsList />} />
+              {/* Paiements - Admin only */}
+              <Route path="paiements" element={<AdminRoute><PaiementsList /></AdminRoute>} />
+              <Route path="paiements/nouveau" element={<AdminRoute><PaiementForm /></AdminRoute>} />
+              <Route path="paiements/:id/modifier" element={<AdminRoute><PaiementForm /></AdminRoute>} />
 
-            {/* Cahier */}
-            <Route path="cahier" element={<AdminCahierList />} />
-          </Route>
+              {/* Stats - Admin only */}
+              <Route path="stats" element={<AdminRoute><Stats /></AdminRoute>} />
 
-          {/* ================= PROFESSEUR ================= */}
-          <Route
-            path="/prof"
-            element={
-              <ProtectedRoute roles={["prof"]}>
-                <ProfesseurLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<ProfesseurDashboard />} />
-            <Route path="cours/:id" element={<ProfCoursDetail />} />
-          </Route>
+              {/* Users - Admin only */}
+              <Route path="utilisateurs" element={<AdminRoute><Users /></AdminRoute>} />
 
-          {/* ================= ELEVE ================= */}
-          <Route
-            path="/eleve"
-            element={
-              <ProtectedRoute roles={["eleve"]}>
-                <EleveLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<EleveDashboard />} />
-            <Route path="emploi-du-temps" element={<EleveEmploiDuTemps />} />
-            <Route path="presences" element={<ElevePresences />} />
-            <Route path="paiements" element={<ElevePaiements />} />
-          </Route>
+              {/* Messages - All */}
+              <Route path="messages" element={<Messages />} />
 
-          {/* FALLBACK */}
-          <Route path="*" element={<div>Page introuvable</div>} />
+              {/* Profil - All */}
+              <Route path="profil" element={<Profil />} />
 
-        </Routes>
+              {/* Corbeille - Admin only */}
+              <Route path="corbeille" element={<AdminRoute><Corbeille /></AdminRoute>} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );

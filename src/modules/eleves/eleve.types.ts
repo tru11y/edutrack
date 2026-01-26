@@ -1,7 +1,10 @@
-import { Timestamp } from "firebase/firestore";
+import type { Timestamp, FieldValue } from "firebase/firestore";
 
 export type Sexe = "M" | "F";
 export type StatutEleve = "actif" | "inactif";
+
+// Type pour les champs de date qui peuvent etre soit un Timestamp (lecture) soit un FieldValue (ecriture)
+export type FirestoreDate = Timestamp | FieldValue;
 
 export interface ParentContact {
   nom: string;
@@ -40,12 +43,12 @@ export interface Eleve {
   statut: StatutEleve;
 
   // ======================
-  // MÉTIER
+  // METIER
   // ======================
   isBanned?: boolean;
   banReason?: string | null;
-  banDate?: Timestamp | null;
+  banDate?: FirestoreDate | null;
 
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt?: FirestoreDate;
+  updatedAt?: FirestoreDate;
 }

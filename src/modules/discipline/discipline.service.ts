@@ -1,21 +1,23 @@
 import { doc, updateDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { updateEleveSystem } from "../eleves/eleve.service";
+import type { DisciplineLog } from "./discipline.types";
+import type { Eleve } from "../eleves/eleve.types";
 
 /* =========================
-   EXCLURE / BANNIR UN ÉLÈVE
+   EXCLURE / BANNIR UN ELEVE
 ========================= */
 
 export async function exclureEleve(
   eleveId: string,
   reason: string,
   auteur?: string
-) {
-  // 🔒 Bannissement officiel
+): Promise<void> {
+  // Bannissement officiel
   await updateEleveSystem(eleveId, {
     isBanned: true,
     banReason: reason,
-    banDate: serverTimestamp() as any,
+    banDate: serverTimestamp() as Eleve["banDate"],
   });
 
   // 📝 Optionnel : log discipline
@@ -35,11 +37,14 @@ export async function exclureEleve(
    GET ALL DISCIPLINE LOGS
 ========================= */
 
-export async function getAllDiscipline(): Promise<any[]> {
+export async function getAllDiscipline(): Promise<DisciplineLog[]> {
   try {
     const logsRef = collection(db, "discipline_logs");
     const snapshot = await getDocs(logsRef);
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<DisciplineLog, "id">),
+    }));
   } catch {
     return [];
   }

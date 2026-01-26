@@ -2,6 +2,7 @@
 export type StatutMetier =
   | "essai"
   | "autorise"
+  | "refuse"
   | "a_renvoyer"
   | "banni";
 
