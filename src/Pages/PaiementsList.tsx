@@ -90,6 +90,14 @@ export default function PaiementsList() {
         />
         <select value={filterMois} onChange={(e) => setFilterMois(e.target.value)} aria-label="Filtrer par mois" style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", minWidth: 200 }}><option value="">Tous les mois</option>{mois.map((m) => <option key={m} value={m}>{new Date(m + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</option>)}</select>
         <select value={filterStatut} onChange={(e) => setFilterStatut(e.target.value)} aria-label="Filtrer par statut" style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", minWidth: 160 }}><option value="">Tous les statuts</option><option value="paye">Paye</option><option value="partiel">Partiel</option><option value="impaye">Impaye</option></select>
+        {(search || filterMois || filterStatut) && (
+          <button
+            onClick={() => { setSearch(""); setFilterMois(""); setFilterStatut(""); }}
+            style={{ padding: "12px 16px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, fontSize: 14, cursor: "pointer" }}
+          >
+            Effacer
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
