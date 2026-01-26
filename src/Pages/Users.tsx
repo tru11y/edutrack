@@ -16,6 +16,7 @@ interface UserData {
 export default function Users() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +30,7 @@ export default function Users() {
 
   const loadUsers = async () => {
     try {
+      setLoadError(null);
       const snap = await getDocs(collection(db, "users"));
       const data = snap.docs.map((d) => ({
         id: d.id,
@@ -36,7 +38,8 @@ export default function Users() {
       })) as UserData[];
       setUsers(data.sort((a, b) => (a.email || "").localeCompare(b.email || "")));
     } catch (err) {
-      console.error(err);
+      console.error("Erreur chargement users:", err);
+      setLoadError(err instanceof Error ? err.message : "Erreur de chargement");
     } finally {
       setLoading(false);
     }
@@ -136,6 +139,28 @@ export default function Users() {
           <p style={{ color: "#64748b", fontSize: 14 }}>Chargement...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div style={{ padding: 40, textAlign: "center" }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: "#1e293b", margin: "0 0 8px" }}>Erreur de chargement</h2>
+        <p style={{ color: "#64748b", fontSize: 14, margin: "0 0 16px" }}>{loadError}</p>
+        <button
+          onClick={() => { setLoading(true); loadUsers(); }}
+          style={{ padding: "10px 20px", background: "#6366f1", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 14 }}
+        >
+          Reessayer
+        </button>
       </div>
     );
   }
