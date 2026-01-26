@@ -12,7 +12,9 @@
       "Bash(dir)",
       "Bash(dir:*)",
       "Bash(start chrome \"https://edutrak-7a344.web.app\")",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: major UI refactoring with new page architecture and lazy loading\n\n- Restructure App.tsx with lazy loading for all pages\n- Add new src/pages/ directory with 19 refactored pages\n- Modernize AdminLayout with fixed sidebar and admin/prof mode switch\n- Add validators for cahier, discipline, paiements, presences modules\n- Add autoban service for payment management\n- Improve all layouts \\(Admin, Eleve, Parent, Professeur\\)\n- Clean up old unused components and duplicates\n- Update firestore.rules and CSS improvements\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push)"
     ]
   }
 }
