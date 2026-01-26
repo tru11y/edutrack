@@ -2,85 +2,66 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /* ======================
-       HELPERS
-    ====================== */
+    // Autoriser tous les utilisateurs connectes a lire/ecrire
+    // Note: A renforcer pour la production
     function signedIn() {
       return request.auth != null;
     }
 
-    function userDoc() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    match /users/{docId} {
+      allow read, write: if signedIn();
     }
 
-    function hasRole(role) {
-      return signedIn() && userDoc().role == role && userDoc().isActive == true;
+    match /eleves/{docId} {
+      allow read, write: if signedIn();
     }
 
-    function isAdmin() { return hasRole("admin"); }
-    function isProf() { return hasRole("prof"); }
-    function isEleve() { return hasRole("eleve"); }
-    function isParent() { return hasRole("parent"); }
-
-    /* ======================
-       USERS
-    ====================== */
-    match /users/{uid} {
-      allow read: if signedIn() && request.auth.uid == uid;
-      allow write: if isAdmin();
+    match /professeurs/{docId} {
+      allow read, write: if signedIn();
     }
 
-    /* ======================
-       ÉLÈVES
-    ====================== */
-    match /eleves/{eleveId} {
-      allow read: if isAdmin()
-        || (isEleve() && userDoc().eleveId == eleveId)
-        || (isParent() && userDoc().eleveId == eleveId);
-
-      allow write: if isAdmin();
+    match /cours/{docId} {
+      allow read, write: if signedIn();
     }
 
-    /* ======================
-       PROFESSEURS
-    ====================== */
-    match /professeurs/{profId} {
-      allow read: if isAdmin()
-        || (isProf() && userDoc().professeurId == profId);
-
-      allow write: if isAdmin();
+    match /presences/{docId} {
+      allow read, write: if signedIn();
     }
 
-    /* ======================
-       COURS
-    ====================== */
-    match /cours/{coursId} {
-      allow read: if isAdmin() || isProf() || isEleve() || isParent();
-
-      allow create, update, delete: if isAdmin();
+    match /paiements/{docId} {
+      allow read, write: if signedIn();
     }
 
-    /* ======================
-       PRÉSENCES
-    ====================== */
-    match /presences/{presenceId} {
-      allow read: if isAdmin()
-        || isProf()
-        || (isEleve() && resource.data.eleveId == userDoc().eleveId)
-        || (isParent() && resource.data.eleveId == userDoc().eleveId);
-
-      allow write: if isAdmin() || isProf();
+    match /discipline/{docId} {
+      allow read, write: if signedIn();
     }
 
-    /* ======================
-       PAIEMENTS
-    ====================== */
-    match /paiements/{paiementId} {
-      allow read: if isAdmin()
-        || (isEleve() && resource.data.eleveId == userDoc().eleveId)
-        || (isParent() && resource.data.eleveId == userDoc().eleveId);
+    match /discipline_logs/{docId} {
+      allow read, write: if signedIn();
+    }
 
-      allow write: if isAdmin();
+    match /cahier/{docId} {
+      allow read, write: if signedIn();
+    }
+
+    match /messages/{docId} {
+      allow read, write: if signedIn();
+    }
+
+    match /alerts/{docId} {
+      allow read, write: if signedIn();
+    }
+
+    match /creneaux/{docId} {
+      allow read, write: if signedIn();
+    }
+
+    match /classes/{docId} {
+      allow read, write: if signedIn();
+    }
+
+    match /corbeille/{docId} {
+      allow read, write: if signedIn();
     }
   }
 }

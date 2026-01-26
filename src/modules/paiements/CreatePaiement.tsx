@@ -47,7 +47,10 @@ export default function CreatePaiement({ paiement }: any) {
         <option value="cheque">Chèque</option>
       </select>
 
-      <button className="mt-2 bg-green-600 text-white p-2 rounded w-full">
+      <button
+        className="w-full rounded-2xl px-6 py-3 font-semibold text-white shadow-lg bg-gradient-to-tr from-yellow-500 to-yellow-300 hover:from-yellow-600 hover:to-yellow-400 transition text-lg mt-4 disabled:opacity-50"
+        style={{ letterSpacing: 1 }}
+      >
         Enregistrer
       </button>
     </form>

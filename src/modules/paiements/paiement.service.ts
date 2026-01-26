@@ -2,9 +2,11 @@ import {
   collection,
   addDoc,
   getDocs,
+  getDoc,
   query,
   where,
   updateDoc,
+  deleteDoc,
   doc,
   serverTimestamp,
 } from "firebase/firestore";
@@ -125,4 +127,65 @@ export const enregistrerVersement = async (
     paiement.eleveId,
     montantRestant
   );
+};
+
+/* =========================
+   DELETE PAIEMENT
+========================= */
+
+export const deletePaiement = async (paiementId: string): Promise<void> => {
+  const ref = doc(db, "paiements", paiementId);
+  await deleteDoc(ref);
+};
+
+/* =========================
+   GET BY ID
+========================= */
+
+export const getPaiementById = async (id: string): Promise<Paiement | null> => {
+  const ref = doc(db, "paiements", id);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) return null;
+
+  return {
+    id: snap.id,
+    ...snap.data(),
+  } as Paiement;
+};
+
+/* =========================
+   UPDATE PAIEMENT
+========================= */
+
+export const updatePaiement = async (
+  id: string,
+  data: Partial<Paiement>
+): Promise<void> => {
+  const ref = doc(db, "paiements", id);
+  await updateDoc(ref, data);
+};
+
+/* =========================
+   MOVE TO TRASH
+========================= */
+
+export const movePaiementToTrash = async (id: string): Promise<void> => {
+  const ref = doc(db, "paiements", id);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) throw new Error("Paiement introuvable");
+
+  const data = snap.data() as Paiement;
+
+  // Save to trash collection
+  await addDoc(collection(db, "corbeille"), {
+    type: "paiements",
+    originalId: id,
+    data: data,
+    deletedAt: serverTimestamp(),
+  });
+
+  // Delete from paiements
+  await deleteDoc(ref);
 };

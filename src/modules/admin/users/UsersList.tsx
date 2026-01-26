@@ -1,21 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getAllUsers, toggleUserStatus } from "./user.service";
+import type { UserRole } from "../../../types/User";
+
+interface UserListItem {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+}
 
 export default function UsersList() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserListItem[]>([]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const data = await getAllUsers();
-    setUsers(data);
-  };
+    setUsers(data as UserListItem[]);
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-4">👥 Utilisateurs</h1>
+      <h1 className="text-xl font-bold mb-4">Utilisateurs</h1>
 
       <table className="w-full bg-white rounded shadow">
         <thead>
@@ -34,7 +43,7 @@ export default function UsersList() {
               <td>{u.email}</td>
               <td>{u.role}</td>
               <td>
-                {u.isActive ? "🟢 Actif" : "🔴 Inactif"}
+                {u.isActive ? "Actif" : "Inactif"}
               </td>
               <td>
                 <button

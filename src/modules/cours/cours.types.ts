@@ -1,3 +1,5 @@
+import type { Timestamp, FieldValue } from "firebase/firestore";
+
 export type TypeCours = "renforcement" | "soir";
 export type StatutCours = "planifie" | "termine" | "annule";
 
@@ -23,6 +25,6 @@ export interface Cours {
   statut: StatutCours;
 
   // Métadonnées
-  createdAt?: any;
-  updatedAt?: any;
+  createdAt?: Timestamp | FieldValue;
+  updatedAt?: Timestamp | FieldValue;
 }

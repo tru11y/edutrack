@@ -24,8 +24,8 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     return <Navigate to="/compte-suspendu" replace />;
   }
 
-  // 🔐 RÔLES
-  if (roles && !roles.includes(user.role)) {
+  // 🔐 RÔLES - Admin peut accéder à toutes les vues
+  if (roles && !roles.includes(user.role) && user.role !== "admin") {
     return <Navigate to={`/${user.role}`} replace />;
   }
 

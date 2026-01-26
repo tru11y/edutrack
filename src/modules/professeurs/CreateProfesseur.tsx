@@ -108,11 +108,13 @@ export default function CreateProfesseur() {
           <p className="text-red-600 text-sm">{error}</p>
         )}
 
+
         <div className="flex gap-3 pt-4">
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2 rounded-xl bg-black text-white font-medium hover:bg-gray-800 disabled:opacity-50"
+            className="w-full rounded-2xl px-6 py-3 font-semibold text-white shadow-lg bg-gradient-to-tr from-green-600 to-green-400 hover:from-green-700 hover:to-green-500 transition text-lg mt-2 disabled:opacity-50"
+            style={{ letterSpacing: 1 }}
           >
             {loading ? "Création..." : "Créer le professeur"}
           </button>

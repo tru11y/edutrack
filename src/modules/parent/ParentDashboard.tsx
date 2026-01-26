@@ -1,29 +1,244 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
+
+interface Enfant {
+  id: string;
+  nom: string;
+  prenom: string;
+  classe: string;
+  isBanned: boolean;
+  presences: number;
+  absences: number;
+  retards: number;
+  tauxPresence: number;
+  montantDu: number;
+}
 
 export default function ParentDashboard() {
   const { user } = useAuth();
+  const [enfants, setEnfants] = useState<Enfant[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      if (!user?.enfantsIds || user.enfantsIds.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const results: Enfant[] = [];
+
+        for (const enfantId of user.enfantsIds) {
+          const enfantDoc = await getDoc(doc(db, "eleves", enfantId));
+          if (!enfantDoc.exists()) continue;
+
+          const data = enfantDoc.data();
+
+          // Présences
+          const presencesSnap = await getDocs(collection(db, "presences"));
+          let presences = 0, absences = 0, retards = 0;
+
+          presencesSnap.docs.forEach(d => {
+            const pData = d.data();
+            const mine = pData.presences?.find((p: { eleveId: string }) => p.eleveId === enfantId);
+            if (mine) {
+              if (mine.statut === "present") presences++;
+              else if (mine.statut === "absent") absences++;
+              else if (mine.statut === "retard") retards++;
+            }
+          });
+
+          const total = presences + absences + retards;
+          const tauxPresence = total > 0 ? Math.round(((presences + retards) / total) * 100) : 100;
+
+          // Paiements
+          const paiementsSnap = await getDocs(
+            query(collection(db, "paiements"), where("eleveId", "==", enfantId))
+          );
+
+          const montantDu = paiementsSnap.docs.reduce((acc, d) => {
+            const pData = d.data();
+            return acc + ((pData.montantTotal || 0) - (pData.montantPaye || 0));
+          }, 0);
+
+          results.push({
+            id: enfantId,
+            nom: data.nom,
+            prenom: data.prenom,
+            classe: data.classe,
+            isBanned: data.isBanned || false,
+            presences,
+            absences,
+            retards,
+            tauxPresence,
+            montantDu
+          });
+        }
+
+        setEnfants(results);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
+        <p style={{ color: "#86868b" }}>Chargement...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-xl font-bold">👪 Espace Parent</h1>
+    <div>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1d1d1f", marginBottom: 4 }}>
+          Espace Parent
+        </h1>
+        <p style={{ fontSize: 15, color: "#86868b" }}>
+          Suivez la scolarité de {enfants.length === 1 ? "votre enfant" : "vos enfants"}
+        </p>
+      </div>
 
-      <p className="text-gray-600">
-        Bienvenue {user?.email}. Vous pouvez suivre la scolarité de votre enfant ici.
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded shadow">
-          📋 Suivi des présences
+      {enfants.length === 0 ? (
+        <div style={{
+          background: "#fff",
+          borderRadius: 16,
+          border: "1px solid #e5e5e5",
+          padding: 40,
+          textAlign: "center"
+        }}>
+          <p style={{ fontSize: 15, color: "#86868b" }}>
+            Aucun enfant associé à votre compte. Contactez l'administration.
+          </p>
         </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {enfants.map((enfant) => (
+            <div key={enfant.id} style={{
+              background: "#fff",
+              borderRadius: 16,
+              border: "1px solid #e5e5e5",
+              overflow: "hidden"
+            }}>
+              {/* Header enfant */}
+              <div style={{
+                padding: 20,
+                borderBottom: "1px solid #e5e5e5",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <div style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    background: enfant.isBanned ? "#ff3b30" : "#007aff",
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 16,
+                    fontWeight: 600
+                  }}>
+                    {enfant.prenom[0]}{enfant.nom[0]}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 16, fontWeight: 600, color: "#1d1d1f" }}>
+                      {enfant.prenom} {enfant.nom}
+                    </p>
+                    <p style={{ fontSize: 13, color: "#86868b" }}>Classe de {enfant.classe}</p>
+                  </div>
+                </div>
+                {enfant.isBanned && (
+                  <span style={{
+                    fontSize: 12,
+                    fontWeight: 500,
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    background: "#ffebee",
+                    color: "#d32f2f"
+                  }}>
+                    Suspendu
+                  </span>
+                )}
+              </div>
 
-        <div className="bg-white p-4 rounded shadow">
-          📘 Cahier de texte
-        </div>
+              {/* Stats */}
+              <div style={{ padding: 20 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 20 }}>
+                  <MiniStat
+                    label="Présence"
+                    value={`${enfant.tauxPresence}%`}
+                    color={enfant.tauxPresence >= 80 ? "#34c759" : enfant.tauxPresence >= 60 ? "#ff9500" : "#ff3b30"}
+                  />
+                  <MiniStat label="Présent" value={enfant.presences} color="#34c759" />
+                  <MiniStat label="Absences" value={enfant.absences} color="#ff3b30" />
+                  <MiniStat label="Retards" value={enfant.retards} color="#ff9500" />
+                </div>
 
-        <div className="bg-white p-4 rounded shadow">
-          💰 Paiements & reçus
+                {/* Alerte paiement */}
+                {enfant.montantDu > 0 && (
+                  <div style={{
+                    background: "#fff7ed",
+                    border: "1px solid #fed7aa",
+                    borderRadius: 12,
+                    padding: 16,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between"
+                  }}>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: "#c2410c" }}>Paiement en attente</p>
+                    <p style={{ fontSize: 16, fontWeight: 600, color: "#c2410c" }}>
+                      {enfant.montantDu.toLocaleString("fr-FR")} FCFA
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
+      )}
+
+      {/* Liens rapides */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginTop: 32 }}>
+        <QuickLink to="/parent/presences" label="Présences" desc="Historique des présences" />
+        <QuickLink to="/parent/cahier" label="Cahier de texte" desc="Cours et devoirs" />
+        <QuickLink to="/parent/paiements" label="Paiements" desc="Historique et reçus" />
       </div>
     </div>
+  );
+}
+
+function MiniStat({ label, value, color }: { label: string; value: string | number; color: string }) {
+  return (
+    <div style={{ textAlign: "center", padding: 12, background: "#f5f5f7", borderRadius: 10 }}>
+      <p style={{ fontSize: 20, fontWeight: 600, color }}>{value}</p>
+      <p style={{ fontSize: 11, color: "#86868b", marginTop: 4 }}>{label}</p>
+    </div>
+  );
+}
+
+function QuickLink({ to, label, desc }: { to: string; label: string; desc: string }) {
+  return (
+    <Link to={to} style={{
+      background: "#fff",
+      borderRadius: 16,
+      border: "1px solid #e5e5e5",
+      padding: 20,
+      textDecoration: "none"
+    }}>
+      <p style={{ fontSize: 15, fontWeight: 500, color: "#1d1d1f", marginBottom: 4 }}>{label}</p>
+      <p style={{ fontSize: 13, color: "#86868b" }}>{desc}</p>
+    </Link>
   );
 }

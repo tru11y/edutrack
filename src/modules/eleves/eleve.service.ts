@@ -4,6 +4,7 @@ import {
   getDocs,
   getDoc,
   updateDoc,
+  deleteDoc,
   doc,
   serverTimestamp,
   query,
@@ -27,6 +28,7 @@ const elevesRef = collection(db, "eleves");
 
 function normalizeEleve(data: Partial<Eleve>): Eleve {
   const normalized: Eleve = {
+    id: data.id,
     nom: data.nom ?? "",
     prenom: data.prenom ?? "",
     sexe: (data.sexe === "M" || data.sexe === "F" ? data.sexe : "M") as "M" | "F",
@@ -35,8 +37,8 @@ function normalizeEleve(data: Partial<Eleve>): Eleve {
     parents: Array.isArray(data.parents) ? data.parents : [],
     ecoleOrigine: data.ecoleOrigine ?? "",
     isBanned: false,
-    createdAt: data.createdAt ?? (serverTimestamp() as any),
-    updatedAt: serverTimestamp() as any,
+    createdAt: data.createdAt ?? serverTimestamp(),
+    updatedAt: serverTimestamp(),
   };
 
   if (data.contactUrgence !== undefined) {
@@ -77,13 +79,13 @@ export async function getEleveById(id: string): Promise<Eleve | null> {
   });
 }
 
-export async function getElevesBannis() {
+export async function getElevesBannis(): Promise<Eleve[]> {
   const q = query(elevesRef, where("isBanned", "==", true));
   const snap = await getDocs(q);
 
   return snap.docs.map((d) => ({
     id: d.id,
-    ...(d.data() as any),
+    ...(d.data() as Omit<Eleve, "id">),
   }));
 }
 
@@ -131,8 +133,8 @@ export async function createEleveWithAccount(data: {
     parents: Array.isArray(data.parents) ? data.parents : [],
     ecoleOrigine: "",
     isBanned: false,
-    createdAt: serverTimestamp() as any,
-    updatedAt: serverTimestamp() as any,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   };
 
   const ref = await addDoc(elevesRef, elevePayload);
@@ -179,4 +181,28 @@ export async function desactiverEleve(id: string) {
     statut: "inactif",
     updatedAt: serverTimestamp(),
   });
+}
+
+/* ======================
+   MOVE TO TRASH
+====================== */
+
+export async function moveEleveToTrash(id: string): Promise<void> {
+  const ref = doc(db, "eleves", id);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) throw new Error("Eleve introuvable");
+
+  const data = snap.data() as Eleve;
+
+  // Save to trash collection
+  await addDoc(collection(db, "corbeille"), {
+    type: "eleves",
+    originalId: id,
+    data: data,
+    deletedAt: serverTimestamp(),
+  });
+
+  // Delete from eleves
+  await deleteDoc(ref);
 }

@@ -1,34 +1,100 @@
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function EleveLayout() {
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", minHeight: "100vh" }}>
-      <aside style={{ padding: 20, borderRight: "1px solid var(--border)" }}>
-        <h3>EDUTRACK</h3>
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
 
-        <nav style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
-          <Nav to="/eleve" label="Vue générale" />
-          <Nav to="/eleve/emploi-du-temps" label="Emploi du temps" />
-          <Nav to="/eleve/presences" label="Présences" />
-          <Nav to="/eleve/paiements" label="Paiements" />
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f5f5f7" }}>
+      <aside style={{
+        width: 260,
+        background: "#fff",
+        borderRight: "1px solid #e5e5e5",
+        display: "flex",
+        flexDirection: "column",
+        padding: "24px 16px"
+      }}>
+        <div style={{ padding: "0 12px", marginBottom: 32 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: "#1d1d1f" }}>EDUTRACK</h1>
+          <span style={{
+            display: "inline-block",
+            marginTop: 8,
+            padding: "4px 10px",
+            background: "#007aff",
+            color: "#fff",
+            borderRadius: 6,
+            fontSize: 12,
+            fontWeight: 500
+          }}>
+            Élève
+          </span>
+        </div>
+
+        <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+          <NavItem to="/eleve" end label="Tableau de bord" />
+          <NavItem to="/eleve/emploi-du-temps" label="Emploi du temps" />
+          <NavItem to="/eleve/presences" label="Mes présences" />
+          <NavItem to="/eleve/paiements" label="Mes paiements" />
         </nav>
+
+        <div style={{
+          padding: 16,
+          background: "#f5f5f7",
+          borderRadius: 12,
+          marginTop: 16
+        }}>
+          <div style={{ fontSize: 14, fontWeight: 500, color: "#1d1d1f", marginBottom: 4 }}>
+            {user?.email?.split("@")[0]}
+          </div>
+          <div style={{ fontSize: 12, color: "#86868b", marginBottom: 12 }}>
+            {user?.email}
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              background: "#fff",
+              border: "1px solid #e5e5e5",
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#1d1d1f",
+              cursor: "pointer"
+            }}
+          >
+            Déconnexion
+          </button>
+        </div>
       </aside>
 
-      <main style={{ padding: 24 }}>
+      <main style={{ flex: 1, padding: 32, overflowY: "auto" }}>
         <Outlet />
       </main>
     </div>
   );
 }
 
-function Nav({ to, label }: { to: string; label: string }) {
+function NavItem({ to, label, end }: { to: string; label: string; end?: boolean }) {
   return (
     <NavLink
       to={to}
+      end={end}
       style={({ isActive }) => ({
-        padding: "8px 12px",
+        display: "block",
+        padding: "10px 12px",
         borderRadius: 8,
-        background: isActive ? "#f0f0f0" : "transparent",
+        fontSize: 14,
+        fontWeight: 500,
+        color: isActive ? "#fff" : "#1d1d1f",
+        background: isActive ? "#1d1d1f" : "transparent",
+        textDecoration: "none"
       })}
     >
       {label}

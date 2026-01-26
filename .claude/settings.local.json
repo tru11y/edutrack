@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(wc:*)",
+      "Bash(done)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)",
+      "Bash(npm test:*)",
+      "Bash(git add:*)",
+      "Bash(npx firebase deploy:*)",
+      "Bash(dir)",
+      "Bash(dir:*)",
+      "Bash(start chrome \"https://edutrak-7a344.web.app\")",
+      "Bash(cd:*)"
+    ]
+  }
+}

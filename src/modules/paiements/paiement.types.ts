@@ -1,3 +1,5 @@
+import type { Timestamp, FieldValue } from "firebase/firestore";
+
 export type MethodePaiement = "especes" | "mobile_money" | "virement" | "cheque";
 
 export type StatutPaiement = "impaye" | "partiel" | "paye";
@@ -5,7 +7,7 @@ export type StatutPaiement = "impaye" | "partiel" | "paye";
 export interface Versement {
   montant: number;
   methode: MethodePaiement;
-  date: Date;
+  date: Date | Timestamp;
 }
 
 export interface Paiement {
@@ -24,5 +26,5 @@ export interface Paiement {
 
   versements: Versement[];
 
-  createdAt?: any;
+  createdAt?: Timestamp | FieldValue;
 }
