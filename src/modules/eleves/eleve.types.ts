@@ -26,6 +26,7 @@ export interface Adresse {
 
 export interface Eleve {
   id?: string;
+  matricule?: string;
 
   nom: string;
   prenom: string;
