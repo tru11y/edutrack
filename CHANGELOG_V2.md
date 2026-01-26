@@ -136,10 +136,64 @@ toast.info("Information");
 
 ---
 
+## 6. Navigation Amelioree
+
+### Corbeille dans le menu
+- **Nouveau lien:** Corbeille ajoutee au menu de navigation
+- **Icone dedicee:** Icone poubelle pour une identification rapide
+- **Acces admin:** Reserve aux administrateurs
+
+### Fichier modifie
+- `src/Layout/AdminLayout.tsx`
+
+---
+
+## 7. Recherche et Filtres Avances
+
+### PaiementsList
+- **Recherche par nom d'eleve:** Champ de recherche textuel
+- **Filtre par mois:** Selection du mois de paiement
+- **Filtre par statut:** Paye/Partiel/Impaye
+- **Bouton "Effacer":** Reinitialise tous les filtres
+
+### CahierList
+- **Recherche textuelle:** Recherche dans classe, contenu, professeur
+- **Filtre par classe:** Selection de classe
+- **Filtre par date:** Selection de date specifique
+- **Bouton "Effacer":** Reinitialise tous les filtres
+
+### PresencesList
+- **Filtre par classe:** Selection de classe
+- **Filtre par date:** Selection de date d'appel
+- **Bouton "Effacer filtres":** Reinitialise les filtres
+
+### Fichiers modifies
+- `src/pages/PaiementsList.tsx`
+- `src/pages/CahierList.tsx`
+- `src/pages/PresencesList.tsx`
+
+---
+
+## 8. Corrections Bug Users Page
+
+### Probleme identifie
+- La page `/utilisateurs` affichait une page blanche sans erreur visible
+
+### Solution implementee
+- **Fichier:** `src/pages/Users.tsx`
+  - Ajout d'un etat `loadError` pour capturer les erreurs
+  - Affichage d'un message d'erreur explicite avec bouton "Reessayer"
+  - Console logging pour debugging
+
+---
+
 ## Commits Git
 
 1. `ff8c1db` - fix: improve parent validation in élève creation form
 2. `6118c59` - feat: v2 improvements - performance, mobile responsive, enhanced dashboard
+3. `bf674e7` - feat: add corbeille to navigation, search functionality to lists
+4. `ca65b83` - feat: add search functionality to CahierList and PaiementsList
+5. `6f9e607` - feat: add date filters and clear buttons to list pages
 
 ---
 
@@ -149,7 +203,7 @@ toast.info("Information");
 src/
 ├── App.tsx                          # ToastProvider integre
 ├── Layout/
-│   └── AdminLayout.tsx              # Mobile responsive
+│   └── AdminLayout.tsx              # Mobile responsive + Corbeille nav
 ├── components/
 │   └── ui/
 │       └── Toast.tsx                # Notifications ameliorees
@@ -158,7 +212,11 @@ src/
 │       └── eleve.validators.ts      # Validation amelioree
 ├── pages/
 │   ├── Dashboard.tsx                # Stats avancees
-│   └── EleveForm.tsx                # Validation parent
+│   ├── EleveForm.tsx                # Validation parent + matricule
+│   ├── PaiementsList.tsx            # Recherche + filtres
+│   ├── CahierList.tsx               # Recherche + filtres
+│   ├── PresencesList.tsx            # Filtres date/classe
+│   └── Users.tsx                    # Error handling
 └── vite.config.ts                   # Code splitting
 ```
 
@@ -166,7 +224,7 @@ src/
 
 ## Prochaines Ameliorations Possibles
 
-1. **Recherche globale** - Barre de recherche dans le header
+1. ~~**Recherche globale**~~ ✅ Recherche implementee sur toutes les listes
 2. **Mode hors-ligne** - Service Worker + IndexedDB
 3. **Notifications push** - Pour alertes paiements en retard
 4. **Export PDF/Excel** - Pour rapports et statistiques
