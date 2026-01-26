@@ -7,7 +7,7 @@
 
 ## 1. Correction Bug Creation Eleve
 
-### Probleme identifie
+### Probleme identifie #1 - Validation parent
 - Le formulaire de creation d'eleve echouait silencieusement si aucun parent n'etait renseigne
 - La validation backend exigeait un parent mais le frontend ne l'indiquait pas clairement
 
@@ -17,6 +17,20 @@
 - **Fichier:** `src/modules/eleves/eleve.validators.ts`
   - Messages d'erreur plus descriptifs
   - Validation robuste de chaque champ parent
+
+### Probleme identifie #2 - Undefined field value
+- Erreur Firestore: `addDoc() called with invalid data. Unsupported field value: undefined`
+- Le champ `id` etait inclus dans le payload avec valeur `undefined`
+
+### Solution implementee
+- **Fichier:** `src/modules/eleves/eleve.service.ts`
+  - `normalizeEleve()` n'inclut plus les champs undefined
+  - Seuls les champs avec des valeurs reelles sont envoyes a Firestore
+
+### Nouveaux champs ajoutes
+- **Matricule**: Identifiant unique de l'eleve (optionnel)
+- **Date de naissance**: Format date (optionnel)
+- Fichiers modifies: `eleve.types.ts`, `eleve.service.ts`, `EleveForm.tsx`
 
 ---
 
