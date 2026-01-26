@@ -9,7 +9,9 @@ export default function CahierList() {
   const isAdmin = user?.role === "admin";
   const [cahiers, setCahiers] = useState<CahierEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [filterClasse, setFilterClasse] = useState("");
+  const [filterDate, setFilterDate] = useState("");
 
   const loadCahiers = async () => {
     try {
@@ -40,7 +42,15 @@ export default function CahierList() {
   };
 
   const classes = [...new Set(cahiers.map((c) => c.classe).filter(Boolean))];
-  const filtered = cahiers.filter((c) => !filterClasse || c.classe === filterClasse);
+  const filtered = cahiers.filter((c) => {
+    const matchSearch = !search ||
+      c.classe?.toLowerCase().includes(search.toLowerCase()) ||
+      c.contenu?.toLowerCase().includes(search.toLowerCase()) ||
+      c.profNom?.toLowerCase().includes(search.toLowerCase());
+    const matchClasse = !filterClasse || c.classe === filterClasse;
+    const matchDate = !filterDate || c.date === filterDate;
+    return matchSearch && matchClasse && matchDate;
+  });
 
   if (loading) {
     return (<div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}><div style={{ textAlign: "center" }}><div style={{ width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#8b5cf6", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} /><p style={{ color: "#64748b", fontSize: 14 }}>Chargement...</p></div><style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style></div>);
@@ -72,11 +82,25 @@ export default function CahierList() {
         </div>
       </div>
 
-      <div style={{ marginBottom: 24 }}>
-        <select value={filterClasse} onChange={(e) => setFilterClasse(e.target.value)} aria-label="Filtrer par classe" style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", minWidth: 200 }}>
+      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+        <input
+          type="text"
+          placeholder="Rechercher..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ flex: 1, minWidth: 200, padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, outline: "none" }}
+        />
+        <select value={filterClasse} onChange={(e) => setFilterClasse(e.target.value)} aria-label="Filtrer par classe" style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", minWidth: 160 }}>
           <option value="">Toutes les classes</option>
           {classes.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
+        <input
+          type="date"
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+          aria-label="Filtrer par date"
+          style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff" }}
+        />
       </div>
 
       {filtered.length === 0 ? (
