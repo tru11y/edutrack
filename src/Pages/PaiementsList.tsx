@@ -6,6 +6,7 @@ import type { Paiement } from "../modules/paiements/paiement.types";
 export default function PaiementsList() {
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
   const [filterMois, setFilterMois] = useState("");
 
@@ -37,7 +38,12 @@ export default function PaiementsList() {
   };
 
   const mois = [...new Set(paiements.map((p) => p.mois))].sort().reverse();
-  const filtered = paiements.filter((p) => (!filterStatut || p.statut === filterStatut) && (!filterMois || p.mois === filterMois));
+  const filtered = paiements.filter((p) => {
+    const matchSearch = !search || p.eleveNom?.toLowerCase().includes(search.toLowerCase());
+    const matchStatut = !filterStatut || p.statut === filterStatut;
+    const matchMois = !filterMois || p.mois === filterMois;
+    return matchSearch && matchStatut && matchMois;
+  });
   const stats = { total: paiements.reduce((acc, p) => acc + (p.montantTotal || 0), 0), paye: paiements.reduce((acc, p) => acc + (p.montantPaye || 0), 0), impaye: paiements.reduce((acc, p) => acc + (p.montantRestant || 0), 0) };
 
   if (loading) {
@@ -74,7 +80,14 @@ export default function PaiementsList() {
         <div style={{ background: "#fef2f2", borderRadius: 12, padding: 20, border: "1px solid #fecaca" }}><p style={{ fontSize: 13, color: "#dc2626", margin: "0 0 8px" }}>Reste a payer</p><p style={{ fontSize: 24, fontWeight: 700, color: "#ef4444", margin: 0 }}>{stats.impaye.toLocaleString()} <span style={{ fontSize: 14, fontWeight: 500 }}>FCFA</span></p></div>
       </div>
 
-      <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+        <input
+          type="text"
+          placeholder="Rechercher un eleve..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ flex: 1, minWidth: 200, padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, outline: "none" }}
+        />
         <select value={filterMois} onChange={(e) => setFilterMois(e.target.value)} aria-label="Filtrer par mois" style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", minWidth: 200 }}><option value="">Tous les mois</option>{mois.map((m) => <option key={m} value={m}>{new Date(m + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</option>)}</select>
         <select value={filterStatut} onChange={(e) => setFilterStatut(e.target.value)} aria-label="Filtrer par statut" style={{ padding: "12px 16px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", minWidth: 160 }}><option value="">Tous les statuts</option><option value="paye">Paye</option><option value="partiel">Partiel</option><option value="impaye">Impaye</option></select>
       </div>
