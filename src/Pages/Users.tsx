@@ -209,11 +209,11 @@ export default function Users() {
               <div key={user.id} style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 16 }}>
-                    {(user.prenom?.[0] || user.email[0]).toUpperCase()}
+                    {(user.prenom?.[0] || user.email?.[0] || "?").toUpperCase()}
                   </div>
                   <div>
-                    <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>{user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email.split("@")[0]}</p>
-                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{user.email}</p>
+                    <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>{user.prenom && user.nom ? `${user.prenom} ${user.nom}` : (user.email?.split("@")[0] || "Inconnu")}</p>
+                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{user.email || "Pas d'email"}</p>
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -241,11 +241,11 @@ export default function Users() {
               <div key={user.id} style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 16 }}>
-                    {(user.prenom?.[0] || user.email[0]).toUpperCase()}
+                    {(user.prenom?.[0] || user.email?.[0] || "?").toUpperCase()}
                   </div>
                   <div>
-                    <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>{user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email.split("@")[0]}</p>
-                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{user.email}</p>
+                    <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>{user.prenom && user.nom ? `${user.prenom} ${user.nom}` : (user.email?.split("@")[0] || "Inconnu")}</p>
+                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{user.email || "Pas d'email"}</p>
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
