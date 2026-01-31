@@ -263,6 +263,19 @@ export default function Users() {
     );
   }
 
+  // Admin2 ne peut pas modifier/supprimer un admin
+  const canEditUser = (targetUser: UserData) => {
+    if (isAdmin) return true;
+    if (isAdmin2 && targetUser.role === "admin") return false;
+    return true;
+  };
+
+  const canDeleteUser = (_targetUser: UserData) => {
+    if (isAdmin) return true;
+    // Admin2 ne peut pas supprimer
+    return false;
+  };
+
   const renderUserCard = (user: UserData, bgGradient: string, roleLabel: string, roleColor: string, roleBg: string) => (
     <div key={user.id} style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -279,30 +292,38 @@ export default function Users() {
         <span style={{ padding: "4px 12px", background: user.isActive ? "#ecfdf5" : "#fef2f2", color: user.isActive ? "#10b981" : "#ef4444", borderRadius: 20, fontSize: 12, fontWeight: 500 }}>
           {user.isActive ? "Actif" : "Inactif"}
         </span>
-        <button
-          onClick={() => openEditModal(user)}
-          style={{ padding: "6px 12px", background: "#eef2ff", color: "#6366f1", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
-        >
-          Modifier
-        </button>
-        <button
-          onClick={() => sendPasswordReset(user.email)}
-          style={{ padding: "6px 12px", background: "#fef3c7", color: "#d97706", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
-        >
-          Reset MDP
-        </button>
-        <button
-          onClick={() => toggleUserStatus(user)}
-          style={{ padding: "6px 12px", background: user.isActive ? "#fffbeb" : "#ecfdf5", color: user.isActive ? "#f59e0b" : "#10b981", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
-        >
-          {user.isActive ? "Desactiver" : "Activer"}
-        </button>
-        <button
-          onClick={() => handleDeleteUser(user)}
-          style={{ padding: "6px 12px", background: "#fef2f2", color: "#ef4444", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
-        >
-          {isAdmin2 ? "Demander suppr." : "Supprimer"}
-        </button>
+        {canEditUser(user) && (
+          <button
+            onClick={() => openEditModal(user)}
+            style={{ padding: "6px 12px", background: "#eef2ff", color: "#6366f1", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
+          >
+            Modifier
+          </button>
+        )}
+        {canEditUser(user) && (
+          <button
+            onClick={() => sendPasswordReset(user.email)}
+            style={{ padding: "6px 12px", background: "#fef3c7", color: "#d97706", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
+          >
+            Reset MDP
+          </button>
+        )}
+        {canEditUser(user) && (
+          <button
+            onClick={() => toggleUserStatus(user)}
+            style={{ padding: "6px 12px", background: user.isActive ? "#fffbeb" : "#ecfdf5", color: user.isActive ? "#f59e0b" : "#10b981", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
+          >
+            {user.isActive ? "Desactiver" : "Activer"}
+          </button>
+        )}
+        {canDeleteUser(user) && (
+          <button
+            onClick={() => handleDeleteUser(user)}
+            style={{ padding: "6px 12px", background: "#fef2f2", color: "#ef4444", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
+          >
+            Supprimer
+          </button>
+        )}
       </div>
     </div>
   );
@@ -416,7 +437,7 @@ export default function Users() {
                 <select name="role" value={form.role} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", boxSizing: "border-box" }}>
                   <option value="prof">Professeur</option>
                   <option value="admin2">Admin 2</option>
-                  <option value="admin">Administrateur</option>
+                  {isAdmin && <option value="admin">Administrateur</option>}
                 </select>
               </div>
 
@@ -461,7 +482,7 @@ export default function Users() {
                 <select name="role" value={editForm.role} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", boxSizing: "border-box" }}>
                   <option value="prof">Professeur</option>
                   <option value="admin2">Admin 2</option>
-                  <option value="admin">Administrateur</option>
+                  {isAdmin && <option value="admin">Administrateur</option>}
                 </select>
               </div>
 

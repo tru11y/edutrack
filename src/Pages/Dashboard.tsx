@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { collection, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { useAuth } from "../context/AuthContext";
 import type { Paiement } from "../modules/paiements/paiement.types";
 
 interface Stats {
@@ -18,6 +19,8 @@ interface Stats {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const isAdmin2 = user?.role === "admin2";
   const [stats, setStats] = useState<Stats>({
     eleves: 0,
     elevesActifs: 0,
@@ -257,12 +260,20 @@ export default function Dashboard() {
               </div>
             </div>
             <div>
-              <p style={{ fontSize: 14, color: "#64748b", margin: "0 0 8px" }}>
-                {stats.totalPaye.toLocaleString()} FCFA collectes
-              </p>
-              <p style={{ fontSize: 14, color: "#64748b", margin: 0 }}>
-                sur {stats.totalDu.toLocaleString()} FCFA attendus
-              </p>
+              {isAdmin2 ? (
+                <p style={{ fontSize: 14, color: "#64748b", margin: 0 }}>
+                  {stats.paiementsPaye} payes sur {stats.paiements} total
+                </p>
+              ) : (
+                <>
+                  <p style={{ fontSize: 14, color: "#64748b", margin: "0 0 8px" }}>
+                    {stats.totalPaye.toLocaleString()} FCFA collectes
+                  </p>
+                  <p style={{ fontSize: 14, color: "#64748b", margin: 0 }}>
+                    sur {stats.totalDu.toLocaleString()} FCFA attendus
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -331,7 +342,7 @@ export default function Dashboard() {
                     <p style={{ fontSize: 12, color: "#94a3b8", margin: "2px 0 0" }}>{p.mois}</p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "#1e293b", margin: 0 }}>{p.montantPaye?.toLocaleString()} FCFA</p>
+                    {!isAdmin2 && <p style={{ fontSize: 14, fontWeight: 600, color: "#1e293b", margin: 0 }}>{p.montantPaye?.toLocaleString()} FCFA</p>}
                     <span style={{
                       fontSize: 11,
                       padding: "2px 8px",
