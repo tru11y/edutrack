@@ -259,7 +259,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
 
-  if (user?.role === "prof") {
+  // Seuls les admins peuvent accéder - tous les autres rôles sont redirigés
+  if (user?.role !== "admin") {
     return <Navigate to="/presences" replace />;
   }
 
@@ -270,7 +271,8 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function ProfRedirect() {
   const { user } = useAuth();
 
-  if (user?.role === "prof") {
+  // Seuls les admins voient le dashboard - tous les autres sont redirigés
+  if (user?.role !== "admin") {
     return <Navigate to="/presences" replace />;
   }
 
