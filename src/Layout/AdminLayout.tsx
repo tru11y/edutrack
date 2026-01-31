@@ -45,7 +45,7 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const actualRole = user?.role || "admin";
+  const actualRole = user?.role === "admin" ? "admin" : "prof";
   const userRole = (actualRole === "admin" && profMode) ? "prof" : actualRole;
   const isProf = userRole === "prof";
   const canSwitchMode = actualRole === "admin";
