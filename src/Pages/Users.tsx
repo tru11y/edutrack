@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { collection, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, setDoc, addDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { db, auth } from "../services/firebase";
+import { useAuth } from "../context/AuthContext";
 
 interface UserData {
   id: string;
   email: string;
-  role: "admin" | "prof";
+  role: "admin" | "admin2" | "prof";
   isActive: boolean;
   nom?: string;
   prenom?: string;
@@ -14,19 +15,33 @@ interface UserData {
 }
 
 export default function Users() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [form, setForm] = useState({
     email: "",
     password: "",
     nom: "",
     prenom: "",
-    role: "prof" as "admin" | "prof",
+    role: "prof" as "admin" | "admin2" | "prof",
   });
+  const [editForm, setEditForm] = useState({
+    email: "",
+    nom: "",
+    prenom: "",
+    role: "prof" as "admin" | "admin2" | "prof",
+    newPassword: "",
+  });
+
+  const isAdmin = currentUser?.role === "admin";
+  const isAdmin2 = currentUser?.role === "admin2";
 
   const loadUsers = async () => {
     try {
@@ -53,6 +68,10 @@ export default function Users() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.email || !form.password) {
@@ -68,11 +87,9 @@ export default function Users() {
       setSaving(true);
       setError("");
 
-      // Create Firebase Auth user
       const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
       const uid = userCredential.user.uid;
 
-      // Create Firestore user document with uid as document ID
       const userRef = doc(db, "users", uid);
       await setDoc(userRef, {
         uid: uid,
@@ -103,6 +120,64 @@ export default function Users() {
     }
   };
 
+  const openEditModal = (user: UserData) => {
+    setEditingUser(user);
+    setEditForm({
+      email: user.email || "",
+      nom: user.nom || "",
+      prenom: user.prenom || "",
+      role: user.role,
+      newPassword: "",
+    });
+    setError("");
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    try {
+      setSaving(true);
+      setError("");
+
+      const userRef = doc(db, "users", editingUser.id);
+      await updateDoc(userRef, {
+        nom: editForm.nom,
+        prenom: editForm.prenom,
+        role: editForm.role,
+      });
+
+      // Si un nouveau mot de passe est defini, on ne peut pas le changer directement
+      // car Firebase Admin SDK est necessaire. On affiche un message.
+      if (editForm.newPassword) {
+        setError("Le mot de passe ne peut etre modifie directement. Utilisez 'Envoyer email de reinitialisation'.");
+        setSaving(false);
+        return;
+      }
+
+      setShowEditModal(false);
+      setEditingUser(null);
+      await loadUsers();
+    } catch (err) {
+      console.error(err);
+      setError("Erreur lors de la modification");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setSuccessMessage(`Email de reinitialisation envoye a ${email}`);
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'envoi de l'email");
+    }
+  };
+
   const toggleUserStatus = async (user: UserData) => {
     try {
       const userRef = doc(db, "users", user.id);
@@ -117,6 +192,28 @@ export default function Users() {
   };
 
   const handleDeleteUser = async (user: UserData) => {
+    // Admin2 ne peut pas supprimer directement - envoie une demande
+    if (isAdmin2) {
+      if (!window.confirm(`Envoyer une demande de suppression pour ${user.email} ?`)) return;
+      try {
+        await addDoc(collection(db, "demandes_suppression"), {
+          userId: user.id,
+          userEmail: user.email,
+          userName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email,
+          requestedBy: currentUser?.email,
+          requestedAt: serverTimestamp(),
+          status: "pending",
+        });
+        setSuccessMessage("Demande de suppression envoyee");
+        setTimeout(() => setSuccessMessage(""), 5000);
+      } catch (err) {
+        console.error(err);
+        alert("Erreur lors de l'envoi de la demande");
+      }
+      return;
+    }
+
+    // Admin peut supprimer directement
     if (!window.confirm(`Supprimer l'utilisateur ${user.email} ? Cette action est irreversible.`)) return;
     try {
       const userRef = doc(db, "users", user.id);
@@ -129,6 +226,7 @@ export default function Users() {
   };
 
   const admins = users.filter((u) => u.role === "admin");
+  const admins2 = users.filter((u) => u.role === "admin2");
   const profs = users.filter((u) => u.role === "prof");
 
   if (loading) {
@@ -165,10 +263,54 @@ export default function Users() {
     );
   }
 
+  const renderUserCard = (user: UserData, bgGradient: string, roleLabel: string, roleColor: string, roleBg: string) => (
+    <div key={user.id} style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: bgGradient, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 16 }}>
+          {(user.prenom?.[0] || user.email?.[0] || "?").toUpperCase()}
+        </div>
+        <div>
+          <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>{user.prenom && user.nom ? `${user.prenom} ${user.nom}` : (user.email?.split("@")[0] || "Inconnu")}</p>
+          <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{user.email || "Pas d'email"}</p>
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <span style={{ padding: "4px 12px", background: roleBg, color: roleColor, borderRadius: 20, fontSize: 12, fontWeight: 500 }}>{roleLabel}</span>
+        <span style={{ padding: "4px 12px", background: user.isActive ? "#ecfdf5" : "#fef2f2", color: user.isActive ? "#10b981" : "#ef4444", borderRadius: 20, fontSize: 12, fontWeight: 500 }}>
+          {user.isActive ? "Actif" : "Inactif"}
+        </span>
+        <button
+          onClick={() => openEditModal(user)}
+          style={{ padding: "6px 12px", background: "#eef2ff", color: "#6366f1", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
+        >
+          Modifier
+        </button>
+        <button
+          onClick={() => sendPasswordReset(user.email)}
+          style={{ padding: "6px 12px", background: "#fef3c7", color: "#d97706", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
+        >
+          Reset MDP
+        </button>
+        <button
+          onClick={() => toggleUserStatus(user)}
+          style={{ padding: "6px 12px", background: user.isActive ? "#fffbeb" : "#ecfdf5", color: user.isActive ? "#f59e0b" : "#10b981", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
+        >
+          {user.isActive ? "Desactiver" : "Activer"}
+        </button>
+        <button
+          onClick={() => handleDeleteUser(user)}
+          style={{ padding: "6px 12px", background: "#fef2f2", color: "#ef4444", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}
+        >
+          {isAdmin2 ? "Demander suppr." : "Supprimer"}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 48, height: 48, borderRadius: 12, background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "center", color: "#6366f1" }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M17 21V19C17 16.79 15.21 15 13 15H5C2.79 15 1 16.79 1 19V21M23 21V19C23 17.14 21.87 15.57 20.24 15.13M16.24 3.13C17.87 3.57 19 5.14 19 7C19 8.86 17.87 10.43 16.24 10.87M13 7C13 9.21 11.21 11 9 11C6.79 11 5 9.21 5 7C5 4.79 6.79 3 9 3C11.21 3 13 4.79 13 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -188,11 +330,22 @@ export default function Users() {
         </div>
       </div>
 
+      {/* Success Message */}
+      {successMessage && (
+        <div style={{ padding: "12px 16px", background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 10, marginBottom: 16 }}>
+          <p style={{ fontSize: 14, color: "#10b981", margin: 0 }}>{successMessage}</p>
+        </div>
+      )}
+
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16, marginBottom: 24 }}>
         <div style={{ background: "#eef2ff", borderRadius: 12, padding: 20, border: "1px solid #c7d2fe" }}>
           <p style={{ fontSize: 13, color: "#6366f1", margin: "0 0 8px" }}>Administrateurs</p>
           <p style={{ fontSize: 28, fontWeight: 700, color: "#4f46e5", margin: 0 }}>{admins.length}</p>
+        </div>
+        <div style={{ background: "#fef3c7", borderRadius: 12, padding: 20, border: "1px solid #fcd34d" }}>
+          <p style={{ fontSize: 13, color: "#d97706", margin: "0 0 8px" }}>Admin 2</p>
+          <p style={{ fontSize: 28, fontWeight: 700, color: "#b45309", margin: 0 }}>{admins2.length}</p>
         </div>
         <div style={{ background: "#ecfdf5", borderRadius: 12, padding: 20, border: "1px solid #a7f3d0" }}>
           <p style={{ fontSize: 13, color: "#10b981", margin: "0 0 8px" }}>Professeurs</p>
@@ -205,25 +358,17 @@ export default function Users() {
         <div style={{ marginBottom: 24 }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: "0 0 16px" }}>Administrateurs</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {admins.map((user) => (
-              <div key={user.id} style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 16 }}>
-                    {(user.prenom?.[0] || user.email?.[0] || "?").toUpperCase()}
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>{user.prenom && user.nom ? `${user.prenom} ${user.nom}` : (user.email?.split("@")[0] || "Inconnu")}</p>
-                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{user.email || "Pas d'email"}</p>
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{ padding: "4px 12px", background: "#eef2ff", color: "#6366f1", borderRadius: 20, fontSize: 12, fontWeight: 500 }}>Admin</span>
-                  <span style={{ padding: "4px 12px", background: user.isActive ? "#ecfdf5" : "#fef2f2", color: user.isActive ? "#10b981" : "#ef4444", borderRadius: 20, fontSize: 12, fontWeight: 500 }}>
-                    {user.isActive ? "Actif" : "Inactif"}
-                  </span>
-                </div>
-              </div>
-            ))}
+            {admins.map((user) => renderUserCard(user, "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", "Admin", "#6366f1", "#eef2ff"))}
+          </div>
+        </div>
+      )}
+
+      {/* Admin 2 */}
+      {admins2.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: "0 0 16px" }}>Admin 2</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {admins2.map((user) => renderUserCard(user, "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", "Admin 2", "#d97706", "#fef3c7"))}
           </div>
         </div>
       )}
@@ -237,60 +382,15 @@ export default function Users() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {profs.map((user) => (
-              <div key={user.id} style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 16 }}>
-                    {(user.prenom?.[0] || user.email?.[0] || "?").toUpperCase()}
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>{user.prenom && user.nom ? `${user.prenom} ${user.nom}` : (user.email?.split("@")[0] || "Inconnu")}</p>
-                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{user.email || "Pas d'email"}</p>
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ padding: "4px 12px", background: "#ecfdf5", color: "#10b981", borderRadius: 20, fontSize: 12, fontWeight: 500 }}>Prof</span>
-                  <button
-                    onClick={() => toggleUserStatus(user)}
-                    style={{
-                      padding: "6px 12px",
-                      background: user.isActive ? "#fffbeb" : "#ecfdf5",
-                      color: user.isActive ? "#f59e0b" : "#10b981",
-                      border: "none",
-                      borderRadius: 8,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      cursor: "pointer"
-                    }}
-                  >
-                    {user.isActive ? "Desactiver" : "Activer"}
-                  </button>
-                  <button
-                    onClick={() => handleDeleteUser(user)}
-                    style={{
-                      padding: "6px 12px",
-                      background: "#fef2f2",
-                      color: "#ef4444",
-                      border: "none",
-                      borderRadius: 8,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      cursor: "pointer"
-                    }}
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-            ))}
+            {profs.map((user) => renderUserCard(user, "linear-gradient(135deg, #10b981 0%, #059669 100%)", "Prof", "#10b981", "#ecfdf5"))}
           </div>
         )}
       </div>
 
-      {/* Modal */}
+      {/* Modal Ajouter */}
       {showModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 480 }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
             <h2 style={{ fontSize: 20, fontWeight: 600, color: "#1e293b", margin: "0 0 24px" }}>Nouvel utilisateur</h2>
             <form onSubmit={handleSubmit}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
@@ -315,6 +415,7 @@ export default function Users() {
                 <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Role</label>
                 <select name="role" value={form.role} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", boxSizing: "border-box" }}>
                   <option value="prof">Professeur</option>
+                  <option value="admin2">Admin 2</option>
                   <option value="admin">Administrateur</option>
                 </select>
               </div>
@@ -330,6 +431,62 @@ export default function Users() {
                   {saving ? "Creation..." : "Creer"}
                 </button>
                 <button type="button" onClick={() => { setShowModal(false); setError(""); }} style={{ flex: 1, padding: "14px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Modifier */}
+      {showEditModal && editingUser && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: "#1e293b", margin: "0 0 8px" }}>Modifier l'utilisateur</h2>
+            <p style={{ fontSize: 14, color: "#64748b", margin: "0 0 24px" }}>{editingUser.email}</p>
+            <form onSubmit={handleEditSubmit}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Prenom</label>
+                  <input type="text" name="prenom" value={editForm.prenom} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Nom</label>
+                  <input type="text" name="nom" value={editForm.nom} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                </div>
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Role</label>
+                <select name="role" value={editForm.role} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", boxSizing: "border-box" }}>
+                  <option value="prof">Professeur</option>
+                  <option value="admin2">Admin 2</option>
+                  <option value="admin">Administrateur</option>
+                </select>
+              </div>
+
+              <div style={{ padding: 16, background: "#f8fafc", borderRadius: 10, marginBottom: 24 }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: "#64748b", margin: "0 0 12px" }}>Mot de passe</p>
+                <button
+                  type="button"
+                  onClick={() => sendPasswordReset(editingUser.email)}
+                  style={{ width: "100%", padding: "12px", background: "#fef3c7", color: "#d97706", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+                >
+                  Envoyer email de reinitialisation
+                </button>
+              </div>
+
+              {error && (
+                <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, marginBottom: 16 }}>
+                  <p style={{ fontSize: 14, color: "#dc2626", margin: 0 }}>{error}</p>
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: 12 }}>
+                <button type="submit" disabled={saving} style={{ flex: 1, padding: "14px", background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+                  {saving ? "Enregistrement..." : "Enregistrer"}
+                </button>
+                <button type="button" onClick={() => { setShowEditModal(false); setEditingUser(null); setError(""); }} style={{ flex: 1, padding: "14px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
                   Annuler
                 </button>
               </div>

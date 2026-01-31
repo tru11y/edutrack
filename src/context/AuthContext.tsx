@@ -22,7 +22,7 @@ import { auth, db } from "../services/firebase";
    TYPES
 ========================= */
 
-export type UserRole = "admin" | "prof" | "eleve" | "parent";
+export type UserRole = "admin" | "admin2" | "prof" | "eleve" | "parent";
 
 export interface AppUser {
   uid: string;
