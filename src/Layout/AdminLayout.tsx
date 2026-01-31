@@ -41,9 +41,32 @@ export default function AdminLayout() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [profMode, setProfMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Stocker le mode par utilisateur dans localStorage (isolé par UID)
+  const storageKey = user?.uid ? `profMode_${user.uid}` : null;
+  const [profMode, setProfMode] = useState(() => {
+    if (storageKey) {
+      return localStorage.getItem(storageKey) === "true";
+    }
+    return false;
+  });
+
+  // Sauvegarder le mode dans localStorage quand il change
+  useEffect(() => {
+    if (storageKey) {
+      localStorage.setItem(storageKey, profMode.toString());
+    }
+  }, [profMode, storageKey]);
+
+  // Reset le mode si l'utilisateur change
+  useEffect(() => {
+    if (storageKey) {
+      const savedMode = localStorage.getItem(storageKey) === "true";
+      setProfMode(savedMode);
+    }
+  }, [user?.uid, storageKey]);
 
   const actualRole = (user?.role === "admin" || user?.role === "admin2") ? (user?.role as "admin" | "admin2") : "prof";
   const userRole = ((actualRole === "admin" || actualRole === "admin2") && profMode) ? "prof" : actualRole;
