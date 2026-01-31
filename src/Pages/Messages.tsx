@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { collection, addDoc, getDocs, query, orderBy, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, serverTimestamp, Timestamp, onSnapshot } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 
 interface UserData {
   id: string;
   email: string;
-  role: "admin" | "prof";
+  role: "admin" | "admin2" | "prof";
   nom?: string;
   prenom?: string;
   isActive?: boolean;
@@ -26,7 +26,7 @@ interface Message {
 export default function Messages() {
   const { user } = useAuth();
   const isProf = user?.role === "prof";
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "admin2";
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,20 +35,24 @@ export default function Messages() {
   const [destinataire, setDestinataire] = useState("tous");
   const [error, setError] = useState("");
 
-  const loadUsers = async () => {
-    try {
-      const snap = await getDocs(collection(db, "users"));
+  // Listener temps reel pour les utilisateurs
+  useEffect(() => {
+    const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as UserData[];
       setUsers(data.filter((u) => u.isActive !== false));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    }, (err) => {
+      console.error("Erreur users:", err);
+    });
 
-  const loadMessages = async () => {
-    try {
-      const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
+    return () => unsubUsers();
+  }, []);
+
+  // Listener temps reel pour les messages
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+    const unsubMessages = onSnapshot(q, (snap) => {
       const allMessages = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Message[];
 
       // Filtrer les messages selon le role de l'utilisateur
@@ -67,17 +71,14 @@ export default function Messages() {
       });
 
       setMessages(filteredMessages);
-    } catch (err) {
-      console.error(err);
-    } finally {
       setLoading(false);
-    }
-  };
+    }, (err) => {
+      console.error("Erreur messages:", err);
+      setLoading(false);
+    });
 
-  useEffect(() => {
-    loadUsers();
-    loadMessages();
-  }, []);
+    return () => unsubMessages();
+  }, [user?.uid, isAdmin, isProf]);
 
   const getDestinataireNom = (dest: string): string => {
     if (dest === "tous") return "Tout le monde";
@@ -108,7 +109,7 @@ export default function Messages() {
 
       await addDoc(collection(db, "messages"), payload);
       setNewMessage("");
-      await loadMessages();
+      // Le listener temps reel va automatiquement mettre a jour les messages
     } catch (err) {
       console.error(err);
       setError("Erreur lors de l'envoi. Verifiez votre connexion.");
