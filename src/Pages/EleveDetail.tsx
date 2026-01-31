@@ -8,7 +8,7 @@ import type { Paiement } from "../modules/paiements/paiement.types";
 
 export default function EleveDetail() {
   const { user } = useAuth();
-  const isAdmin2 = user?.role === "admin2";
+  const isGestionnaire = user?.role === "gestionnaire";
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [eleve, setEleve] = useState<Eleve | null>(null);
@@ -125,7 +125,7 @@ export default function EleveDetail() {
                 <div key={p.id} style={{ padding: 16, background: "#f8fafc", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>{new Date(p.mois + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</p>
-                    {!isAdmin2 && <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>{p.montantPaye.toLocaleString()} / {p.montantTotal.toLocaleString()} FCFA</p>}
+                    {!isGestionnaire && <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>{p.montantPaye.toLocaleString()} / {p.montantTotal.toLocaleString()} FCFA</p>}
                   </div>
                   <span style={{ padding: "6px 12px", background: p.statut === "paye" ? "#ecfdf5" : p.statut === "partiel" ? "#fffbeb" : "#fef2f2", color: p.statut === "paye" ? "#10b981" : p.statut === "partiel" ? "#f59e0b" : "#ef4444", borderRadius: 20, fontSize: 12, fontWeight: 500 }}>{p.statut === "paye" ? "Paye" : p.statut === "partiel" ? "Partiel" : "Impaye"}</span>
                 </div>

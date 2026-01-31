@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect, Suspense, lazy, Component, type ReactNode } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import { LanguageProvider } from "./context/LanguageContext";
 import { ToastProvider } from "./components/ui/Toast";
 
 /* ========== ERROR BOUNDARY ========== */
@@ -259,8 +261,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
 
-  // Seuls les admins et admin2 peuvent accéder - tous les autres rôles sont redirigés
-  if (user?.role !== "admin" && user?.role !== "admin2") {
+  // Seuls les admins et gestionnaires peuvent acceder
+  if (user?.role !== "admin" && user?.role !== "gestionnaire") {
     return <Navigate to="/presences" replace />;
   }
 
@@ -271,8 +273,8 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function ProfRedirect() {
   const { user } = useAuth();
 
-  // Seuls les admins et admin2 voient le dashboard - tous les autres sont redirigés
-  if (user?.role !== "admin" && user?.role !== "admin2") {
+  // Seuls les admins et gestionnaires voient le dashboard
+  if (user?.role !== "admin" && user?.role !== "gestionnaire") {
     return <Navigate to="/presences" replace />;
   }
 
@@ -283,11 +285,13 @@ function ProfRedirect() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <ToastProvider>
-          <BrowserRouter>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <BrowserRouter>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
                 <Route index element={<ProfRedirect />} />
@@ -311,12 +315,14 @@ export default function App() {
                 <Route path="profil" element={<Profil />} />
                 <Route path="corbeille" element={<AdminRoute><Corbeille /></AdminRoute>} />
               </Route>
-              <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
-        </ToastProvider>
-      </AuthProvider>
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </ToastProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

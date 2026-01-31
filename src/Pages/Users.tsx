@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext";
 interface UserData {
   id: string;
   email: string;
-  role: "admin" | "admin2" | "prof";
+  role: "admin" | "gestionnaire" | "prof";
   isActive: boolean;
   nom?: string;
   prenom?: string;
@@ -30,18 +30,18 @@ export default function Users() {
     password: "",
     nom: "",
     prenom: "",
-    role: "prof" as "admin" | "admin2" | "prof",
+    role: "prof" as "admin" | "gestionnaire" | "prof",
   });
   const [editForm, setEditForm] = useState({
     email: "",
     nom: "",
     prenom: "",
-    role: "prof" as "admin" | "admin2" | "prof",
+    role: "prof" as "admin" | "gestionnaire" | "prof",
     newPassword: "",
   });
 
   const isAdmin = currentUser?.role === "admin";
-  const isAdmin2 = currentUser?.role === "admin2";
+  const isGestionnaire = currentUser?.role === "gestionnaire";
 
   const loadUsers = async () => {
     try {
@@ -172,9 +172,22 @@ export default function Users() {
       await sendPasswordResetEmail(auth, email);
       setSuccessMessage(`Email de reinitialisation envoye a ${email}`);
       setTimeout(() => setSuccessMessage(""), 5000);
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de l'envoi de l'email");
+    } catch (err: unknown) {
+      console.error("Erreur reset password:", err);
+      let errorMsg = "Erreur lors de l'envoi de l'email";
+      if (err instanceof Error) {
+        if (err.message.includes("user-not-found")) {
+          errorMsg = "Aucun compte associe a cet email";
+        } else if (err.message.includes("invalid-email")) {
+          errorMsg = "Adresse email invalide";
+        } else if (err.message.includes("too-many-requests")) {
+          errorMsg = "Trop de tentatives. Reessayez plus tard";
+        } else if (err.message.includes("network")) {
+          errorMsg = "Erreur reseau. Verifiez votre connexion";
+        }
+      }
+      setError(errorMsg);
+      setTimeout(() => setError(""), 5000);
     }
   };
 
@@ -193,7 +206,7 @@ export default function Users() {
 
   const handleDeleteUser = async (user: UserData) => {
     // Admin2 ne peut pas supprimer directement - envoie une demande
-    if (isAdmin2) {
+    if (isGestionnaire) {
       if (!window.confirm(`Envoyer une demande de suppression pour ${user.email} ?`)) return;
       try {
         await addDoc(collection(db, "demandes_suppression"), {
@@ -226,7 +239,7 @@ export default function Users() {
   };
 
   const admins = users.filter((u) => u.role === "admin");
-  const admins2 = users.filter((u) => u.role === "admin2");
+  const gestionnaires = users.filter((u) => u.role === "gestionnaire");
   const profs = users.filter((u) => u.role === "prof");
 
   if (loading) {
@@ -266,7 +279,7 @@ export default function Users() {
   // Admin2 ne peut pas modifier/supprimer un admin
   const canEditUser = (targetUser: UserData) => {
     if (isAdmin) return true;
-    if (isAdmin2 && targetUser.role === "admin") return false;
+    if (isGestionnaire && targetUser.role === "admin") return false;
     return true;
   };
 
@@ -365,8 +378,8 @@ export default function Users() {
           <p style={{ fontSize: 28, fontWeight: 700, color: "#4f46e5", margin: 0 }}>{admins.length}</p>
         </div>
         <div style={{ background: "#fef3c7", borderRadius: 12, padding: 20, border: "1px solid #fcd34d" }}>
-          <p style={{ fontSize: 13, color: "#d97706", margin: "0 0 8px" }}>Admin 2</p>
-          <p style={{ fontSize: 28, fontWeight: 700, color: "#b45309", margin: 0 }}>{admins2.length}</p>
+          <p style={{ fontSize: 13, color: "#d97706", margin: "0 0 8px" }}>Gestionnaire</p>
+          <p style={{ fontSize: 28, fontWeight: 700, color: "#b45309", margin: 0 }}>{gestionnaires.length}</p>
         </div>
         <div style={{ background: "#ecfdf5", borderRadius: 12, padding: 20, border: "1px solid #a7f3d0" }}>
           <p style={{ fontSize: 13, color: "#10b981", margin: "0 0 8px" }}>Professeurs</p>
@@ -384,12 +397,12 @@ export default function Users() {
         </div>
       )}
 
-      {/* Admin 2 */}
-      {admins2.length > 0 && (
+      {/* Gestionnaire */}
+      {gestionnaires.length > 0 && (
         <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: "0 0 16px" }}>Admin 2</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: "0 0 16px" }}>Gestionnaire</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {admins2.map((user) => renderUserCard(user, "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", "Admin 2", "#d97706", "#fef3c7"))}
+            {gestionnaires.map((user) => renderUserCard(user, "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", "Gestionnaire", "#d97706", "#fef3c7"))}
           </div>
         </div>
       )}
@@ -436,7 +449,7 @@ export default function Users() {
                 <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Role</label>
                 <select name="role" value={form.role} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", boxSizing: "border-box" }}>
                   <option value="prof">Professeur</option>
-                  <option value="admin2">Admin 2</option>
+                  <option value="gestionnaire">Gestionnaire</option>
                   {isAdmin && <option value="admin">Administrateur</option>}
                 </select>
               </div>
@@ -481,7 +494,7 @@ export default function Users() {
                 <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Role</label>
                 <select name="role" value={editForm.role} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", boxSizing: "border-box" }}>
                   <option value="prof">Professeur</option>
-                  <option value="admin2">Admin 2</option>
+                  <option value="gestionnaire">Gestionnaire</option>
                   {isAdmin && <option value="admin">Administrateur</option>}
                 </select>
               </div>

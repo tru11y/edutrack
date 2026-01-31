@@ -20,7 +20,7 @@ interface Stats {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const isAdmin2 = user?.role === "admin2";
+  const isGestionnaire = user?.role === "gestionnaire";
   const [stats, setStats] = useState<Stats>({
     eleves: 0,
     elevesActifs: 0,
@@ -260,7 +260,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div>
-              {isAdmin2 ? (
+              {isGestionnaire ? (
                 <p style={{ fontSize: 14, color: "#64748b", margin: 0 }}>
                   {stats.paiementsPaye} payes sur {stats.paiements} total
                 </p>
@@ -342,7 +342,7 @@ export default function Dashboard() {
                     <p style={{ fontSize: 12, color: "#94a3b8", margin: "2px 0 0" }}>{p.mois}</p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    {!isAdmin2 && <p style={{ fontSize: 14, fontWeight: 600, color: "#1e293b", margin: 0 }}>{p.montantPaye?.toLocaleString()} FCFA</p>}
+                    {!isGestionnaire && <p style={{ fontSize: 14, fontWeight: 600, color: "#1e293b", margin: 0 }}>{p.montantPaye?.toLocaleString()} FCFA</p>}
                     <span style={{
                       fontSize: 11,
                       padding: "2px 8px",
