@@ -7,20 +7,20 @@ interface NavItem {
   label: string;
   icon: string;
   end?: boolean;
-  roles: ("admin" | "prof")[];
+  roles: ("admin" | "admin2" | "prof")[];
 }
 
 const navItems: NavItem[] = [
-  { to: "/", label: "Tableau de bord", icon: "dashboard", end: true, roles: ["admin"] },
-  { to: "/eleves", label: "Eleves", icon: "users", roles: ["admin"] },
+  { to: "/", label: "Tableau de bord", icon: "dashboard", end: true, roles: ["admin", "admin2"] },
+  { to: "/eleves", label: "Eleves", icon: "users", roles: ["admin", "admin2"] },
   { to: "/mes-eleves", label: "Mes eleves", icon: "users", roles: ["prof"] },
-  { to: "/presences", label: "Presences", icon: "check", roles: ["admin", "prof"] },
-  { to: "/cahier", label: "Cahier de texte", icon: "book", roles: ["admin", "prof"] },
-  { to: "/paiements", label: "Paiements", icon: "card", roles: ["admin"] },
-  { to: "/stats", label: "Statistiques", icon: "chart", roles: ["admin"] },
-  { to: "/utilisateurs", label: "Utilisateurs", icon: "settings", roles: ["admin"] },
-  { to: "/messages", label: "Messages", icon: "message", roles: ["admin", "prof"] },
-  { to: "/corbeille", label: "Corbeille", icon: "trash", roles: ["admin"] },
+  { to: "/presences", label: "Presences", icon: "check", roles: ["admin", "admin2", "prof"] },
+  { to: "/cahier", label: "Cahier de texte", icon: "book", roles: ["admin", "admin2", "prof"] },
+  { to: "/paiements", label: "Paiements", icon: "card", roles: ["admin", "admin2"] },
+  { to: "/stats", label: "Statistiques", icon: "chart", roles: ["admin", "admin2"] },
+  { to: "/utilisateurs", label: "Utilisateurs", icon: "settings", roles: ["admin", "admin2"] },
+  { to: "/messages", label: "Messages", icon: "message", roles: ["admin", "admin2", "prof"] },
+  { to: "/corbeille", label: "Corbeille", icon: "trash", roles: ["admin", "admin2"] },
 ];
 
 const icons: Record<string, React.ReactNode> = {
@@ -45,10 +45,10 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const actualRole = user?.role === "admin" ? "admin" : "prof";
-  const userRole = (actualRole === "admin" && profMode) ? "prof" : actualRole;
+  const actualRole = (user?.role === "admin" || user?.role === "admin2") ? (user?.role as "admin" | "admin2") : "prof";
+  const userRole = ((actualRole === "admin" || actualRole === "admin2") && profMode) ? "prof" : actualRole;
   const isProf = userRole === "prof";
-  const canSwitchMode = actualRole === "admin";
+  const canSwitchMode = actualRole === "admin" || actualRole === "admin2";
 
   // Handle resize
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function AdminLayout() {
     navigate("/login");
   };
 
-  const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole as "admin" | "prof"));
+  const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole as "admin" | "admin2" | "prof"));
 
   const sidebarWidth = 260;
 
@@ -279,7 +279,7 @@ export default function AdminLayout() {
                   {user?.email?.split("@")[0] || "Utilisateur"}
                 </p>
                 <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
-                  {isProf ? "Professeur" : "Administrateur"}
+                  {isProf ? "Professeur" : (user?.role === "admin2" ? "Admin 2" : "Administrateur")}
                 </p>
               </div>
             </div>
