@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAllPaiements } from "./paiement.service";
+import { useAuth } from "../../context/AuthContext";
 
 interface Paiement {
   id?: string;
@@ -14,6 +15,8 @@ interface Paiement {
 }
 
 export default function AdminPaiementsList() {
+  const { user } = useAuth();
+  const isAdmin2 = user?.role === "admin2";
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "paye" | "partiel" | "impaye">("all");
@@ -91,31 +94,33 @@ export default function AdminPaiementsList() {
         <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Gerez les paiements de tous les eleves</p>
       </div>
 
-      {/* Stats Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20, marginBottom: 32 }}>
+      {/* Stats Cards - Admin2 voit seulement les compteurs, pas les montants */}
+      <div style={{ display: "grid", gridTemplateColumns: isAdmin2 ? "repeat(3, 1fr)" : "repeat(4, 1fr)", gap: 20, marginBottom: 32 }}>
+        {!isAdmin2 && (
+          <StatCard
+            label="Total attendu"
+            value={`${stats.total.toLocaleString("fr-FR")} FCFA`}
+            color="#6366f1"
+            bg="#eef2ff"
+          />
+        )}
         <StatCard
-          label="Total attendu"
-          value={`${stats.total.toLocaleString("fr-FR")} FCFA`}
-          color="#6366f1"
-          bg="#eef2ff"
-        />
-        <StatCard
-          label="Total encaisse"
-          value={`${stats.paye.toLocaleString("fr-FR")} FCFA`}
+          label={isAdmin2 ? "Payes" : "Total encaisse"}
+          value={isAdmin2 ? `${stats.count.paye}` : `${stats.paye.toLocaleString("fr-FR")} FCFA`}
           color="#10b981"
           bg="#ecfdf5"
         />
         <StatCard
-          label="Impayes"
-          value={`${stats.impaye.toLocaleString("fr-FR")} FCFA`}
-          color="#ef4444"
-          bg="#fef2f2"
+          label={isAdmin2 ? "Partiels" : "Impayes"}
+          value={isAdmin2 ? `${stats.count.partiel}` : `${stats.impaye.toLocaleString("fr-FR")} FCFA`}
+          color={isAdmin2 ? "#f59e0b" : "#ef4444"}
+          bg={isAdmin2 ? "#fffbeb" : "#fef2f2"}
         />
         <StatCard
-          label="Taux recouvrement"
-          value={`${stats.total > 0 ? Math.round((stats.paye / stats.total) * 100) : 0}%`}
-          color="#f59e0b"
-          bg="#fffbeb"
+          label={isAdmin2 ? "Impayes" : "Taux recouvrement"}
+          value={isAdmin2 ? `${stats.count.impaye}` : `${stats.total > 0 ? Math.round((stats.paye / stats.total) * 100) : 0}%`}
+          color={isAdmin2 ? "#ef4444" : "#f59e0b"}
+          bg={isAdmin2 ? "#fef2f2" : "#fffbeb"}
         />
       </div>
 
@@ -225,9 +230,9 @@ export default function AdminPaiementsList() {
               <tr style={{ background: "#f8fafc" }}>
                 <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Eleve</th>
                 <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Mois</th>
-                <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total</th>
-                <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Paye</th>
-                <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Reste</th>
+                {!isAdmin2 && <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total</th>}
+                {!isAdmin2 && <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Paye</th>}
+                {!isAdmin2 && <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Reste</th>}
                 <th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Statut</th>
                 <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Actions</th>
               </tr>
@@ -262,15 +267,21 @@ export default function AdminPaiementsList() {
                     </div>
                   </td>
                   <td style={{ padding: "16px 20px", fontSize: 14, color: "#475569" }}>{p.mois}</td>
-                  <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 500, color: "#1e293b", textAlign: "right" }}>
-                    {p.montantTotal.toLocaleString("fr-FR")} F
-                  </td>
-                  <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 500, color: "#10b981", textAlign: "right" }}>
-                    {p.montantPaye.toLocaleString("fr-FR")} F
-                  </td>
-                  <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 500, color: p.montantRestant > 0 ? "#ef4444" : "#64748b", textAlign: "right" }}>
-                    {p.montantRestant.toLocaleString("fr-FR")} F
-                  </td>
+                  {!isAdmin2 && (
+                    <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 500, color: "#1e293b", textAlign: "right" }}>
+                      {p.montantTotal.toLocaleString("fr-FR")} F
+                    </td>
+                  )}
+                  {!isAdmin2 && (
+                    <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 500, color: "#10b981", textAlign: "right" }}>
+                      {p.montantPaye.toLocaleString("fr-FR")} F
+                    </td>
+                  )}
+                  {!isAdmin2 && (
+                    <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 500, color: p.montantRestant > 0 ? "#ef4444" : "#64748b", textAlign: "right" }}>
+                      {p.montantRestant.toLocaleString("fr-FR")} F
+                    </td>
+                  )}
                   <td style={{ padding: "16px 20px", textAlign: "center" }}>
                     <StatusBadge statut={p.statut} />
                   </td>
