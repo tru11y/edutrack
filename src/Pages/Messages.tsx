@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 interface UserData {
   id: string;
   email: string;
-  role: "admin" | "admin2" | "prof";
+  role: "admin" | "gestionnaire" | "prof";
   nom?: string;
   prenom?: string;
   isActive?: boolean;
@@ -26,7 +26,7 @@ interface Message {
 export default function Messages() {
   const { user } = useAuth();
   const isProf = user?.role === "prof";
-  const isAdmin = user?.role === "admin" || user?.role === "admin2";
+  const isAdmin = user?.role === "admin" || user?.role === "gestionnaire";
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
