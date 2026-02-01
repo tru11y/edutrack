@@ -83,6 +83,10 @@ const translations = {
     professorSpace: "Espace Professeur",
     adminMode: "Mode Admin",
     profMode: "Mode Prof",
+
+    // Payments
+    newPayment: "Nouveau paiement",
+    managePayments: "Gerez les paiements de tous les eleves",
   },
   en: {
     // Navigation
@@ -163,6 +167,10 @@ const translations = {
     professorSpace: "Professor Space",
     adminMode: "Admin Mode",
     profMode: "Prof Mode",
+
+    // Payments
+    newPayment: "New payment",
+    managePayments: "Manage all student payments",
   },
 };
 

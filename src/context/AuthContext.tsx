@@ -20,7 +20,6 @@ import {
   serverTimestamp,
   onSnapshot,
   query,
-  where,
 } from "firebase/firestore";
 import { auth, db } from "../services/firebase";
 
@@ -211,8 +210,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userRef = doc(db, "users", user.uid);
         // Utiliser setDoc avec merge pour creer le champ s'il n'existe pas
         await setDoc(userRef, { lastSeen: serverTimestamp() }, { merge: true });
-      } catch (err) {
-        console.error("Erreur mise a jour statut:", err);
+      } catch {
+        // Erreur silencieuse - mise a jour statut non critique
       }
     };
 
@@ -232,8 +231,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             const logRef = doc(db, "connection_logs", currentSessionId);
             await updateDoc(logRef, { logoutAt: serverTimestamp() });
-          } catch (err) {
-            console.error("Erreur log deconnexion:", err);
+          } catch {
+            // Erreur silencieuse - log deconnexion non critique
           }
         }
         setUser(null);
@@ -249,7 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = snap.data();
 
         if (!data.isActive) {
-          console.warn("Compte desactive");
+          // Compte desactive - deconnexion silencieuse
           setUser(null);
           setLoading(false);
           return;
@@ -290,8 +289,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // Mettre a jour lastSeen
             await updateDoc(userRef, { lastSeen: serverTimestamp() });
-          } catch (err) {
-            console.error("Erreur creation log:", err);
+          } catch {
+            // Erreur silencieuse - creation log non critique
           }
         }
 
@@ -299,24 +298,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Premiere connexion - auto-creation admin
-      console.warn("Profil Firestore absent - creation automatique (admin)");
+      // SECURITE: Refuser l'acces si le profil n'existe pas dans Firestore
+      // Les utilisateurs doivent etre crees manuellement par un admin
 
-      const newUser: AppUser = {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-        role: "admin",
-        isActive: true,
-      };
-
-      await setDoc(userRef, {
-        role: "admin",
-        isActive: true,
-        createdAt: serverTimestamp(),
-        lastSeen: serverTimestamp(),
-      });
-
-      setUser(newUser);
+      // Deconnecter l'utilisateur Firebase qui n'a pas de profil
+      await signOut(auth);
+      setUser(null);
       setLoading(false);
     });
 
@@ -337,8 +324,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const logRef = doc(db, "connection_logs", currentSessionId);
         await updateDoc(logRef, { logoutAt: serverTimestamp() });
-      } catch (err) {
-        console.error("Erreur log deconnexion:", err);
+      } catch {
+        // Erreur silencieuse - log deconnexion non critique
       }
     }
     await signOut(auth);
