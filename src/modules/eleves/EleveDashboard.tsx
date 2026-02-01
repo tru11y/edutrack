@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
 interface EleveInfo {
   nom: string;
@@ -21,6 +22,7 @@ interface Stats {
 
 export default function EleveDashboard() {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [eleve, setEleve] = useState<EleveInfo | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +81,7 @@ export default function EleveDashboard() {
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
-        <p style={{ color: "#86868b" }}>Chargement...</p>
+        <p style={{ color: colors.textMuted }}>Chargement...</p>
       </div>
     );
   }
@@ -92,7 +94,7 @@ export default function EleveDashboard() {
             width: 64,
             height: 64,
             borderRadius: "50%",
-            background: "#ffebee",
+            background: colors.dangerBg,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -100,8 +102,8 @@ export default function EleveDashboard() {
           }}>
             <span style={{ fontSize: 28 }}>⚠️</span>
           </div>
-          <h2 style={{ fontSize: 20, fontWeight: 600, color: "#1d1d1f", marginBottom: 8 }}>Compte suspendu</h2>
-          <p style={{ fontSize: 14, color: "#86868b" }}>
+          <h2 style={{ fontSize: 20, fontWeight: 600, color: colors.text, marginBottom: 8 }}>Compte suspendu</h2>
+          <p style={{ fontSize: 14, color: colors.textMuted }}>
             Votre compte a été suspendu en raison d'impayés. Veuillez régulariser votre situation.
           </p>
         </div>
@@ -112,45 +114,45 @@ export default function EleveDashboard() {
   return (
     <div>
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1d1d1f", marginBottom: 4 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, marginBottom: 4 }}>
           Bonjour {eleve?.prenom || ""}
         </h1>
-        <p style={{ fontSize: 15, color: "#86868b" }}>
+        <p style={{ fontSize: 15, color: colors.textMuted }}>
           {eleve?.classe && `Classe de ${eleve.classe}`} · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
         </p>
       </div>
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e5e5", padding: 20 }}>
-          <p style={{ fontSize: 13, color: "#86868b", marginBottom: 8 }}>Taux présence</p>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 20 }}>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 8 }}>Taux présence</p>
           <p style={{
             fontSize: 32,
             fontWeight: 600,
-            color: (stats?.tauxPresence || 0) >= 80 ? "#34c759" : (stats?.tauxPresence || 0) >= 60 ? "#ff9500" : "#ff3b30"
+            color: (stats?.tauxPresence || 0) >= 80 ? colors.success : (stats?.tauxPresence || 0) >= 60 ? colors.warning : colors.danger
           }}>
             {stats?.tauxPresence || 0}%
           </p>
         </div>
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e5e5", padding: 20 }}>
-          <p style={{ fontSize: 13, color: "#86868b", marginBottom: 8 }}>Présences</p>
-          <p style={{ fontSize: 32, fontWeight: 600, color: "#34c759" }}>{stats?.presences || 0}</p>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 20 }}>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 8 }}>Présences</p>
+          <p style={{ fontSize: 32, fontWeight: 600, color: colors.success }}>{stats?.presences || 0}</p>
         </div>
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e5e5", padding: 20 }}>
-          <p style={{ fontSize: 13, color: "#86868b", marginBottom: 8 }}>Absences</p>
-          <p style={{ fontSize: 32, fontWeight: 600, color: "#ff3b30" }}>{stats?.absences || 0}</p>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 20 }}>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 8 }}>Absences</p>
+          <p style={{ fontSize: 32, fontWeight: 600, color: colors.danger }}>{stats?.absences || 0}</p>
         </div>
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e5e5", padding: 20 }}>
-          <p style={{ fontSize: 13, color: "#86868b", marginBottom: 8 }}>Retards</p>
-          <p style={{ fontSize: 32, fontWeight: 600, color: "#ff9500" }}>{stats?.retards || 0}</p>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 20 }}>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 8 }}>Retards</p>
+          <p style={{ fontSize: 32, fontWeight: 600, color: colors.warning }}>{stats?.retards || 0}</p>
         </div>
       </div>
 
       {/* Paiement */}
       {stats && stats.montantDu > 0 && (
         <div style={{
-          background: "#fff7ed",
-          border: "1px solid #fed7aa",
+          background: colors.warningBg,
+          border: `1px solid ${colors.warning}40`,
           borderRadius: 16,
           padding: 20,
           marginBottom: 32,
@@ -159,10 +161,10 @@ export default function EleveDashboard() {
           justifyContent: "space-between"
         }}>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#c2410c", marginBottom: 4 }}>Paiement en attente</p>
-            <p style={{ fontSize: 13, color: "#ea580c" }}>Veuillez régulariser votre situation</p>
+            <p style={{ fontSize: 14, fontWeight: 500, color: colors.warning, marginBottom: 4 }}>Paiement en attente</p>
+            <p style={{ fontSize: 13, color: colors.warning }}>Veuillez régulariser votre situation</p>
           </div>
-          <p style={{ fontSize: 20, fontWeight: 600, color: "#c2410c" }}>
+          <p style={{ fontSize: 20, fontWeight: 600, color: colors.warning }}>
             {stats.montantDu.toLocaleString("fr-FR")} FCFA
           </p>
         </div>
@@ -170,25 +172,25 @@ export default function EleveDashboard() {
 
       {/* Liens */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-        <QuickLink to="/eleve/presences" label="Mes présences" desc="Historique détaillé" />
-        <QuickLink to="/eleve/emploi-du-temps" label="Emploi du temps" desc="Planning de la semaine" />
-        <QuickLink to="/eleve/paiements" label="Mes paiements" desc="Historique et reçus" />
+        <QuickLink to="/eleve/presences" label="Mes présences" desc="Historique détaillé" colors={colors} />
+        <QuickLink to="/eleve/emploi-du-temps" label="Emploi du temps" desc="Planning de la semaine" colors={colors} />
+        <QuickLink to="/eleve/paiements" label="Mes paiements" desc="Historique et reçus" colors={colors} />
       </div>
     </div>
   );
 }
 
-function QuickLink({ to, label, desc }: { to: string; label: string; desc: string }) {
+function QuickLink({ to, label, desc, colors }: { to: string; label: string; desc: string; colors: ReturnType<typeof import("../../context/ThemeContext").useTheme>["colors"] }) {
   return (
     <Link to={to} style={{
-      background: "#fff",
+      background: colors.bgCard,
       borderRadius: 16,
-      border: "1px solid #e5e5e5",
+      border: `1px solid ${colors.border}`,
       padding: 20,
       textDecoration: "none"
     }}>
-      <p style={{ fontSize: 15, fontWeight: 500, color: "#1d1d1f", marginBottom: 4 }}>{label}</p>
-      <p style={{ fontSize: 13, color: "#86868b" }}>{desc}</p>
+      <p style={{ fontSize: 15, fontWeight: 500, color: colors.text, marginBottom: 4 }}>{label}</p>
+      <p style={{ fontSize: 13, color: colors.textMuted }}>{desc}</p>
     </Link>
   );
 }
