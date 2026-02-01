@@ -2,66 +2,181 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Autoriser tous les utilisateurs connectes a lire/ecrire
-    // Note: A renforcer pour la production
+    // ========================================
+    // FONCTIONS DE SECURITE
+    // ========================================
+
+    // Verifier si l'utilisateur est connecte
     function signedIn() {
       return request.auth != null;
     }
 
-    match /users/{docId} {
-      allow read, write: if signedIn();
+    // Obtenir le document utilisateur courant
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    match /eleves/{docId} {
-      allow read, write: if signedIn();
+    // Verifier si l'utilisateur est admin
+    function isAdmin() {
+      return signedIn() && getUserData().role == "admin";
     }
 
-    match /professeurs/{docId} {
-      allow read, write: if signedIn();
+    // Verifier si l'utilisateur est admin ou gestionnaire
+    function isAdminOrGestionnaire() {
+      return signedIn() && getUserData().role in ["admin", "gestionnaire"];
     }
 
-    match /cours/{docId} {
-      allow read, write: if signedIn();
+    // Verifier si l'utilisateur est prof
+    function isProf() {
+      return signedIn() && getUserData().role == "prof";
     }
 
-    match /presences/{docId} {
-      allow read, write: if signedIn();
+    // Verifier si l'utilisateur est eleve
+    function isEleve() {
+      return signedIn() && getUserData().role == "eleve";
     }
 
-    match /paiements/{docId} {
-      allow read, write: if signedIn();
+    // Verifier si l'utilisateur est parent
+    function isParent() {
+      return signedIn() && getUserData().role == "parent";
     }
 
+    // Verifier si l'utilisateur est staff (admin, gestionnaire, prof)
+    function isStaff() {
+      return signedIn() && getUserData().role in ["admin", "gestionnaire", "prof"];
+    }
+
+    // ========================================
+    // REGLES PAR COLLECTION
+    // ========================================
+
+    // USERS - Seuls les admins peuvent creer/modifier des utilisateurs
+    match /users/{userId} {
+      // Lecture: staff peut voir tous, les autres seulement eux-memes
+      allow read: if isStaff() || request.auth.uid == userId;
+
+      // Creation: admin uniquement
+      allow create: if isAdmin();
+
+      // Modification: admin peut tout modifier, les autres seulement leur lastSeen
+      allow update: if isAdmin() ||
+        (request.auth.uid == userId &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeen']));
+
+      // Suppression: admin uniquement
+      allow delete: if isAdmin();
+    }
+
+    // ELEVES - Staff peut gerer, parents/eleves lecture limitee
+    match /eleves/{eleveId} {
+      // Lecture: staff complet, parent si enfant, eleve si lui-meme
+      allow read: if isStaff() ||
+        (isParent() && eleveId in getUserData().enfantsIds) ||
+        (isEleve() && getUserData().eleveId == eleveId);
+
+      // Ecriture: admin et gestionnaire uniquement
+      allow write: if isAdminOrGestionnaire();
+    }
+
+    // PROFESSEURS - Staff peut gerer
+    match /professeurs/{profId} {
+      allow read: if isStaff() ||
+        (isProf() && getUserData().professeurId == profId);
+      allow write: if isAdminOrGestionnaire();
+    }
+
+    // COURS - Staff peut gerer, eleves/parents lecture
+    match /cours/{coursId} {
+      allow read: if signedIn();
+      allow write: if isStaff();
+    }
+
+    // PRESENCES - Staff peut gerer, eleves/parents lecture limitee
+    match /presences/{presenceId} {
+      allow read: if signedIn();
+      // Profs peuvent marquer les presences, admin/gestionnaire peuvent modifier
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isAdminOrGestionnaire();
+    }
+
+    // PAIEMENTS - Donnees sensibles, acces tres restreint
+    match /paiements/{paiementId} {
+      // Lecture: admin/gestionnaire complet, parent si son enfant
+      allow read: if isAdminOrGestionnaire() ||
+        (isParent() && resource.data.eleveId in getUserData().enfantsIds);
+
+      // Ecriture: admin et gestionnaire uniquement
+      allow write: if isAdminOrGestionnaire();
+    }
+
+    // DISCIPLINE - Staff peut gerer
     match /discipline/{docId} {
-      allow read, write: if signedIn();
+      allow read: if isStaff() ||
+        (isParent() && resource.data.eleveId in getUserData().enfantsIds) ||
+        (isEleve() && resource.data.eleveId == getUserData().eleveId);
+      allow write: if isStaff();
     }
 
+    // DISCIPLINE LOGS - Admin/gestionnaire uniquement
     match /discipline_logs/{docId} {
-      allow read, write: if signedIn();
+      allow read, write: if isAdminOrGestionnaire();
     }
 
+    // CAHIER DE TEXTE - Staff peut gerer, tous peuvent lire
     match /cahier/{docId} {
-      allow read, write: if signedIn();
+      allow read: if signedIn();
+      allow write: if isStaff();
     }
 
-    match /messages/{docId} {
-      allow read, write: if signedIn();
+    // MESSAGES - Tous peuvent lire/ecrire leurs messages
+    match /messages/{messageId} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      // Seul l'auteur ou admin peut modifier/supprimer
+      allow update, delete: if isAdmin() || resource.data.senderId == request.auth.uid;
     }
 
-    match /alerts/{docId} {
-      allow read, write: if signedIn();
+    // ALERTS - Admin/gestionnaire peuvent gerer, tous peuvent lire
+    match /alerts/{alertId} {
+      allow read: if signedIn();
+      allow write: if isAdminOrGestionnaire();
     }
 
-    match /creneaux/{docId} {
-      allow read, write: if signedIn();
+    // CRENEAUX - Staff peut gerer, tous peuvent lire
+    match /creneaux/{creneauId} {
+      allow read: if signedIn();
+      allow write: if isAdminOrGestionnaire();
     }
 
-    match /classes/{docId} {
-      allow read, write: if signedIn();
+    // CLASSES - Staff peut gerer, tous peuvent lire
+    match /classes/{classeId} {
+      allow read: if signedIn();
+      allow write: if isAdminOrGestionnaire();
     }
 
+    // CORBEILLE - Admin uniquement
     match /corbeille/{docId} {
-      allow read, write: if signedIn();
+      allow read, write: if isAdmin();
+    }
+
+    // CONNECTION LOGS - Admin/gestionnaire lecture, systeme ecriture
+    match /connection_logs/{logId} {
+      // Lecture: admin/gestionnaire uniquement
+      allow read: if isAdminOrGestionnaire();
+      // Ecriture: utilisateur connecte peut creer son propre log
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      // Mise a jour: seulement pour ajouter logoutAt sur son propre log
+      allow update: if signedIn() && resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['logoutAt']);
+      // Suppression: admin uniquement
+      allow delete: if isAdmin();
+    }
+
+    // ONLINE USERS - Tous les utilisateurs connectes
+    match /online_users/{userId} {
+      allow read: if isAdminOrGestionnaire();
+      allow write: if signedIn() && request.auth.uid == userId;
     }
   }
 }
