@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, setDoc, addDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendPasswordResetEmail, getAuth } from "firebase/auth";
+import { initializeApp, deleteApp } from "firebase/app";
 import { db, auth } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 interface UserData {
   id: string;
@@ -16,6 +18,7 @@ interface UserData {
 
 export default function Users() {
   const { user: currentUser } = useAuth();
+  const { colors } = useTheme();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -87,23 +90,33 @@ export default function Users() {
       setSaving(true);
       setError("");
 
-      const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
-      const uid = userCredential.user.uid;
+      // Utiliser une app Firebase secondaire pour ne pas deconnecter l'admin actuel
+      const firebaseConfig = auth.app.options;
+      const secondaryApp = initializeApp(firebaseConfig, "secondary-" + Date.now());
+      const secondaryAuth = getAuth(secondaryApp);
 
-      const userRef = doc(db, "users", uid);
-      await setDoc(userRef, {
-        uid: uid,
-        email: form.email,
-        nom: form.nom || "",
-        prenom: form.prenom || "",
-        role: form.role,
-        isActive: true,
-        createdAt: serverTimestamp(),
-      });
+      try {
+        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, form.email, form.password);
+        const uid = userCredential.user.uid;
 
-      setShowModal(false);
-      setForm({ email: "", password: "", nom: "", prenom: "", role: "prof" });
-      await loadUsers();
+        const userRef = doc(db, "users", uid);
+        await setDoc(userRef, {
+          uid: uid,
+          email: form.email,
+          nom: form.nom || "",
+          prenom: form.prenom || "",
+          role: form.role,
+          isActive: true,
+          createdAt: serverTimestamp(),
+        });
+
+        setShowModal(false);
+        setForm({ email: "", password: "", nom: "", prenom: "", role: "prof" });
+        await loadUsers();
+      } finally {
+        // Supprimer l'app secondaire
+        await deleteApp(secondaryApp);
+      }
     } catch (err: unknown) {
       console.error(err);
       if (err instanceof Error) {
@@ -424,30 +437,30 @@ export default function Users() {
       {/* Modal Ajouter */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: "#1e293b", margin: "0 0 24px" }}>Nouvel utilisateur</h2>
+          <div style={{ background: colors.bgCard, borderRadius: 16, padding: 32, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: colors.text, margin: "0 0 24px" }}>Nouvel utilisateur</h2>
             <form onSubmit={handleSubmit}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Prenom</label>
-                  <input type="text" name="prenom" value={form.prenom} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Prenom</label>
+                  <input type="text" name="prenom" value={form.prenom} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Nom</label>
-                  <input type="text" name="nom" value={form.nom} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Nom</label>
+                  <input type="text" name="nom" value={form.nom} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }} />
                 </div>
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Email *</label>
-                <input type="email" name="email" value={form.email} onChange={handleChange} required style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Email *</label>
+                <input type="email" name="email" value={form.email} onChange={handleChange} required style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }} />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Mot de passe *</label>
-                <input type="password" name="password" value={form.password} onChange={handleChange} required minLength={6} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Mot de passe *</label>
+                <input type="password" name="password" value={form.password} onChange={handleChange} required minLength={6} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }} />
               </div>
               <div style={{ marginBottom: 24 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Role</label>
-                <select name="role" value={form.role} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", boxSizing: "border-box" }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Role</label>
+                <select name="role" value={form.role} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }}>
                   <option value="prof">Professeur</option>
                   <option value="gestionnaire">Gestionnaire</option>
                   {isAdmin && <option value="admin">Administrateur</option>}
@@ -455,16 +468,16 @@ export default function Users() {
               </div>
 
               {error && (
-                <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, marginBottom: 16 }}>
-                  <p style={{ fontSize: 14, color: "#dc2626", margin: 0 }}>{error}</p>
+                <div style={{ padding: "12px 16px", background: colors.dangerBg, border: `1px solid ${colors.danger}30`, borderRadius: 10, marginBottom: 16 }}>
+                  <p style={{ fontSize: 14, color: colors.danger, margin: 0 }}>{error}</p>
                 </div>
               )}
 
               <div style={{ display: "flex", gap: 12 }}>
-                <button type="submit" disabled={saving} style={{ flex: 1, padding: "14px", background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+                <button type="submit" disabled={saving} style={{ flex: 1, padding: "14px", background: `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
                   {saving ? "Creation..." : "Creer"}
                 </button>
-                <button type="button" onClick={() => { setShowModal(false); setError(""); }} style={{ flex: 1, padding: "14px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+                <button type="button" onClick={() => { setShowModal(false); setError(""); }} style={{ flex: 1, padding: "14px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
                   Annuler
                 </button>
               </div>
@@ -476,51 +489,51 @@ export default function Users() {
       {/* Modal Modifier */}
       {showEditModal && editingUser && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: "#1e293b", margin: "0 0 8px" }}>Modifier l'utilisateur</h2>
-            <p style={{ fontSize: 14, color: "#64748b", margin: "0 0 24px" }}>{editingUser.email}</p>
+          <div style={{ background: colors.bgCard, borderRadius: 16, padding: 32, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: colors.text, margin: "0 0 8px" }}>Modifier l'utilisateur</h2>
+            <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 24px" }}>{editingUser.email}</p>
             <form onSubmit={handleEditSubmit}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Prenom</label>
-                  <input type="text" name="prenom" value={editForm.prenom} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Prenom</label>
+                  <input type="text" name="prenom" value={editForm.prenom} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Nom</label>
-                  <input type="text" name="nom" value={editForm.nom} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Nom</label>
+                  <input type="text" name="nom" value={editForm.nom} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }} />
                 </div>
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Role</label>
-                <select name="role" value={editForm.role} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", boxSizing: "border-box" }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Role</label>
+                <select name="role" value={editForm.role} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }}>
                   <option value="prof">Professeur</option>
                   <option value="gestionnaire">Gestionnaire</option>
                   {isAdmin && <option value="admin">Administrateur</option>}
                 </select>
               </div>
 
-              <div style={{ padding: 16, background: "#f8fafc", borderRadius: 10, marginBottom: 24 }}>
-                <p style={{ fontSize: 13, fontWeight: 500, color: "#64748b", margin: "0 0 12px" }}>Mot de passe</p>
+              <div style={{ padding: 16, background: colors.bgSecondary, borderRadius: 10, marginBottom: 24 }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: colors.textMuted, margin: "0 0 12px" }}>Mot de passe</p>
                 <button
                   type="button"
                   onClick={() => sendPasswordReset(editingUser.email)}
-                  style={{ width: "100%", padding: "12px", background: "#fef3c7", color: "#d97706", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+                  style={{ width: "100%", padding: "12px", background: colors.warningBg, color: colors.warning, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
                 >
                   Envoyer email de reinitialisation
                 </button>
               </div>
 
               {error && (
-                <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, marginBottom: 16 }}>
-                  <p style={{ fontSize: 14, color: "#dc2626", margin: 0 }}>{error}</p>
+                <div style={{ padding: "12px 16px", background: colors.dangerBg, border: `1px solid ${colors.danger}30`, borderRadius: 10, marginBottom: 16 }}>
+                  <p style={{ fontSize: 14, color: colors.danger, margin: 0 }}>{error}</p>
                 </div>
               )}
 
               <div style={{ display: "flex", gap: 12 }}>
-                <button type="submit" disabled={saving} style={{ flex: 1, padding: "14px", background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+                <button type="submit" disabled={saving} style={{ flex: 1, padding: "14px", background: `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
                   {saving ? "Enregistrement..." : "Enregistrer"}
                 </button>
-                <button type="button" onClick={() => { setShowEditModal(false); setEditingUser(null); setError(""); }} style={{ flex: 1, padding: "14px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+                <button type="button" onClick={() => { setShowEditModal(false); setEditingUser(null); setError(""); }} style={{ flex: 1, padding: "14px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
                   Annuler
                 </button>
               </div>

@@ -18,7 +18,8 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: improve parent validation in élève creation form\n\n- Add frontend validation to require at least one parent with name and phone\n- Improve validator error messages to be more descriptive\n- Fix issue where empty parent fields could cause creation to fail silently\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit:*)",
       "Bash(firebase deploy:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm install:*)"
     ]
   }
 }
