@@ -144,22 +144,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || (user.role !== "admin" && user.role !== "gestionnaire")) return;
 
-    const q = query(collection(db, "users"), where("isActive", "==", true));
-    const unsub = onSnapshot(q, (snap) => {
-      const users: OnlineUser[] = snap.docs.map((d) => {
-        const data = d.data();
-        const lastSeen = data.lastSeen?.toDate?.() || new Date(0);
-        const isOnline = Date.now() - lastSeen.getTime() < 5 * 60 * 1000; // 5 minutes
-        return {
-          id: d.id,
-          email: data.email || "",
-          role: migrateRole(data.role),
-          nom: data.nom,
-          prenom: data.prenom,
-          lastSeen,
-          isOnline,
-        };
-      });
+    // Ecouter TOUS les utilisateurs actifs
+    const unsub = onSnapshot(collection(db, "users"), (snap) => {
+      const users: OnlineUser[] = snap.docs
+        .filter((d) => d.data().isActive !== false)
+        .map((d) => {
+          const data = d.data();
+          const lastSeen = data.lastSeen?.toDate?.() || new Date(0);
+          // Considere en ligne si actif dans les 3 dernieres minutes
+          const isOnline = Date.now() - lastSeen.getTime() < 3 * 60 * 1000;
+          return {
+            id: d.id,
+            email: data.email || "",
+            role: migrateRole(data.role),
+            nom: data.nom,
+            prenom: data.prenom,
+            lastSeen,
+            isOnline,
+          };
+        });
       setOnlineUsers(users);
     });
 
@@ -206,15 +209,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const updateOnlineStatus = async () => {
       try {
         const userRef = doc(db, "users", user.uid);
-        await updateDoc(userRef, { lastSeen: serverTimestamp() });
+        // Utiliser setDoc avec merge pour creer le champ s'il n'existe pas
+        await setDoc(userRef, { lastSeen: serverTimestamp() }, { merge: true });
       } catch (err) {
         console.error("Erreur mise a jour statut:", err);
       }
     };
 
-    // Mettre a jour immediatement puis toutes les 2 minutes
+    // Mettre a jour immediatement puis toutes les minutes
     updateOnlineStatus();
-    const interval = setInterval(updateOnlineStatus, 2 * 60 * 1000);
+    const interval = setInterval(updateOnlineStatus, 60 * 1000); // Chaque minute
 
     return () => clearInterval(interval);
   }, [user?.uid]);

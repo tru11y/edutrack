@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { colors } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,7 @@ export default function LoginPage() {
         position: "relative",
         width: "100%",
         maxWidth: 420,
-        background: "#fff",
+        background: colors.bgCard,
         borderRadius: 24,
         boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
         overflow: "hidden"
@@ -52,7 +54,7 @@ export default function LoginPage() {
         <div style={{
           padding: "40px 40px 32px",
           textAlign: "center",
-          borderBottom: "1px solid #f0f0f0"
+          borderBottom: `1px solid ${colors.border}`
         }}>
           <div style={{
             width: 64,
@@ -70,7 +72,7 @@ export default function LoginPage() {
           <h1 style={{
             fontSize: 28,
             fontWeight: 700,
-            color: "#1d1d1f",
+            color: colors.text,
             margin: 0,
             letterSpacing: "-0.5px"
           }}>
@@ -78,7 +80,7 @@ export default function LoginPage() {
           </h1>
           <p style={{
             fontSize: 15,
-            color: "#86868b",
+            color: colors.textMuted,
             marginTop: 8
           }}>
             Gestion scolaire intelligente
@@ -90,16 +92,16 @@ export default function LoginPage() {
           {error && (
             <div style={{
               padding: "12px 16px",
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
+              background: colors.dangerBg,
+              border: `1px solid ${colors.danger}30`,
               borderRadius: 12,
               marginBottom: 24,
               display: "flex",
               alignItems: "center",
               gap: 10
             }}>
-              <span style={{ fontSize: 18 }}>!</span>
-              <p style={{ fontSize: 14, color: "#dc2626", margin: 0 }}>{error}</p>
+              <span style={{ fontSize: 18, color: colors.danger }}>!</span>
+              <p style={{ fontSize: 14, color: colors.danger, margin: 0 }}>{error}</p>
             </div>
           )}
 
@@ -108,7 +110,7 @@ export default function LoginPage() {
               display: "block",
               fontSize: 13,
               fontWeight: 600,
-              color: "#1d1d1f",
+              color: colors.text,
               marginBottom: 8
             }}>
               Adresse email
@@ -123,18 +125,20 @@ export default function LoginPage() {
                 width: "100%",
                 padding: "14px 16px",
                 fontSize: 15,
-                border: "2px solid #e5e5e5",
+                border: `2px solid ${colors.border}`,
                 borderRadius: 12,
                 outline: "none",
                 transition: "border-color 0.2s, box-shadow 0.2s",
-                boxSizing: "border-box"
+                boxSizing: "border-box",
+                background: colors.bgInput,
+                color: colors.text
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = "#667eea";
                 e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = "#e5e5e5";
+                e.target.style.borderColor = colors.border;
                 e.target.style.boxShadow = "none";
               }}
             />
@@ -145,7 +149,7 @@ export default function LoginPage() {
               display: "block",
               fontSize: 13,
               fontWeight: 600,
-              color: "#1d1d1f",
+              color: colors.text,
               marginBottom: 8
             }}>
               Mot de passe
@@ -160,18 +164,20 @@ export default function LoginPage() {
                 width: "100%",
                 padding: "14px 16px",
                 fontSize: 15,
-                border: "2px solid #e5e5e5",
+                border: `2px solid ${colors.border}`,
                 borderRadius: 12,
                 outline: "none",
                 transition: "border-color 0.2s, box-shadow 0.2s",
-                boxSizing: "border-box"
+                boxSizing: "border-box",
+                background: colors.bgInput,
+                color: colors.text
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = "#667eea";
                 e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = "#e5e5e5";
+                e.target.style.borderColor = colors.border;
                 e.target.style.boxShadow = "none";
               }}
             />
@@ -227,11 +233,11 @@ export default function LoginPage() {
         {/* Footer */}
         <div style={{
           padding: "20px 40px",
-          background: "#f9fafb",
-          borderTop: "1px solid #f0f0f0",
+          background: colors.bgSecondary,
+          borderTop: `1px solid ${colors.border}`,
           textAlign: "center"
         }}>
-          <p style={{ fontSize: 13, color: "#86868b", margin: 0 }}>
+          <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>
             Plateforme sécurisée pour votre établissement
           </p>
         </div>
