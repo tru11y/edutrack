@@ -25,6 +25,9 @@ const app = initializeApp(firebaseConfig);
    EXPORTS
 ========================= */
 
+// 🔥 APP (pour Cloud Functions)
+export { app };
+
 // 🔐 AUTH
 export const auth = getAuth(app);
 
