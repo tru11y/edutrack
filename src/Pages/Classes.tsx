@@ -1,24 +1,52 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { collection, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { getAllEleves } from "../modules/eleves/eleve.service";
+import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 import type { Eleve } from "../modules/eleves/eleve.types";
+
+interface ScheduleSlot {
+  jour: "lundi" | "mardi" | "mercredi" | "jeudi" | "vendredi" | "samedi";
+  heureDebut: string;
+  heureFin: string;
+  matiere: string;
+  profId?: string;
+  profNom?: string;
+}
 
 interface ClasseData {
   id?: string;
   nom: string;
   niveau?: string;
   description?: string;
+  emploiDuTemps?: ScheduleSlot[];
 }
 
 export default function Classes() {
+  const { colors } = useTheme();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin" || user?.role === "gestionnaire";
   const [classes, setClasses] = useState<ClasseData[]>([]);
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [newClasse, setNewClasse] = useState({ nom: "", niveau: "", description: "" });
   const [saving, setSaving] = useState(false);
+
+  // Emploi du temps state
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedClasse, setSelectedClasse] = useState<ClasseData | null>(null);
+  const [newSlot, setNewSlot] = useState<ScheduleSlot>({
+    jour: "lundi",
+    heureDebut: "08:00",
+    heureFin: "09:00",
+    matiere: "",
+    profNom: ""
+  });
+
+  const jours = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const;
 
   const loadData = async () => {
     try {
@@ -119,6 +147,59 @@ export default function Classes() {
     }
   };
 
+  // Gestion de l'emploi du temps
+  const openScheduleModal = (classe: ClasseData) => {
+    setSelectedClasse(classe);
+    setShowScheduleModal(true);
+  };
+
+  const handleAddSlot = async () => {
+    if (!selectedClasse?.id || !newSlot.matiere.trim()) return;
+
+    try {
+      const currentSchedule = selectedClasse.emploiDuTemps || [];
+      const updatedSchedule = [...currentSchedule, { ...newSlot, matiere: newSlot.matiere.trim(), profNom: newSlot.profNom?.trim() || "" }];
+
+      await updateDoc(doc(db, "classes", selectedClasse.id), {
+        emploiDuTemps: updatedSchedule
+      });
+
+      setNewSlot({ jour: "lundi", heureDebut: "08:00", heureFin: "09:00", matiere: "", profNom: "" });
+      await loadData();
+      // Update selectedClasse with new data
+      setSelectedClasse(prev => prev ? { ...prev, emploiDuTemps: updatedSchedule } : null);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'ajout du cours");
+    }
+  };
+
+  const handleRemoveSlot = async (index: number) => {
+    if (!selectedClasse?.id) return;
+
+    try {
+      const currentSchedule = selectedClasse.emploiDuTemps || [];
+      const updatedSchedule = currentSchedule.filter((_, i) => i !== index);
+
+      await updateDoc(doc(db, "classes", selectedClasse.id), {
+        emploiDuTemps: updatedSchedule
+      });
+
+      await loadData();
+      setSelectedClasse(prev => prev ? { ...prev, emploiDuTemps: updatedSchedule } : null);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la suppression du cours");
+    }
+  };
+
+  // Obtenir les cours d'aujourd'hui pour une classe
+  const getTodaysCourses = (classe: ClasseData): ScheduleSlot[] => {
+    if (!classe.emploiDuTemps) return [];
+    const today = new Date().toLocaleDateString("fr-FR", { weekday: "long" }).toLowerCase();
+    return classe.emploiDuTemps.filter(slot => slot.jour === today);
+  };
+
   const totalEleves = eleves.length;
   const totalGarcons = eleves.filter((e) => e.sexe === "M").length;
   const totalFilles = eleves.filter((e) => e.sexe === "F").length;
@@ -127,8 +208,8 @@ export default function Classes() {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement...</p>
+          <div style={{ width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.primary, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -139,13 +220,13 @@ export default function Classes() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <Link to="/eleves" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#64748b", textDecoration: "none", fontSize: 14, marginBottom: 16 }}>
+        <Link to="/eleves" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: colors.textMuted, textDecoration: "none", fontSize: 14, marginBottom: 16 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Retour aux eleves
         </Link>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "center", color: "#6366f1" }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.primaryBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
                 <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
@@ -154,43 +235,45 @@ export default function Classes() {
               </svg>
             </div>
             <div>
-              <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>Classes</h1>
-              <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>{classes.length} classe{classes.length > 1 ? "s" : ""}</p>
+              <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>Classes</h1>
+              <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{classes.length} classe{classes.length > 1 ? "s" : ""}</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            style={{
-              padding: "12px 20px",
-              background: showForm ? "#f1f5f9" : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-              color: showForm ? "#64748b" : "#fff",
-              border: "none",
-              borderRadius: 10,
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 8
-            }}
-          >
-            {showForm ? (
-              <>Annuler</>
-            ) : (
-              <>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-                Nouvelle classe
-              </>
-            )}
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              style={{
+                padding: "12px 20px",
+                background: showForm ? colors.bgSecondary : `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
+                color: showForm ? colors.textMuted : "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 8
+              }}
+            >
+              {showForm ? (
+                <>Annuler</>
+              ) : (
+                <>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                  Nouvelle classe
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Stats globales */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
-        <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e2e8f0" }}>
-          <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 8px" }}>Total eleves</p>
-          <p style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>{totalEleves}</p>
+        <div style={{ background: colors.bgCard, borderRadius: 12, padding: 20, border: `1px solid ${colors.border}` }}>
+          <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 8px" }}>Total eleves</p>
+          <p style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>{totalEleves}</p>
         </div>
         <div style={{ background: "#dbeafe", borderRadius: 12, padding: 20, border: "1px solid #93c5fd" }}>
           <p style={{ fontSize: 13, color: "#3b82f6", margin: "0 0 8px" }}>Garcons</p>
@@ -204,12 +287,12 @@ export default function Classes() {
 
       {/* Formulaire d'ajout */}
       {showForm && (
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 24, marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: "#1e293b", margin: "0 0 20px" }}>Ajouter une classe</h2>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginBottom: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>Ajouter une classe</h2>
           <form onSubmit={handleAddClasse}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr", gap: 16, marginBottom: 20 }}>
               <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
                   Nom de la classe *
                 </label>
                 <input
@@ -218,11 +301,11 @@ export default function Classes() {
                   onChange={(e) => setNewClasse({ ...newClasse, nom: e.target.value })}
                   placeholder="Ex: CP, CE1, 6eme..."
                   required
-                  style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }}
                 />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
                   Niveau
                 </label>
                 <input
@@ -230,11 +313,11 @@ export default function Classes() {
                   value={newClasse.niveau}
                   onChange={(e) => setNewClasse({ ...newClasse, niveau: e.target.value })}
                   placeholder="Ex: Primaire, College..."
-                  style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }}
                 />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
                   Description
                 </label>
                 <input
@@ -242,7 +325,7 @@ export default function Classes() {
                   value={newClasse.description}
                   onChange={(e) => setNewClasse({ ...newClasse, description: e.target.value })}
                   placeholder="Description optionnelle"
-                  style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }}
                 />
               </div>
             </div>
@@ -251,8 +334,8 @@ export default function Classes() {
               disabled={saving || !newClasse.nom.trim()}
               style={{
                 padding: "12px 24px",
-                background: saving || !newClasse.nom.trim() ? "#e2e8f0" : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                color: saving || !newClasse.nom.trim() ? "#94a3b8" : "#fff",
+                background: saving || !newClasse.nom.trim() ? colors.border : `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
+                color: saving || !newClasse.nom.trim() ? colors.textMuted : "#fff",
                 border: "none",
                 borderRadius: 10,
                 fontSize: 14,
@@ -268,21 +351,22 @@ export default function Classes() {
 
       {/* Liste des classes */}
       {classes.length === 0 ? (
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 60, textAlign: "center" }}>
-          <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Aucune classe</p>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 60, textAlign: "center" }}>
+          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Aucune classe</p>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
           {classes.map((classe) => {
             const count = getElevesCount(classe.nom);
             const { garcons, filles } = getElevesByGender(classe.nom);
+            const todaysCourses = getTodaysCourses(classe);
             return (
               <div
                 key={classe.id || classe.nom}
                 style={{
-                  background: "#fff",
+                  background: colors.bgCard,
                   borderRadius: 16,
-                  border: "1px solid #e2e8f0",
+                  border: `1px solid ${colors.border}`,
                   overflow: "hidden",
                   transition: "box-shadow 0.2s"
                 }}
@@ -294,7 +378,7 @@ export default function Classes() {
                         width: 48,
                         height: 48,
                         borderRadius: 12,
-                        background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                        background: `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
                         color: "#fff",
                         display: "flex",
                         alignItems: "center",
@@ -305,40 +389,65 @@ export default function Classes() {
                         {classe.nom.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p style={{ margin: 0, fontWeight: 600, fontSize: 18, color: "#1e293b" }}>{classe.nom}</p>
+                        <p style={{ margin: 0, fontWeight: 600, fontSize: 18, color: colors.text }}>{classe.nom}</p>
                         {classe.niveau && (
-                          <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>{classe.niveau}</p>
+                          <p style={{ margin: 0, fontSize: 12, color: colors.textMuted }}>{classe.niveau}</p>
                         )}
                       </div>
                     </div>
-                    {count === 0 && classe.id && (
-                      <button
-                        onClick={() => handleDeleteClasse(classe)}
-                        title="Supprimer"
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 8,
-                          background: "#fef2f2",
-                          border: "none",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#ef4444"
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M2 4H14M5.33 4V2.67C5.33 2.3 5.63 2 6 2H10C10.37 2 10.67 2.3 10.67 2.67V4M6.67 7.33V11.33M9.33 7.33V11.33M3.33 4L4 13.33C4 13.7 4.3 14 4.67 14H11.33C11.7 14 12 13.7 12 13.33L12.67 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                    )}
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {classe.id && isAdmin && (
+                        <button
+                          onClick={() => openScheduleModal(classe)}
+                          title="Emploi du temps"
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 8,
+                            background: colors.primaryBg,
+                            border: "none",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: colors.primary
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                            <path d="M2 6H14M5 1V4M11 1V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                        </button>
+                      )}
+                      {count === 0 && classe.id && isAdmin && (
+                        <button
+                          onClick={() => handleDeleteClasse(classe)}
+                          title="Supprimer"
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 8,
+                            background: colors.dangerBg,
+                            border: "none",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: colors.danger
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M2 4H14M5.33 4V2.67C5.33 2.3 5.63 2 6 2H10C10.37 2 10.67 2.3 10.67 2.67V4M6.67 7.33V11.33M9.33 7.33V11.33M3.33 4L4 13.33C4 13.7 4.3 14 4.67 14H11.33C11.7 14 12 13.7 12 13.33L12.67 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-                    <div style={{ background: "#f8fafc", borderRadius: 8, padding: 12, textAlign: "center" }}>
-                      <p style={{ fontSize: 20, fontWeight: 700, color: "#1e293b", margin: 0 }}>{count}</p>
-                      <p style={{ fontSize: 11, color: "#64748b", margin: "4px 0 0" }}>Eleves</p>
+                    <div style={{ background: colors.bgSecondary, borderRadius: 8, padding: 12, textAlign: "center" }}>
+                      <p style={{ fontSize: 20, fontWeight: 700, color: colors.text, margin: 0 }}>{count}</p>
+                      <p style={{ fontSize: 11, color: colors.textMuted, margin: "4px 0 0" }}>Eleves</p>
                     </div>
                     <div style={{ background: "#dbeafe", borderRadius: 8, padding: 12, textAlign: "center" }}>
                       <p style={{ fontSize: 20, fontWeight: 700, color: "#3b82f6", margin: 0 }}>{garcons}</p>
@@ -350,37 +459,253 @@ export default function Classes() {
                     </div>
                   </div>
 
+                  {/* Cours aujourd'hui */}
+                  {todaysCourses.length > 0 && (
+                    <div style={{ marginTop: 16, padding: 12, background: colors.successBg, borderRadius: 10, border: `1px solid ${colors.success}30` }}>
+                      <p style={{ fontSize: 11, fontWeight: 600, color: colors.success, margin: "0 0 8px", textTransform: "uppercase" }}>
+                        Cours aujourd'hui
+                      </p>
+                      {todaysCourses.map((slot, idx) => (
+                        <div key={idx} style={{ fontSize: 12, color: colors.text, marginBottom: idx < todaysCourses.length - 1 ? 4 : 0 }}>
+                          <span style={{ fontWeight: 500 }}>{slot.heureDebut}-{slot.heureFin}</span>: {slot.matiere}
+                          {slot.profNom && <span style={{ color: colors.textMuted }}> ({slot.profNom})</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {classe.description && (
-                    <p style={{ fontSize: 13, color: "#64748b", margin: "16px 0 0", fontStyle: "italic" }}>
+                    <p style={{ fontSize: 13, color: colors.textMuted, margin: "16px 0 0", fontStyle: "italic" }}>
                       {classe.description}
                     </p>
                   )}
                 </div>
 
-                <Link
-                  to={`/eleves?classe=${encodeURIComponent(classe.nom)}`}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    padding: "12px 16px",
-                    background: "#f8fafc",
-                    borderTop: "1px solid #e2e8f0",
-                    color: "#6366f1",
-                    textDecoration: "none",
-                    fontSize: 13,
-                    fontWeight: 500
-                  }}
-                >
-                  Voir les eleves
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </Link>
+                <div style={{ display: "flex", borderTop: `1px solid ${colors.border}` }}>
+                  <Link
+                    to={`/eleves?classe=${encodeURIComponent(classe.nom)}`}
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      padding: "12px 16px",
+                      background: colors.bgSecondary,
+                      color: colors.primary,
+                      textDecoration: "none",
+                      fontSize: 13,
+                      fontWeight: 500
+                    }}
+                  >
+                    Voir les eleves
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </Link>
+                  {classe.id && (
+                    <button
+                      onClick={() => openScheduleModal(classe)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        padding: "12px 16px",
+                        background: colors.bgSecondary,
+                        borderLeft: `1px solid ${colors.border}`,
+                        color: colors.textMuted,
+                        border: "none",
+                        fontSize: 13,
+                        fontWeight: 500,
+                        cursor: "pointer"
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                        <path d="M2 6H14M5 1V4M11 1V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      Emploi
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Modal Emploi du temps */}
+      {showScheduleModal && selectedClasse && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: 20
+        }}>
+          <div style={{
+            background: colors.bgCard,
+            borderRadius: 16,
+            width: "100%",
+            maxWidth: 700,
+            maxHeight: "90vh",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column"
+          }}>
+            {/* Header */}
+            <div style={{ padding: "20px 24px", borderBottom: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: colors.text }}>Emploi du temps - {selectedClasse.nom}</h2>
+                <p style={{ margin: "4px 0 0", fontSize: 13, color: colors.textMuted }}>{selectedClasse.emploiDuTemps?.length || 0} cours programmes</p>
+              </div>
+              <button
+                onClick={() => { setShowScheduleModal(false); setSelectedClasse(null); }}
+                style={{ width: 36, height: 36, borderRadius: 8, background: colors.bgSecondary, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: colors.textMuted }}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M4.5 4.5L13.5 13.5M4.5 13.5L13.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
+              {/* Formulaire ajout */}
+              {isAdmin && (
+                <div style={{ background: colors.bgSecondary, borderRadius: 12, padding: 16, marginBottom: 24 }}>
+                  <p style={{ margin: "0 0 12px", fontSize: 14, fontWeight: 600, color: colors.text }}>Ajouter un cours</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 2fr 2fr", gap: 12, marginBottom: 12 }}>
+                    <select
+                      value={newSlot.jour}
+                      onChange={(e) => setNewSlot({ ...newSlot, jour: e.target.value as typeof newSlot.jour })}
+                      style={{ padding: "10px 12px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 13, background: colors.bgInput, color: colors.text }}
+                    >
+                      {jours.map(j => <option key={j} value={j}>{j.charAt(0).toUpperCase() + j.slice(1)}</option>)}
+                    </select>
+                    <input
+                      type="time"
+                      value={newSlot.heureDebut}
+                      onChange={(e) => setNewSlot({ ...newSlot, heureDebut: e.target.value })}
+                      style={{ padding: "10px 12px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 13, background: colors.bgInput, color: colors.text }}
+                    />
+                    <input
+                      type="time"
+                      value={newSlot.heureFin}
+                      onChange={(e) => setNewSlot({ ...newSlot, heureFin: e.target.value })}
+                      style={{ padding: "10px 12px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 13, background: colors.bgInput, color: colors.text }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Matiere"
+                      value={newSlot.matiere}
+                      onChange={(e) => setNewSlot({ ...newSlot, matiere: e.target.value })}
+                      style={{ padding: "10px 12px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 13, background: colors.bgInput, color: colors.text }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Professeur (optionnel)"
+                      value={newSlot.profNom || ""}
+                      onChange={(e) => setNewSlot({ ...newSlot, profNom: e.target.value })}
+                      style={{ padding: "10px 12px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 13, background: colors.bgInput, color: colors.text }}
+                    />
+                  </div>
+                  <button
+                    onClick={handleAddSlot}
+                    disabled={!newSlot.matiere.trim()}
+                    style={{
+                      padding: "10px 20px",
+                      background: !newSlot.matiere.trim() ? colors.border : `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
+                      color: !newSlot.matiere.trim() ? colors.textMuted : "#fff",
+                      border: "none",
+                      borderRadius: 8,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: !newSlot.matiere.trim() ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    Ajouter
+                  </button>
+                </div>
+              )}
+
+              {/* Liste par jour */}
+              {jours.map(jour => {
+                const slots = (selectedClasse.emploiDuTemps || [])
+                  .map((slot, originalIndex) => ({ ...slot, originalIndex }))
+                  .filter(slot => slot.jour === jour)
+                  .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
+
+                if (slots.length === 0) return null;
+
+                return (
+                  <div key={jour} style={{ marginBottom: 20 }}>
+                    <p style={{ margin: "0 0 10px", fontSize: 14, fontWeight: 600, color: colors.text, textTransform: "capitalize" }}>{jour}</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {slots.map((slot) => (
+                        <div
+                          key={slot.originalIndex}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "12px 16px",
+                            background: colors.bgSecondary,
+                            borderRadius: 10,
+                            border: `1px solid ${colors.border}`
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: colors.primary, minWidth: 100 }}>
+                              {slot.heureDebut} - {slot.heureFin}
+                            </span>
+                            <span style={{ fontSize: 14, fontWeight: 500, color: colors.text }}>{slot.matiere}</span>
+                            {slot.profNom && (
+                              <span style={{ fontSize: 12, color: colors.textMuted }}>({slot.profNom})</span>
+                            )}
+                          </div>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleRemoveSlot(slot.originalIndex)}
+                              style={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: 6,
+                                background: colors.dangerBg,
+                                border: "none",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: colors.danger
+                              }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M3 3L11 11M3 11L11 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {(!selectedClasse.emploiDuTemps || selectedClasse.emploiDuTemps.length === 0) && (
+                <div style={{ textAlign: "center", padding: 40 }}>
+                  <p style={{ color: colors.textMuted, margin: 0 }}>Aucun cours programme</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
