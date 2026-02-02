@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { getAllEleves } from "../modules/eleves/eleve.service";
 import { savePresencesForCours } from "../modules/presences/presence.service";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import type { Eleve } from "../modules/eleves/eleve.types";
 import type { PresenceItem, StatutMetier } from "../modules/presences/presence.types";
 
@@ -19,6 +20,7 @@ interface ElevePresence {
 export default function PresenceAppel() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { colors } = useTheme();
   const isProf = user?.role === "prof";
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,8 +123,8 @@ export default function PresenceAppel() {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#10b981", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement...</p>
+          <div style={{ width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.success, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -132,30 +134,30 @@ export default function PresenceAppel() {
   return (
     <div>
       <div style={{ marginBottom: 32 }}>
-        <Link to="/presences" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#64748b", textDecoration: "none", fontSize: 14, marginBottom: 16 }}>
+        <Link to="/presences" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: colors.textMuted, textDecoration: "none", fontSize: 14, marginBottom: 16 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Retour
         </Link>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>Faire l'appel</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>Faire l'appel</h1>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 24, marginBottom: 24 }}>
+      <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginBottom: 24 }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Date</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }}
             />
           </div>
           <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Classe</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Classe</label>
             <select
               value={classe}
               onChange={(e) => setClasse(e.target.value)}
-              style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, background: colors.bgInput, color: colors.text, boxSizing: "border-box" }}
             >
               <option value="">Selectionner</option>
               {classes.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -166,37 +168,37 @@ export default function PresenceAppel() {
 
       {classe && presences.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 24 }}>
-          <div style={{ background: "#ecfdf5", borderRadius: 12, padding: 16, textAlign: "center" }}>
-            <p style={{ fontSize: 24, fontWeight: 700, color: "#10b981", margin: 0 }}>{stats.presents}</p>
-            <p style={{ fontSize: 12, color: "#059669", margin: "4px 0 0" }}>Presents</p>
+          <div style={{ background: colors.successBg, borderRadius: 12, padding: 16, textAlign: "center" }}>
+            <p style={{ fontSize: 24, fontWeight: 700, color: colors.success, margin: 0 }}>{stats.presents}</p>
+            <p style={{ fontSize: 12, color: colors.success, margin: "4px 0 0" }}>Presents</p>
           </div>
-          <div style={{ background: "#fef2f2", borderRadius: 12, padding: 16, textAlign: "center" }}>
-            <p style={{ fontSize: 24, fontWeight: 700, color: "#ef4444", margin: 0 }}>{stats.absents}</p>
-            <p style={{ fontSize: 12, color: "#dc2626", margin: "4px 0 0" }}>Absents</p>
+          <div style={{ background: colors.dangerBg, borderRadius: 12, padding: 16, textAlign: "center" }}>
+            <p style={{ fontSize: 24, fontWeight: 700, color: colors.danger, margin: 0 }}>{stats.absents}</p>
+            <p style={{ fontSize: 12, color: colors.danger, margin: "4px 0 0" }}>Absents</p>
           </div>
-          <div style={{ background: "#fffbeb", borderRadius: 12, padding: 16, textAlign: "center" }}>
-            <p style={{ fontSize: 24, fontWeight: 700, color: "#f59e0b", margin: 0 }}>{stats.retards}</p>
-            <p style={{ fontSize: 12, color: "#d97706", margin: "4px 0 0" }}>Retards</p>
+          <div style={{ background: colors.warningBg, borderRadius: 12, padding: 16, textAlign: "center" }}>
+            <p style={{ fontSize: 24, fontWeight: 700, color: colors.warning, margin: 0 }}>{stats.retards}</p>
+            <p style={{ fontSize: 12, color: colors.warning, margin: "4px 0 0" }}>Retards</p>
           </div>
-          <div style={{ background: "#ecfdf5", borderRadius: 12, padding: 16, textAlign: "center", border: "2px solid #10b981" }}>
-            <p style={{ fontSize: 24, fontWeight: 700, color: "#10b981", margin: 0 }}>{stats.autorises}</p>
-            <p style={{ fontSize: 12, color: "#059669", margin: "4px 0 0" }}>Autorises</p>
+          <div style={{ background: colors.successBg, borderRadius: 12, padding: 16, textAlign: "center", border: `2px solid ${colors.success}` }}>
+            <p style={{ fontSize: 24, fontWeight: 700, color: colors.success, margin: 0 }}>{stats.autorises}</p>
+            <p style={{ fontSize: 12, color: colors.success, margin: "4px 0 0" }}>Autorises</p>
           </div>
-          <div style={{ background: "#fef2f2", borderRadius: 12, padding: 16, textAlign: "center", border: "2px solid #ef4444" }}>
-            <p style={{ fontSize: 24, fontWeight: 700, color: "#ef4444", margin: 0 }}>{stats.refuses}</p>
-            <p style={{ fontSize: 12, color: "#dc2626", margin: "4px 0 0" }}>Refuses</p>
+          <div style={{ background: colors.dangerBg, borderRadius: 12, padding: 16, textAlign: "center", border: `2px solid ${colors.danger}` }}>
+            <p style={{ fontSize: 24, fontWeight: 700, color: colors.danger, margin: 0 }}>{stats.refuses}</p>
+            <p style={{ fontSize: 12, color: colors.danger, margin: "4px 0 0" }}>Refuses</p>
           </div>
         </div>
       )}
 
       {classe && presences.length > 0 ? (
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
-            <p style={{ margin: 0, fontWeight: 600, color: "#1e293b" }}>{presences.length} eleve{presences.length > 1 ? "s" : ""}</p>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, overflow: "hidden" }}>
+          <div style={{ padding: "16px 20px", borderBottom: `1px solid ${colors.border}`, background: colors.bgSecondary }}>
+            <p style={{ margin: 0, fontWeight: 600, color: colors.text }}>{presences.length} eleve{presences.length > 1 ? "s" : ""}</p>
           </div>
           <div style={{ maxHeight: 500, overflowY: "auto" }}>
             {presences.map((p) => (
-              <div key={p.eleveId} style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div key={p.eleveId} style={{ padding: "16px 20px", borderBottom: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   {/* Point vert/rouge pour autorise/refuse */}
                   <button
@@ -207,10 +209,10 @@ export default function PresenceAppel() {
                       width: 16,
                       height: 16,
                       borderRadius: "50%",
-                      background: p.statutMetier === "autorise" ? "#10b981" : "#ef4444",
+                      background: p.statutMetier === "autorise" ? colors.success : colors.danger,
                       border: "none",
                       cursor: "pointer",
-                      boxShadow: `0 0 0 3px ${p.statutMetier === "autorise" ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"}`,
+                      boxShadow: `0 0 0 3px ${p.statutMetier === "autorise" ? `${colors.success}30` : `${colors.danger}30`}`,
                       transition: "all 0.2s"
                     }}
                   />
@@ -228,7 +230,7 @@ export default function PresenceAppel() {
                   }}>
                     {p.eleve.prenom[0]}{!isProf && p.eleve.nom[0]}
                   </div>
-                  <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>
+                  <p style={{ margin: 0, fontWeight: 500, color: colors.text }}>
                     {isProf ? p.eleve.prenom : `${p.eleve.prenom} ${p.eleve.nom}`}
                   </p>
                 </div>
@@ -238,8 +240,8 @@ export default function PresenceAppel() {
                     onClick={() => updateStatut(p.eleveId, "present")}
                     style={{
                       padding: "8px 16px",
-                      background: p.statut === "present" ? "#10b981" : "#f1f5f9",
-                      color: p.statut === "present" ? "#fff" : "#64748b",
+                      background: p.statut === "present" ? colors.success : colors.bgSecondary,
+                      color: p.statut === "present" ? "#fff" : colors.textMuted,
                       border: "none",
                       borderRadius: 8,
                       fontSize: 13,
@@ -254,8 +256,8 @@ export default function PresenceAppel() {
                     onClick={() => updateStatut(p.eleveId, "absent")}
                     style={{
                       padding: "8px 16px",
-                      background: p.statut === "absent" ? "#ef4444" : "#f1f5f9",
-                      color: p.statut === "absent" ? "#fff" : "#64748b",
+                      background: p.statut === "absent" ? colors.danger : colors.bgSecondary,
+                      color: p.statut === "absent" ? "#fff" : colors.textMuted,
                       border: "none",
                       borderRadius: 8,
                       fontSize: 13,
@@ -270,8 +272,8 @@ export default function PresenceAppel() {
                     onClick={() => updateStatut(p.eleveId, "retard")}
                     style={{
                       padding: "8px 16px",
-                      background: p.statut === "retard" ? "#f59e0b" : "#f1f5f9",
-                      color: p.statut === "retard" ? "#fff" : "#64748b",
+                      background: p.statut === "retard" ? colors.warning : colors.bgSecondary,
+                      color: p.statut === "retard" ? "#fff" : colors.textMuted,
                       border: "none",
                       borderRadius: 8,
                       fontSize: 13,
@@ -285,14 +287,14 @@ export default function PresenceAppel() {
               </div>
             ))}
           </div>
-          <div style={{ padding: "16px 20px", borderTop: "1px solid #e2e8f0", background: "#f8fafc" }}>
+          <div style={{ padding: "16px 20px", borderTop: `1px solid ${colors.border}`, background: colors.bgSecondary }}>
             <button
               onClick={handleSubmit}
               disabled={saving}
               style={{
                 width: "100%",
                 padding: "14px 24px",
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                background: `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)`,
                 color: "#fff",
                 border: "none",
                 borderRadius: 10,
@@ -307,8 +309,8 @@ export default function PresenceAppel() {
           </div>
         </div>
       ) : (
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 60, textAlign: "center" }}>
-          <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>{classe ? "Aucun eleve actif" : "Selectionnez une classe"}</p>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 60, textAlign: "center" }}>
+          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{classe ? "Aucun eleve actif" : "Selectionnez une classe"}</p>
         </div>
       )}
     </div>
