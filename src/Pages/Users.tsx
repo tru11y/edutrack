@@ -48,6 +48,7 @@ export default function Users() {
     prenom: "",
     role: "prof" as "admin" | "gestionnaire" | "prof",
     newPassword: "",
+    newEmail: "",
     classesEnseignees: [] as string[],
   });
   const [availableClasses, setAvailableClasses] = useState<ClasseData[]>([]);
@@ -169,6 +170,7 @@ export default function Users() {
       prenom: user.prenom || "",
       role: user.role,
       newPassword: "",
+      newEmail: "",
       classesEnseignees: user.classesEnseignees || [],
     });
     setError("");
@@ -185,6 +187,7 @@ export default function Users() {
 
       const userRef = doc(db, "users", editingUser.id);
       const updateData: Record<string, unknown> = {
+        email: editForm.email,
         nom: editForm.nom,
         prenom: editForm.prenom,
         role: editForm.role,
@@ -196,14 +199,6 @@ export default function Users() {
       }
 
       await updateDoc(userRef, updateData);
-
-      // Si un nouveau mot de passe est defini, on ne peut pas le changer directement
-      // car Firebase Admin SDK est necessaire. On affiche un message.
-      if (editForm.newPassword) {
-        setError("Le mot de passe ne peut etre modifie directement. Utilisez 'Envoyer email de reinitialisation'.");
-        setSaving(false);
-        return;
-      }
 
       setShowEditModal(false);
       setEditingUser(null);
@@ -237,6 +232,72 @@ export default function Users() {
       }
       setError(errorMsg);
       setTimeout(() => setError(""), 5000);
+    }
+  };
+
+  const recreateUserWithNewEmail = async (user: UserData, newEmail: string, newPassword: string) => {
+    if (!newEmail || !newPassword || newPassword.length < 6) {
+      setError("Email et mot de passe (min. 6 caracteres) obligatoires");
+      return;
+    }
+
+    if (!window.confirm(`Recreer le compte avec le nouvel email ${newEmail} ?\n\nL'utilisateur devra utiliser ce nouvel email et mot de passe pour se connecter.\nL'ancien acces (${user.email}) sera desactive.`)) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+
+      // Creer un nouveau compte Firebase Auth avec le nouvel email
+      const firebaseConfig = auth.app.options;
+      const secondaryApp = initializeApp(firebaseConfig, "recreate-" + Date.now());
+      const secondaryAuth = getAuth(secondaryApp);
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, newEmail, newPassword);
+        const newUid = userCredential.user.uid;
+
+        // Creer le nouveau document Firestore
+        await setDoc(doc(db, "users", newUid), {
+          uid: newUid,
+          email: newEmail,
+          nom: user.nom || "",
+          prenom: user.prenom || "",
+          role: user.role,
+          isActive: true,
+          classesEnseignees: user.classesEnseignees || [],
+          createdAt: serverTimestamp(),
+          migratedFrom: user.email,
+        });
+
+        // Desactiver l'ancien compte (on ne peut pas le supprimer de Firebase Auth sans Admin SDK)
+        await updateDoc(doc(db, "users", user.id), {
+          isActive: false,
+          migratedTo: newEmail,
+          migratedAt: serverTimestamp(),
+        });
+
+        setSuccessMessage(`Compte recree avec succes!\n\nNouvel email: ${newEmail}\nMot de passe: celui que vous avez defini\n\nCommuniquez ces informations a l'utilisateur.`);
+        setShowEditModal(false);
+        setEditingUser(null);
+        await loadUsers();
+      } finally {
+        await deleteApp(secondaryApp);
+      }
+    } catch (err: unknown) {
+      console.error("Erreur recreation compte:", err);
+      if (err instanceof Error) {
+        if (err.message.includes("email-already-in-use")) {
+          setError("Cet email est deja utilise");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("Erreur lors de la recreation du compte");
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -566,9 +627,13 @@ export default function Users() {
       {showEditModal && editingUser && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
           <div style={{ background: colors.bgCard, borderRadius: 16, padding: 32, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: colors.text, margin: "0 0 8px" }}>Modifier l'utilisateur</h2>
-            <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 24px" }}>{editingUser.email}</p>
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: colors.text, margin: "0 0 24px" }}>Modifier l'utilisateur</h2>
             <form onSubmit={handleEditSubmit}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Email</label>
+                <input type="email" name="email" value={editForm.email} onChange={handleEditChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }} />
+                <p style={{ fontSize: 11, color: colors.textMuted, margin: "4px 0 0" }}>Note: L'email de connexion Firebase reste inchange</p>
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <div>
                   <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Prenom</label>
@@ -625,14 +690,60 @@ export default function Users() {
                 </div>
               )}
 
-              <div style={{ padding: 16, background: colors.bgSecondary, borderRadius: 10, marginBottom: 24 }}>
+              <div style={{ padding: 16, background: colors.bgSecondary, borderRadius: 10, marginBottom: 16 }}>
                 <p style={{ fontSize: 13, fontWeight: 500, color: colors.textMuted, margin: "0 0 12px" }}>Mot de passe</p>
                 <button
                   type="button"
                   onClick={() => sendPasswordReset(editingUser.email)}
-                  style={{ width: "100%", padding: "12px", background: colors.warningBg, color: colors.warning, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+                  style={{ width: "100%", padding: "12px", background: colors.warningBg, color: colors.warning, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer", marginBottom: 12 }}
                 >
                   Envoyer email de reinitialisation
+                </button>
+                <p style={{ fontSize: 11, color: colors.textMuted, margin: 0 }}>
+                  Note: Fonctionne uniquement si l'utilisateur a un email reel (Gmail, Yahoo, etc.)
+                </p>
+              </div>
+
+              <div style={{ padding: 16, background: colors.primaryBg, borderRadius: 10, marginBottom: 24, border: `1px solid ${colors.primary}30` }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: colors.primary, margin: "0 0 8px" }}>Recreer avec un nouvel email</p>
+                <p style={{ fontSize: 11, color: colors.textMuted, margin: "0 0 12px" }}>
+                  Pour les utilisateurs avec emails @edutrack.com (qui ne recoivent pas les emails de reinitialisation),
+                  vous pouvez recreer leur compte avec un vrai email (Gmail, Yahoo, etc.).
+                </p>
+                <input
+                  type="email"
+                  name="newEmail"
+                  value={editForm.newEmail || ""}
+                  onChange={handleEditChange}
+                  placeholder="Nouvel email (ex: user@gmail.com)"
+                  style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text, marginBottom: 12 }}
+                />
+                <input
+                  type="password"
+                  name="newPassword"
+                  value={editForm.newPassword}
+                  onChange={handleEditChange}
+                  placeholder="Nouveau mot de passe (min. 6 caracteres)"
+                  style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text, marginBottom: 12 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => recreateUserWithNewEmail(editingUser, editForm.newEmail || "", editForm.newPassword)}
+                  disabled={!editForm.newEmail || !editForm.newPassword || editForm.newPassword.length < 6 || saving}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    background: editForm.newEmail && editForm.newPassword && editForm.newPassword.length >= 6 ? colors.primary : colors.border,
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    fontWeight: 500,
+                    cursor: editForm.newEmail && editForm.newPassword && editForm.newPassword.length >= 6 && !saving ? "pointer" : "not-allowed",
+                    opacity: saving ? 0.7 : 1
+                  }}
+                >
+                  {saving ? "Recreation en cours..." : "Recreer le compte"}
                 </button>
               </div>
 
