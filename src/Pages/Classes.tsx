@@ -24,12 +24,20 @@ interface ClasseData {
   emploiDuTemps?: ScheduleSlot[];
 }
 
+interface Matiere {
+  id?: string;
+  nom: string;
+  description?: string;
+  couleur?: string;
+}
+
 export default function Classes() {
   const { colors } = useTheme();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "gestionnaire";
   const [classes, setClasses] = useState<ClasseData[]>([]);
   const [eleves, setEleves] = useState<Eleve[]>([]);
+  const [matieres, setMatieres] = useState<Matiere[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [newClasse, setNewClasse] = useState({ nom: "", niveau: "", description: "" });
@@ -46,6 +54,11 @@ export default function Classes() {
     profNom: ""
   });
 
+  // Matieres state
+  const [showMatieresModal, setShowMatieresModal] = useState(false);
+  const [newMatiere, setNewMatiere] = useState({ nom: "", description: "" });
+  const [editingMatiere, setEditingMatiere] = useState<Matiere | null>(null);
+
   const jours = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const;
 
   const loadData = async () => {
@@ -53,6 +66,11 @@ export default function Classes() {
       // Charger les classes depuis Firestore
       const classesSnap = await getDocs(collection(db, "classes"));
       const classesData = classesSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as ClasseData[];
+
+      // Charger les matieres
+      const matieresSnap = await getDocs(collection(db, "matieres"));
+      const matieresData = matieresSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as Matiere[];
+      setMatieres(matieresData.sort((a, b) => a.nom.localeCompare(b.nom)));
 
       // Charger les eleves
       const elevesData = await getAllEleves();
@@ -200,6 +218,52 @@ export default function Classes() {
     return classe.emploiDuTemps.filter(slot => slot.jour === today);
   };
 
+  // Gestion des matieres
+  const handleAddMatiere = async () => {
+    if (!newMatiere.nom.trim()) return;
+
+    try {
+      await addDoc(collection(db, "matieres"), {
+        nom: newMatiere.nom.trim(),
+        description: newMatiere.description?.trim() || "",
+      });
+      setNewMatiere({ nom: "", description: "" });
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'ajout de la matiere");
+    }
+  };
+
+  const handleUpdateMatiere = async () => {
+    if (!editingMatiere?.id || !editingMatiere.nom.trim()) return;
+
+    try {
+      await updateDoc(doc(db, "matieres", editingMatiere.id), {
+        nom: editingMatiere.nom.trim(),
+        description: editingMatiere.description?.trim() || "",
+      });
+      setEditingMatiere(null);
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la modification");
+    }
+  };
+
+  const handleDeleteMatiere = async (matiere: Matiere) => {
+    if (!matiere.id) return;
+    if (!window.confirm(`Supprimer la matiere "${matiere.nom}" ?`)) return;
+
+    try {
+      await deleteDoc(doc(db, "matieres", matiere.id));
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la suppression");
+    }
+  };
+
   const totalEleves = eleves.length;
   const totalGarcons = eleves.filter((e) => e.sexe === "M").length;
   const totalFilles = eleves.filter((e) => e.sexe === "F").length;
@@ -239,33 +303,59 @@ export default function Classes() {
               <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{classes.length} classe{classes.length > 1 ? "s" : ""}</p>
             </div>
           </div>
-          {isAdmin && (
-            <button
-              onClick={() => setShowForm(!showForm)}
-              style={{
-                padding: "12px 20px",
-                background: showForm ? colors.bgSecondary : `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
-                color: showForm ? colors.textMuted : "#fff",
-                border: "none",
-                borderRadius: 10,
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 8
-              }}
-            >
-              {showForm ? (
-                <>Annuler</>
-              ) : (
-                <>
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-                  Nouvelle classe
-                </>
-              )}
-            </button>
-          )}
+          <div style={{ display: "flex", gap: 12 }}>
+            {isAdmin && (
+              <button
+                onClick={() => setShowMatieresModal(true)}
+                style={{
+                  padding: "12px 20px",
+                  background: colors.warningBg,
+                  color: colors.warning,
+                  border: "none",
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M2.25 3.75H15.75V14.25H2.25V3.75Z" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M6 3.75V14.25M2.25 7.5H15.75" stroke="currentColor" strokeWidth="1.5"/>
+                </svg>
+                Matieres ({matieres.length})
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => setShowForm(!showForm)}
+                style={{
+                  padding: "12px 20px",
+                  background: showForm ? colors.bgSecondary : `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
+                  color: showForm ? colors.textMuted : "#fff",
+                  border: "none",
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8
+                }}
+              >
+                {showForm ? (
+                  <>Annuler</>
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                    Nouvelle classe
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -602,13 +692,16 @@ export default function Classes() {
                       onChange={(e) => setNewSlot({ ...newSlot, heureFin: e.target.value })}
                       style={{ padding: "10px 12px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 13, background: colors.bgInput, color: colors.text }}
                     />
-                    <input
-                      type="text"
-                      placeholder="Matiere"
+                    <select
                       value={newSlot.matiere}
                       onChange={(e) => setNewSlot({ ...newSlot, matiere: e.target.value })}
                       style={{ padding: "10px 12px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 13, background: colors.bgInput, color: colors.text }}
-                    />
+                    >
+                      <option value="">Matiere *</option>
+                      {matieres.map((m) => (
+                        <option key={m.id} value={m.nom}>{m.nom}</option>
+                      ))}
+                    </select>
                     <input
                       type="text"
                       placeholder="Professeur (optionnel)"
@@ -702,6 +795,208 @@ export default function Classes() {
               {(!selectedClasse.emploiDuTemps || selectedClasse.emploiDuTemps.length === 0) && (
                 <div style={{ textAlign: "center", padding: 40 }}>
                   <p style={{ color: colors.textMuted, margin: 0 }}>Aucun cours programme</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Matieres */}
+      {showMatieresModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: 20
+        }}>
+          <div style={{
+            background: colors.bgCard,
+            borderRadius: 16,
+            width: "100%",
+            maxWidth: 500,
+            maxHeight: "90vh",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column"
+          }}>
+            {/* Header */}
+            <div style={{ padding: "20px 24px", borderBottom: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: colors.text }}>Gestion des matieres</h2>
+                <p style={{ margin: "4px 0 0", fontSize: 13, color: colors.textMuted }}>{matieres.length} matiere(s)</p>
+              </div>
+              <button
+                onClick={() => { setShowMatieresModal(false); setEditingMatiere(null); }}
+                style={{ width: 36, height: 36, borderRadius: 8, background: colors.bgSecondary, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: colors.textMuted }}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M4.5 4.5L13.5 13.5M4.5 13.5L13.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
+              {/* Formulaire ajout */}
+              <div style={{ background: colors.bgSecondary, borderRadius: 12, padding: 16, marginBottom: 24 }}>
+                <p style={{ margin: "0 0 12px", fontSize: 14, fontWeight: 600, color: colors.text }}>
+                  {editingMatiere ? "Modifier la matiere" : "Ajouter une matiere"}
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <input
+                    type="text"
+                    placeholder="Nom de la matiere *"
+                    value={editingMatiere ? editingMatiere.nom : newMatiere.nom}
+                    onChange={(e) => editingMatiere
+                      ? setEditingMatiere({ ...editingMatiere, nom: e.target.value })
+                      : setNewMatiere({ ...newMatiere, nom: e.target.value })
+                    }
+                    style={{ padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 14, background: colors.bgInput, color: colors.text }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Description (optionnel)"
+                    value={editingMatiere ? editingMatiere.description || "" : newMatiere.description}
+                    onChange={(e) => editingMatiere
+                      ? setEditingMatiere({ ...editingMatiere, description: e.target.value })
+                      : setNewMatiere({ ...newMatiere, description: e.target.value })
+                    }
+                    style={{ padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 14, background: colors.bgInput, color: colors.text }}
+                  />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {editingMatiere ? (
+                      <>
+                        <button
+                          onClick={handleUpdateMatiere}
+                          disabled={!editingMatiere.nom.trim()}
+                          style={{
+                            flex: 1,
+                            padding: "10px 20px",
+                            background: !editingMatiere.nom.trim() ? colors.border : `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
+                            color: !editingMatiere.nom.trim() ? colors.textMuted : "#fff",
+                            border: "none",
+                            borderRadius: 8,
+                            fontSize: 13,
+                            fontWeight: 500,
+                            cursor: !editingMatiere.nom.trim() ? "not-allowed" : "pointer"
+                          }}
+                        >
+                          Enregistrer
+                        </button>
+                        <button
+                          onClick={() => setEditingMatiere(null)}
+                          style={{
+                            padding: "10px 20px",
+                            background: colors.bgSecondary,
+                            color: colors.textMuted,
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: 8,
+                            fontSize: 13,
+                            fontWeight: 500,
+                            cursor: "pointer"
+                          }}
+                        >
+                          Annuler
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleAddMatiere}
+                        disabled={!newMatiere.nom.trim()}
+                        style={{
+                          padding: "10px 20px",
+                          background: !newMatiere.nom.trim() ? colors.border : `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
+                          color: !newMatiere.nom.trim() ? colors.textMuted : "#fff",
+                          border: "none",
+                          borderRadius: 8,
+                          fontSize: 13,
+                          fontWeight: 500,
+                          cursor: !newMatiere.nom.trim() ? "not-allowed" : "pointer"
+                        }}
+                      >
+                        Ajouter
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Liste des matieres */}
+              {matieres.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 40 }}>
+                  <p style={{ color: colors.textMuted, margin: 0 }}>Aucune matiere enregistree</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {matieres.map((matiere) => (
+                    <div
+                      key={matiere.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "12px 16px",
+                        background: colors.bgSecondary,
+                        borderRadius: 10,
+                        border: `1px solid ${colors.border}`
+                      }}
+                    >
+                      <div>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: colors.text }}>{matiere.nom}</p>
+                        {matiere.description && (
+                          <p style={{ margin: "4px 0 0", fontSize: 12, color: colors.textMuted }}>{matiere.description}</p>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          onClick={() => setEditingMatiere(matiere)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 6,
+                            background: colors.primaryBg,
+                            border: "none",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: colors.primary
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M10.08 1.75L12.25 3.92M1.75 12.25L2.33 9.92L10.5 1.75L12.25 3.5L4.08 11.67L1.75 12.25Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMatiere(matiere)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 6,
+                            background: colors.dangerBg,
+                            border: "none",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: colors.danger
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M3 3L11 11M3 11L11 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
