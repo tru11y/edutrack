@@ -6,6 +6,11 @@ import { db, auth } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 
+interface ClasseData {
+  id?: string;
+  nom: string;
+}
+
 interface UserData {
   id: string;
   email: string;
@@ -14,6 +19,7 @@ interface UserData {
   nom?: string;
   prenom?: string;
   createdAt?: unknown;
+  classesEnseignees?: string[]; // Classes attribuées au prof
 }
 
 export default function Users() {
@@ -34,6 +40,7 @@ export default function Users() {
     nom: "",
     prenom: "",
     role: "prof" as "admin" | "gestionnaire" | "prof",
+    classesEnseignees: [] as string[],
   });
   const [editForm, setEditForm] = useState({
     email: "",
@@ -41,7 +48,9 @@ export default function Users() {
     prenom: "",
     role: "prof" as "admin" | "gestionnaire" | "prof",
     newPassword: "",
+    classesEnseignees: [] as string[],
   });
+  const [availableClasses, setAvailableClasses] = useState<ClasseData[]>([]);
 
   const isAdmin = currentUser?.role === "admin";
   const isGestionnaire = currentUser?.role === "gestionnaire";
@@ -63,8 +72,20 @@ export default function Users() {
     }
   };
 
+  // Charger les classes disponibles
+  const loadClasses = async () => {
+    try {
+      const snap = await getDocs(collection(db, "classes"));
+      const data = snap.docs.map((d) => ({ id: d.id, nom: d.data().nom })) as ClasseData[];
+      setAvailableClasses(data.sort((a, b) => a.nom.localeCompare(b.nom)));
+    } catch (err) {
+      console.error("Erreur chargement classes:", err);
+    }
+  };
+
   useEffect(() => {
     loadUsers();
+    loadClasses();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -100,7 +121,7 @@ export default function Users() {
         const uid = userCredential.user.uid;
 
         const userRef = doc(db, "users", uid);
-        await setDoc(userRef, {
+        const userData: Record<string, unknown> = {
           uid: uid,
           email: form.email,
           nom: form.nom || "",
@@ -108,10 +129,17 @@ export default function Users() {
           role: form.role,
           isActive: true,
           createdAt: serverTimestamp(),
-        });
+        };
+
+        // Ajouter les classes pour les profs
+        if (form.role === "prof" && form.classesEnseignees.length > 0) {
+          userData.classesEnseignees = form.classesEnseignees;
+        }
+
+        await setDoc(userRef, userData);
 
         setShowModal(false);
-        setForm({ email: "", password: "", nom: "", prenom: "", role: "prof" });
+        setForm({ email: "", password: "", nom: "", prenom: "", role: "prof", classesEnseignees: [] });
         await loadUsers();
       } finally {
         // Supprimer l'app secondaire
@@ -141,6 +169,7 @@ export default function Users() {
       prenom: user.prenom || "",
       role: user.role,
       newPassword: "",
+      classesEnseignees: user.classesEnseignees || [],
     });
     setError("");
     setShowEditModal(true);
@@ -155,11 +184,18 @@ export default function Users() {
       setError("");
 
       const userRef = doc(db, "users", editingUser.id);
-      await updateDoc(userRef, {
+      const updateData: Record<string, unknown> = {
         nom: editForm.nom,
         prenom: editForm.prenom,
         role: editForm.role,
-      });
+      };
+
+      // Ajouter/mettre à jour les classes pour les profs
+      if (editForm.role === "prof") {
+        updateData.classesEnseignees = editForm.classesEnseignees;
+      }
+
+      await updateDoc(userRef, updateData);
 
       // Si un nouveau mot de passe est defini, on ne peut pas le changer directement
       // car Firebase Admin SDK est necessaire. On affiche un message.
@@ -303,14 +339,17 @@ export default function Users() {
   };
 
   const renderUserCard = (user: UserData, bgGradient: string, roleLabel: string, roleColor: string, roleBg: string) => (
-    <div key={user.id} style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+    <div key={user.id} style={{ background: colors.bgCard, borderRadius: 12, border: `1px solid ${colors.border}`, padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ width: 44, height: 44, borderRadius: 12, background: bgGradient, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 16 }}>
           {(user.prenom?.[0] || user.email?.[0] || "?").toUpperCase()}
         </div>
         <div>
-          <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>{user.prenom && user.nom ? `${user.prenom} ${user.nom}` : (user.email?.split("@")[0] || "Inconnu")}</p>
-          <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{user.email || "Pas d'email"}</p>
+          <p style={{ margin: 0, fontWeight: 500, color: colors.text }}>{user.prenom && user.nom ? `${user.prenom} ${user.nom}` : (user.email?.split("@")[0] || "Inconnu")}</p>
+          <p style={{ margin: 0, fontSize: 13, color: colors.textMuted }}>{user.email || "Pas d'email"}</p>
+          {user.role === "prof" && user.classesEnseignees && user.classesEnseignees.length > 0 && (
+            <p style={{ margin: "4px 0 0", fontSize: 11, color: colors.primary }}>{user.classesEnseignees.join(", ")}</p>
+          )}
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -458,7 +497,7 @@ export default function Users() {
                 <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Mot de passe *</label>
                 <input type="password" name="password" value={form.password} onChange={handleChange} required minLength={6} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }} />
               </div>
-              <div style={{ marginBottom: 24 }}>
+              <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Role</label>
                 <select name="role" value={form.role} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }}>
                   <option value="prof">Professeur</option>
@@ -466,6 +505,43 @@ export default function Users() {
                   {isAdmin && <option value="admin">Administrateur</option>}
                 </select>
               </div>
+
+              {/* Classes pour les profs */}
+              {form.role === "prof" && availableClasses.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Classes enseignees</label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {availableClasses.map((c) => (
+                      <button
+                        key={c.nom}
+                        type="button"
+                        onClick={() => {
+                          if (form.classesEnseignees.includes(c.nom)) {
+                            setForm({ ...form, classesEnseignees: form.classesEnseignees.filter(cl => cl !== c.nom) });
+                          } else {
+                            setForm({ ...form, classesEnseignees: [...form.classesEnseignees, c.nom] });
+                          }
+                        }}
+                        style={{
+                          padding: "8px 14px",
+                          borderRadius: 8,
+                          border: `1px solid ${form.classesEnseignees.includes(c.nom) ? colors.primary : colors.border}`,
+                          background: form.classesEnseignees.includes(c.nom) ? colors.primaryBg : colors.bgSecondary,
+                          color: form.classesEnseignees.includes(c.nom) ? colors.primary : colors.textMuted,
+                          fontSize: 13,
+                          fontWeight: 500,
+                          cursor: "pointer"
+                        }}
+                      >
+                        {c.nom}
+                      </button>
+                    ))}
+                  </div>
+                  {form.classesEnseignees.length > 0 && (
+                    <p style={{ fontSize: 12, color: colors.textMuted, margin: "8px 0 0" }}>{form.classesEnseignees.length} classe(s) selectionnee(s)</p>
+                  )}
+                </div>
+              )}
 
               {error && (
                 <div style={{ padding: "12px 16px", background: colors.dangerBg, border: `1px solid ${colors.danger}30`, borderRadius: 10, marginBottom: 16 }}>
@@ -511,6 +587,43 @@ export default function Users() {
                   {isAdmin && <option value="admin">Administrateur</option>}
                 </select>
               </div>
+
+              {/* Classes pour les profs */}
+              {editForm.role === "prof" && availableClasses.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Classes enseignees</label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {availableClasses.map((c) => (
+                      <button
+                        key={c.nom}
+                        type="button"
+                        onClick={() => {
+                          if (editForm.classesEnseignees.includes(c.nom)) {
+                            setEditForm({ ...editForm, classesEnseignees: editForm.classesEnseignees.filter(cl => cl !== c.nom) });
+                          } else {
+                            setEditForm({ ...editForm, classesEnseignees: [...editForm.classesEnseignees, c.nom] });
+                          }
+                        }}
+                        style={{
+                          padding: "8px 14px",
+                          borderRadius: 8,
+                          border: `1px solid ${editForm.classesEnseignees.includes(c.nom) ? colors.primary : colors.border}`,
+                          background: editForm.classesEnseignees.includes(c.nom) ? colors.primaryBg : colors.bgSecondary,
+                          color: editForm.classesEnseignees.includes(c.nom) ? colors.primary : colors.textMuted,
+                          fontSize: 13,
+                          fontWeight: 500,
+                          cursor: "pointer"
+                        }}
+                      >
+                        {c.nom}
+                      </button>
+                    ))}
+                  </div>
+                  {editForm.classesEnseignees.length > 0 && (
+                    <p style={{ fontSize: 12, color: colors.textMuted, margin: "8px 0 0" }}>{editForm.classesEnseignees.length} classe(s) selectionnee(s)</p>
+                  )}
+                </div>
+              )}
 
               <div style={{ padding: 16, background: colors.bgSecondary, borderRadius: 10, marginBottom: 24 }}>
                 <p style={{ fontSize: 13, fontWeight: 500, color: colors.textMuted, margin: "0 0 12px" }}>Mot de passe</p>
