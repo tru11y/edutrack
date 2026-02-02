@@ -9,7 +9,7 @@ import Avatar from "../components/ui/Avatar";
 import Card from "../components/ui/Card";
 import { ClassSelect } from "../components/ui/Select";
 import EmptyState, { EmptyStateIcons } from "../components/ui/EmptyState";
-import { LoadingSpinner, SkeletonStudentCard } from "../components/ui/Skeleton";
+import { SkeletonStudentCard } from "../components/ui/Skeleton";
 import StatusBadge from "../components/ui/StatusBadge";
 
 export default function MesEleves() {
