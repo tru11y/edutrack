@@ -6,6 +6,13 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import type { PresenceCoursPayload } from "../modules/presences/presence.types";
 import type { Eleve } from "../modules/eleves/eleve.types";
+import Modal from "../components/ui/Modal";
+import Card from "../components/ui/Card";
+import Avatar from "../components/ui/Avatar";
+import { ClassSelect } from "../components/ui/Select";
+import StatusBadge from "../components/ui/StatusBadge";
+import EmptyState, { EmptyStateIcons } from "../components/ui/EmptyState";
+import { SkeletonPresenceCard } from "../components/ui/Skeleton";
 
 interface PresenceDoc extends PresenceCoursPayload { id: string; }
 
@@ -27,7 +34,6 @@ export default function PresencesList() {
     }).catch((err) => { console.error(err); setLoading(false); });
   }, []);
 
-  // Obtenir le nom de l'eleve par ID
   const getEleveName = (eleveId: string): string => {
     const eleve = eleves.find(e => e.id === eleveId);
     return eleve ? `${eleve.prenom} ${eleve.nom}` : eleveId;
@@ -48,27 +54,33 @@ export default function PresencesList() {
     const presents = items.filter((i) => i.statut === "present").length;
     const absents = items.filter((i) => i.statut === "absent").length;
     const retards = items.filter((i) => i.statut === "retard").length;
-    const autorises = items.filter((i) => i.statutMetier === "autorise").length;
-    const refuses = items.filter((i) => i.statutMetier === "refuse").length;
-    return { presents, absents, retards, autorises, refuses, total: items.length };
+    return { presents, absents, retards, total: items.length };
   };
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.success, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement des presences...</p>
+      <div>
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.successBg }} />
+            <div>
+              <div style={{ width: 150, height: 28, background: colors.bgSecondary, borderRadius: 6, marginBottom: 8 }} />
+              <div style={{ width: 100, height: 16, background: colors.bgSecondary, borderRadius: 4 }} />
+            </div>
+          </div>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {[1, 2, 3, 4].map((i) => <SkeletonPresenceCard key={i} />)}
+        </div>
       </div>
     );
   }
 
   return (
     <div>
+      {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -78,138 +90,177 @@ export default function PresencesList() {
               <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{presences.length} appel{presences.length > 1 ? "s" : ""}</p>
             </div>
           </div>
-          <Link to="/presences/appel" style={{ padding: "12px 20px", background: `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)`, color: "#fff", borderRadius: 10, textDecoration: "none", fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+          <Link
+            to="/presences/appel"
+            style={{
+              padding: "12px 20px",
+              background: `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)`,
+              color: "#fff",
+              borderRadius: 10,
+              textDecoration: "none",
+              fontSize: 14,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              transition: "all 0.2s",
+            }}
+          >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             Faire l'appel
           </Link>
         </div>
       </div>
 
+      {/* Filtres */}
       <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
-        <select value={filterClasse} onChange={(e) => setFilterClasse(e.target.value)} aria-label="Filtrer par classe" style={{ padding: "12px 16px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, background: colors.bgInput, color: colors.text, minWidth: 180 }}>
-          <option value="">Toutes les classes</option>
-          {classes.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <ClassSelect
+          value={filterClasse}
+          onChange={setFilterClasse}
+          classes={classes}
+          allLabel="Toutes les classes"
+        />
         <input
           type="date"
           value={filterDate}
           onChange={(e) => setFilterDate(e.target.value)}
           aria-label="Filtrer par date"
-          style={{ padding: "12px 16px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, background: colors.bgInput, color: colors.text }}
+          style={{
+            padding: "12px 16px",
+            border: `1px solid ${colors.border}`,
+            borderRadius: 10,
+            fontSize: 14,
+            background: colors.bgInput,
+            color: colors.text,
+            outline: "none",
+            transition: "border-color 0.2s",
+          }}
         />
         {(filterClasse || filterDate) && (
           <button
             onClick={() => { setFilterClasse(""); setFilterDate(""); }}
-            style={{ padding: "12px 16px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, cursor: "pointer" }}
+            style={{
+              padding: "12px 16px",
+              background: colors.bgSecondary,
+              color: colors.textMuted,
+              border: "none",
+              borderRadius: 10,
+              fontSize: 14,
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
           >
             Effacer filtres
           </button>
         )}
       </div>
 
+      {/* Liste des presences */}
       {filtered.length === 0 ? (
-        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 60, textAlign: "center" }}>
-          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{presences.length === 0 ? "Aucun appel enregistre" : "Aucune presence trouvee"}</p>
-        </div>
+        <EmptyState
+          icon={EmptyStateIcons.calendar(colors.textMuted)}
+          title={presences.length === 0 ? "Aucun appel enregistre" : "Aucune presence trouvee"}
+          description={presences.length === 0
+            ? "Commencez par faire l'appel pour enregistrer les presences."
+            : "Essayez de modifier vos filtres pour trouver des resultats."}
+          action={presences.length === 0 ? (
+            <Link
+              to="/presences/appel"
+              style={{
+                padding: "10px 20px",
+                background: colors.success,
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontSize: 14,
+                fontWeight: 500,
+                textDecoration: "none",
+                display: "inline-block",
+              }}
+            >
+              Faire l'appel
+            </Link>
+          ) : undefined}
+        />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {filtered.map((presence) => {
             const stats = getStats(presence.presences || []);
             return (
-              <div
+              <Card
                 key={presence.id}
                 onClick={() => setSelectedPresence(presence)}
-                style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 20, cursor: "pointer", transition: "box-shadow 0.2s" }}
-                onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)"}
-                onMouseLeave={(e) => e.currentTarget.style.boxShadow = "none"}
+                hover
               >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.bgSecondary, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textMuted, fontSize: 12, fontWeight: 600, flexDirection: "column" }}>
+                    <div style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 12,
+                      background: colors.bgSecondary,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: colors.textMuted,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      flexDirection: "column",
+                    }}>
                       <span>{new Date(presence.date).getDate()}</span>
                       <span style={{ fontSize: 10 }}>{new Date(presence.date).toLocaleDateString("fr-FR", { month: "short" })}</span>
                     </div>
                     <div>
                       <p style={{ margin: 0, fontWeight: 600, color: colors.text, fontSize: 16 }}>{presence.classe}</p>
-                      <p style={{ margin: 0, fontSize: 13, color: colors.textMuted }}>{new Date(presence.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
+                      <p style={{ margin: 0, fontSize: 13, color: colors.textMuted }}>
+                        {new Date(presence.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+                      </p>
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ padding: "6px 12px", background: colors.bgSecondary, color: colors.textMuted, borderRadius: 8, fontSize: 13 }}>{stats.total} eleves</span>
-                    <span style={{ padding: "6px 12px", background: colors.primaryBg, color: colors.primary, borderRadius: 8, fontSize: 12, fontWeight: 500 }}>Voir details</span>
+                    <StatusBadge variant="default">{stats.total} eleves</StatusBadge>
+                    <StatusBadge variant="primary">Voir details</StatusBadge>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ padding: "6px 12px", background: colors.successBg, color: colors.success, borderRadius: 8, fontSize: 13, fontWeight: 500 }}>{stats.presents} presents</span>
-                  <span style={{ padding: "6px 12px", background: colors.dangerBg, color: colors.danger, borderRadius: 8, fontSize: 13, fontWeight: 500 }}>{stats.absents} absents</span>
-                  {stats.retards > 0 && <span style={{ padding: "6px 12px", background: colors.warningBg, color: colors.warning, borderRadius: 8, fontSize: 13, fontWeight: 500 }}>{stats.retards} retards</span>}
+                  <StatusBadge variant="success">{stats.presents} presents</StatusBadge>
+                  <StatusBadge variant="danger">{stats.absents} absents</StatusBadge>
+                  {stats.retards > 0 && <StatusBadge variant="warning">{stats.retards} retards</StatusBadge>}
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
       )}
 
       {/* Modal Detail Presence */}
-      {selectedPresence && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "rgba(0,0,0,0.5)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-          padding: 20
-        }}>
-          <div style={{
-            background: colors.bgCard,
-            borderRadius: 16,
-            width: "100%",
-            maxWidth: 600,
-            maxHeight: "90vh",
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column"
-          }}>
-            {/* Header */}
-            <div style={{ padding: "20px 24px", borderBottom: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: colors.text }}>{selectedPresence.classe}</h2>
-                <p style={{ margin: "4px 0 0", fontSize: 13, color: colors.textMuted }}>
-                  {new Date(selectedPresence.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedPresence(null)}
-                style={{ width: 36, height: 36, borderRadius: 8, background: colors.bgSecondary, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: colors.textMuted }}
-              >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M4.5 4.5L13.5 13.5M4.5 13.5L13.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </button>
-            </div>
-
+      <Modal
+        isOpen={!!selectedPresence}
+        onClose={() => setSelectedPresence(null)}
+        title={selectedPresence?.classe || ""}
+        subtitle={selectedPresence ? new Date(selectedPresence.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : ""}
+        size="lg"
+      >
+        {selectedPresence && (
+          <>
             {/* Stats */}
-            <div style={{ padding: "16px 24px", background: colors.bgSecondary, display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 24, marginBottom: 24, padding: 16, background: colors.bgSecondary, borderRadius: 12 }}>
               {(() => {
                 const stats = getStats(selectedPresence.presences || []);
                 return (
                   <>
                     <div style={{ textAlign: "center" }}>
-                      <p style={{ fontSize: 24, fontWeight: 700, color: colors.success, margin: 0 }}>{stats.presents}</p>
-                      <p style={{ fontSize: 11, color: colors.textMuted, margin: 0 }}>Presents</p>
+                      <p style={{ fontSize: 28, fontWeight: 700, color: colors.success, margin: 0 }}>{stats.presents}</p>
+                      <p style={{ fontSize: 12, color: colors.textMuted, margin: 0 }}>Presents</p>
                     </div>
                     <div style={{ textAlign: "center" }}>
-                      <p style={{ fontSize: 24, fontWeight: 700, color: colors.danger, margin: 0 }}>{stats.absents}</p>
-                      <p style={{ fontSize: 11, color: colors.textMuted, margin: 0 }}>Absents</p>
+                      <p style={{ fontSize: 28, fontWeight: 700, color: colors.danger, margin: 0 }}>{stats.absents}</p>
+                      <p style={{ fontSize: 12, color: colors.textMuted, margin: 0 }}>Absents</p>
                     </div>
                     <div style={{ textAlign: "center" }}>
-                      <p style={{ fontSize: 24, fontWeight: 700, color: colors.warning, margin: 0 }}>{stats.retards}</p>
-                      <p style={{ fontSize: 11, color: colors.textMuted, margin: 0 }}>Retards</p>
+                      <p style={{ fontSize: 28, fontWeight: 700, color: colors.warning, margin: 0 }}>{stats.retards}</p>
+                      <p style={{ fontSize: 12, color: colors.textMuted, margin: 0 }}>Retards</p>
                     </div>
                   </>
                 );
@@ -217,7 +268,7 @@ export default function PresencesList() {
             </div>
 
             {/* Liste des eleves */}
-            <div style={{ flex: 1, overflow: "auto", padding: "16px 24px" }}>
+            <div style={{ maxHeight: 400, overflow: "auto" }}>
               {/* Presents */}
               {(selectedPresence.presences || []).filter(p => p.statut === "present").length > 0 && (
                 <div style={{ marginBottom: 20 }}>
@@ -229,11 +280,9 @@ export default function PresencesList() {
                       const eleve = getEleveInfo(p.eleveId);
                       return (
                         <div key={p.eleveId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: colors.successBg, borderRadius: 8 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 8, background: eleve?.sexe === "M" ? "#dbeafe" : "#fce7f3", color: eleve?.sexe === "M" ? "#3b82f6" : "#ec4899", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: 12 }}>
-                            {eleve?.prenom?.[0] || "?"}
-                          </div>
+                          <Avatar name={eleve?.prenom} size="sm" variant={eleve?.sexe === "M" ? "male" : "female"} />
                           <span style={{ fontSize: 14, color: colors.text }}>{getEleveName(p.eleveId)}</span>
-                          {p.statutMetier === "refuse" && <span style={{ marginLeft: "auto", fontSize: 11, color: colors.danger, background: colors.dangerBg, padding: "2px 8px", borderRadius: 4 }}>Refuse</span>}
+                          {p.statutMetier === "refuse" && <StatusBadge variant="danger" size="sm">Refuse</StatusBadge>}
                         </div>
                       );
                     })}
@@ -252,9 +301,7 @@ export default function PresencesList() {
                       const eleve = getEleveInfo(p.eleveId);
                       return (
                         <div key={p.eleveId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: colors.dangerBg, borderRadius: 8 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 8, background: eleve?.sexe === "M" ? "#dbeafe" : "#fce7f3", color: eleve?.sexe === "M" ? "#3b82f6" : "#ec4899", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: 12 }}>
-                            {eleve?.prenom?.[0] || "?"}
-                          </div>
+                          <Avatar name={eleve?.prenom} size="sm" variant={eleve?.sexe === "M" ? "male" : "female"} />
                           <span style={{ fontSize: 14, color: colors.text }}>{getEleveName(p.eleveId)}</span>
                         </div>
                       );
@@ -274,11 +321,9 @@ export default function PresencesList() {
                       const eleve = getEleveInfo(p.eleveId);
                       return (
                         <div key={p.eleveId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: colors.warningBg, borderRadius: 8 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 8, background: eleve?.sexe === "M" ? "#dbeafe" : "#fce7f3", color: eleve?.sexe === "M" ? "#3b82f6" : "#ec4899", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: 12 }}>
-                            {eleve?.prenom?.[0] || "?"}
-                          </div>
-                          <span style={{ fontSize: 14, color: colors.text }}>{getEleveName(p.eleveId)}</span>
-                          {p.minutesRetard && <span style={{ marginLeft: "auto", fontSize: 11, color: colors.warning }}>{p.minutesRetard} min</span>}
+                          <Avatar name={eleve?.prenom} size="sm" variant={eleve?.sexe === "M" ? "male" : "female"} />
+                          <span style={{ fontSize: 14, color: colors.text, flex: 1 }}>{getEleveName(p.eleveId)}</span>
+                          {p.minutesRetard && <span style={{ fontSize: 12, color: colors.warning, fontWeight: 500 }}>{p.minutesRetard} min</span>}
                         </div>
                       );
                     })}
@@ -286,9 +331,9 @@ export default function PresencesList() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -19,7 +19,8 @@
       "Bash(git commit:*)",
       "Bash(firebase deploy:*)",
       "Bash(git push:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npx firebase functions:artifacts:setpolicy:*)"
     ]
   }
 }
