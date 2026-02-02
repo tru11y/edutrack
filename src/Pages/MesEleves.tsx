@@ -5,6 +5,12 @@ import { getAllEleves } from "../modules/eleves/eleve.service";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import type { Eleve } from "../modules/eleves/eleve.types";
+import Avatar from "../components/ui/Avatar";
+import Card from "../components/ui/Card";
+import { ClassSelect } from "../components/ui/Select";
+import EmptyState, { EmptyStateIcons } from "../components/ui/EmptyState";
+import { LoadingSpinner, SkeletonStudentCard } from "../components/ui/Skeleton";
+import StatusBadge from "../components/ui/StatusBadge";
 
 export default function MesEleves() {
   const { user } = useAuth();
@@ -17,7 +23,6 @@ export default function MesEleves() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Charger les classes du prof depuis le document user
         if (user?.uid) {
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
@@ -26,7 +31,6 @@ export default function MesEleves() {
           }
         }
 
-        // Charger tous les eleves
         const data = await getAllEleves();
         setEleves(data.filter((e) => e.statut === "actif"));
       } catch (err) {
@@ -39,7 +43,6 @@ export default function MesEleves() {
     loadData();
   }, [user?.uid]);
 
-  // Filtrer les eleves par les classes du prof
   const myEleves = myClasses.length > 0
     ? eleves.filter((e) => myClasses.includes(e.classe))
     : eleves;
@@ -49,18 +52,26 @@ export default function MesEleves() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.success, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement...</p>
+      <div>
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.successBg }} />
+            <div>
+              <div style={{ width: 150, height: 28, background: colors.bgSecondary, borderRadius: 6, marginBottom: 8 }} />
+              <div style={{ width: 100, height: 16, background: colors.bgSecondary, borderRadius: 4 }} />
+            </div>
+          </div>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
+          {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonStudentCard key={i} />)}
+        </div>
       </div>
     );
   }
 
   return (
     <div>
+      {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
           <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.successBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}>
@@ -76,81 +87,73 @@ export default function MesEleves() {
         </div>
       </div>
 
-      {/* Mes classes */}
+      {/* Mes classes badges */}
       {myClasses.length > 0 && (
         <div style={{ marginBottom: 24 }}>
           <p style={{ fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Mes classes</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {myClasses.map((c) => (
-              <span key={c} style={{ padding: "6px 14px", background: colors.primaryBg, color: colors.primary, borderRadius: 8, fontSize: 13, fontWeight: 500 }}>{c}</span>
+              <StatusBadge key={c} variant="primary">{c}</StatusBadge>
             ))}
           </div>
         </div>
       )}
 
+      {/* Warning si pas de classes */}
       {myClasses.length === 0 && (
         <div style={{ padding: 16, background: colors.warningBg, borderRadius: 12, marginBottom: 24, border: `1px solid ${colors.warning}30` }}>
-          <p style={{ margin: 0, fontSize: 14, color: colors.warning }}>
-            Aucune classe ne vous a ete attribuee. Contactez un administrateur pour etre affecte a des classes.
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.warning} strokeWidth="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <p style={{ margin: 0, fontSize: 14, color: colors.warning }}>
+              Aucune classe ne vous a ete attribuee. Contactez un administrateur pour etre affecte a des classes.
+            </p>
+          </div>
         </div>
       )}
 
+      {/* Filtre */}
       <div style={{ marginBottom: 24 }}>
-        <select
+        <ClassSelect
           value={filterClasse}
-          onChange={(e) => setFilterClasse(e.target.value)}
-          aria-label="Filtrer par classe"
-          style={{ padding: "12px 16px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, background: colors.bgInput, color: colors.text, minWidth: 200 }}
-        >
-          <option value="">Toutes mes classes</option>
-          {classes.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+          onChange={setFilterClasse}
+          classes={classes}
+          allLabel="Toutes mes classes"
+        />
       </div>
 
+      {/* Liste des eleves */}
       {filteredEleves.length === 0 ? (
-        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 60, textAlign: "center" }}>
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style={{ margin: "0 auto 16px", color: colors.textMuted }}>
-            <path d="M34 42V38C34 34.69 31.31 32 28 32H12C8.69 32 6 34.69 6 38V42M42 42V38C42 35.58 40.42 33.53 38.24 32.84M31.24 7.16C33.4 7.86 34.98 9.92 34.98 12.32C34.98 14.72 33.4 16.78 31.24 17.48M24 18C24 21.31 21.31 24 18 24C14.69 24 12 21.31 12 18C12 14.69 14.69 12 18 12C21.31 12 24 14.69 24 18Z" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Aucun eleve</p>
-        </div>
+        <EmptyState
+          icon={EmptyStateIcons.users(colors.textMuted)}
+          title="Aucun eleve"
+          description={myClasses.length === 0
+            ? "Vous n'avez pas encore de classes attribuees."
+            : "Aucun eleve trouve dans vos classes."}
+        />
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
           {filteredEleves.map((eleve) => (
-            <div
+            <Card
               key={eleve.id}
-              style={{
-                background: colors.bgCard,
-                borderRadius: 16,
-                border: `1px solid ${colors.border}`,
-                padding: 20,
-                textAlign: "center",
-                transition: "all 0.2s"
-              }}
+              hover
+              style={{ textAlign: "center" }}
             >
-              <div style={{
-                width: 64,
-                height: 64,
-                borderRadius: 16,
-                background: eleve.sexe === "M" ? "#dbeafe" : "#fce7f3",
-                color: eleve.sexe === "M" ? "#3b82f6" : "#ec4899",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 700,
-                fontSize: 24,
-                margin: "0 auto 12px"
-              }}>
-                {eleve.prenom[0].toUpperCase()}
-              </div>
-              <p style={{ margin: "0 0 4px", fontWeight: 600, color: colors.text, fontSize: 16 }}>
+              <Avatar
+                name={eleve.prenom}
+                size="lg"
+                variant={eleve.sexe === "M" ? "male" : "female"}
+              />
+              <p style={{ margin: "12px 0 4px", fontWeight: 600, color: colors.text, fontSize: 16 }}>
                 {eleve.prenom}
               </p>
               <p style={{ margin: 0, fontSize: 13, color: colors.textMuted }}>
                 {eleve.classe}
               </p>
-            </div>
+            </Card>
           ))}
         </div>
       )}
