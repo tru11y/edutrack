@@ -429,6 +429,8 @@ export const toggleUserStatus = functions
     }
   });
 
+
+  
 /**
  * Obtenir les logs d'audit - ADMIN UNIQUEMENT
  */

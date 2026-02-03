@@ -129,7 +129,7 @@ export default function CahierList() {
               </Link>
             )}
             <Link to="/cahier/nouveau" style={{ padding: "12px 20px", background: `linear-gradient(135deg, ${colors.primary} 0%, #7c3aed 100%)`, color: "#fff", borderRadius: 10, textDecoration: "none", fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>Nouvelle entree
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>Remplir cahier de texte
             </Link>
           </div>
         </div>
