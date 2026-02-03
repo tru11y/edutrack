@@ -52,7 +52,15 @@ export default function ProfCoursDetail() {
       </div>
 
       {/* CONTENU */}
-      {tab === "appel" && <PresenceAppel coursId={id} classe={cours.classe} />}
+      {tab === "appel" && (
+        <PresenceAppel
+          coursId={id}
+          classe={cours.classe}
+          date={cours.date}
+          heureDebut={cours.heureDebut}
+          heureFin={cours.heureFin}
+        />
+      )}
       {tab === "cahier" && <CreateCahierTexte coursId={id} classe={cours.classe} elevesPresents={[]} />}
       {tab === "exclusion" && <ExclureEleve />}
 

@@ -198,6 +198,46 @@ input::placeholder, textarea::placeholder {
   color: var(--text-light);
 }
 
+/* Fix pour les selects et options en mode sombre */
+select option {
+  background-color: var(--input-bg);
+  color: var(--text);
+}
+
+[data-theme="dark"] select,
+[data-theme="dark"] input,
+[data-theme="dark"] textarea {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] select option {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
+/* Fix pour les inputs date/time en mode sombre */
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+/* Fix pour les inputs avec contours blancs en mode sombre */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: var(--input-bg) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: var(--primary) !important;
+  outline: none;
+}
+
 /* =========================
    BUTTONS (Global)
 ========================= */
@@ -250,4 +290,26 @@ a:hover {
 
 [data-theme="dark"] tr:hover {
   background: var(--card-hover) !important;
+}
+
+/* Fix pour les boutons disabled en mode sombre */
+[data-theme="dark"] button:disabled {
+  background-color: #475569 !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Fix pour les modales en mode sombre */
+[data-theme="dark"] [style*="rgba(0,0,0"] {
+  background: rgba(0,0,0,0.7) !important;
+}
+
+/* Fix textes en mode sombre */
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] label,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3 {
+  color: inherit;
 }

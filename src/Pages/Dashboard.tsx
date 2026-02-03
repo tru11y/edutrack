@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { collection, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import type { Paiement } from "../modules/paiements/paiement.types";
 
 interface Stats {
@@ -20,6 +21,7 @@ interface Stats {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const isGestionnaire = user?.role === "gestionnaire";
   const [stats, setStats] = useState<Stats>({
     eleves: 0,
@@ -156,13 +158,13 @@ export default function Dashboard() {
           <div style={{
             width: 40,
             height: 40,
-            border: "3px solid #e2e8f0",
-            borderTopColor: "#6366f1",
+            border: `3px solid ${colors.border}`,
+            borderTopColor: colors.primary,
             borderRadius: "50%",
             animation: "spin 0.8s linear infinite",
             margin: "0 auto 16px"
           }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement...</p>
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -173,10 +175,10 @@ export default function Dashboard() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: "0 0 8px" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>
           Tableau de bord
         </h1>
-        <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>
+        <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>
           Bienvenue sur EduTrack - Vue d'ensemble de votre etablissement
         </p>
       </div>
@@ -188,10 +190,10 @@ export default function Dashboard() {
             key={card.title}
             to={card.link}
             style={{
-              background: "#fff",
+              background: colors.bgCard,
               borderRadius: 16,
               padding: 20,
-              border: "1px solid #e2e8f0",
+              border: `1px solid ${colors.border}`,
               textDecoration: "none",
               transition: "transform 0.2s, box-shadow 0.2s",
             }}
@@ -210,13 +212,13 @@ export default function Dashboard() {
                 {card.icon}
               </div>
             </div>
-            <p style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: "0 0 4px" }}>
+            <p style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 4px" }}>
               {card.value}
             </p>
-            <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
+            <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>
               {card.title}
             </p>
-            <p style={{ fontSize: 11, color: "#94a3b8", margin: "4px 0 0" }}>
+            <p style={{ fontSize: 11, color: colors.textLight, margin: "4px 0 0" }}>
               {card.subtitle}
             </p>
           </Link>
@@ -226,20 +228,20 @@ export default function Dashboard() {
       {/* Financial Overview */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, marginBottom: 24 }}>
         {/* Taux de recouvrement */}
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: "0 0 20px" }}>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
             Taux de recouvrement
           </h2>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
             <div style={{ position: "relative", width: 100, height: 100 }}>
               <svg width="100" height="100" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="12" />
+                <circle cx="50" cy="50" r="40" fill="none" stroke={colors.border} strokeWidth="12" />
                 <circle
                   cx="50"
                   cy="50"
                   r="40"
                   fill="none"
-                  stroke={tauxRecouvrement >= 80 ? "#10b981" : tauxRecouvrement >= 50 ? "#f59e0b" : "#ef4444"}
+                  stroke={tauxRecouvrement >= 80 ? colors.success : tauxRecouvrement >= 50 ? colors.warning : colors.danger}
                   strokeWidth="12"
                   strokeLinecap="round"
                   strokeDasharray={`${tauxRecouvrement * 2.51} 251`}
@@ -254,22 +256,22 @@ export default function Dashboard() {
                 justifyContent: "center",
                 fontSize: 22,
                 fontWeight: 700,
-                color: "#1e293b"
+                color: colors.text
               }}>
                 {tauxRecouvrement}%
               </div>
             </div>
             <div>
               {isGestionnaire ? (
-                <p style={{ fontSize: 14, color: "#64748b", margin: 0 }}>
+                <p style={{ fontSize: 14, color: colors.textMuted, margin: 0 }}>
                   {stats.paiementsPaye} payes sur {stats.paiements} total
                 </p>
               ) : (
                 <>
-                  <p style={{ fontSize: 14, color: "#64748b", margin: "0 0 8px" }}>
+                  <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 8px" }}>
                     {stats.totalPaye.toLocaleString()} FCFA collectes
                   </p>
-                  <p style={{ fontSize: 14, color: "#64748b", margin: 0 }}>
+                  <p style={{ fontSize: 14, color: colors.textMuted, margin: 0 }}>
                     sur {stats.totalDu.toLocaleString()} FCFA attendus
                   </p>
                 </>
@@ -279,39 +281,39 @@ export default function Dashboard() {
         </div>
 
         {/* Repartition paiements */}
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: "0 0 20px" }}>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
             Repartition des paiements
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 3, background: "#10b981" }} />
-                <span style={{ fontSize: 14, color: "#64748b" }}>Payes</span>
+                <div style={{ width: 12, height: 12, borderRadius: 3, background: colors.success }} />
+                <span style={{ fontSize: 14, color: colors.textMuted }}>Payes</span>
               </div>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#10b981" }}>{stats.paiementsPaye}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: colors.success }}>{stats.paiementsPaye}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 3, background: "#f59e0b" }} />
-                <span style={{ fontSize: 14, color: "#64748b" }}>Partiels</span>
+                <div style={{ width: 12, height: 12, borderRadius: 3, background: colors.warning }} />
+                <span style={{ fontSize: 14, color: colors.textMuted }}>Partiels</span>
               </div>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#f59e0b" }}>{stats.paiementsPartiel}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: colors.warning }}>{stats.paiementsPartiel}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 3, background: "#ef4444" }} />
-                <span style={{ fontSize: 14, color: "#64748b" }}>Impayes</span>
+                <div style={{ width: 12, height: 12, borderRadius: 3, background: colors.danger }} />
+                <span style={{ fontSize: 14, color: colors.textMuted }}>Impayes</span>
               </div>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#ef4444" }}>{stats.paiementsImpaye}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: colors.danger }}>{stats.paiementsImpaye}</span>
             </div>
             {/* Progress bar */}
-            <div style={{ marginTop: 8, height: 8, background: "#e2e8f0", borderRadius: 4, overflow: "hidden", display: "flex" }}>
+            <div style={{ marginTop: 8, height: 8, background: colors.border, borderRadius: 4, overflow: "hidden", display: "flex" }}>
               {stats.paiements > 0 && (
                 <>
-                  <div style={{ width: `${(stats.paiementsPaye / stats.paiements) * 100}%`, background: "#10b981" }} />
-                  <div style={{ width: `${(stats.paiementsPartiel / stats.paiements) * 100}%`, background: "#f59e0b" }} />
-                  <div style={{ width: `${(stats.paiementsImpaye / stats.paiements) * 100}%`, background: "#ef4444" }} />
+                  <div style={{ width: `${(stats.paiementsPaye / stats.paiements) * 100}%`, background: colors.success }} />
+                  <div style={{ width: `${(stats.paiementsPartiel / stats.paiements) * 100}%`, background: colors.warning }} />
+                  <div style={{ width: `${(stats.paiementsImpaye / stats.paiements) * 100}%`, background: colors.danger }} />
                 </>
               )}
             </div>
@@ -322,33 +324,33 @@ export default function Dashboard() {
       {/* Recent Paiements & Quick Actions */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
         {/* Recent Paiements */}
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 24 }}>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: 0 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: 0 }}>
               Derniers paiements
             </h2>
-            <Link to="/paiements" style={{ fontSize: 13, color: "#6366f1", textDecoration: "none" }}>
+            <Link to="/paiements" style={{ fontSize: 13, color: colors.primary, textDecoration: "none" }}>
               Voir tout →
             </Link>
           </div>
           {recentPaiements.length === 0 ? (
-            <p style={{ fontSize: 14, color: "#64748b", textAlign: "center", padding: 20 }}>Aucun paiement</p>
+            <p style={{ fontSize: 14, color: colors.textMuted, textAlign: "center", padding: 20 }}>Aucun paiement</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {recentPaiements.map((p) => (
-                <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f1f5f9" }}>
+                <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: `1px solid ${colors.borderLight}` }}>
                   <div>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: "#1e293b", margin: 0 }}>{p.eleveNom}</p>
-                    <p style={{ fontSize: 12, color: "#94a3b8", margin: "2px 0 0" }}>{p.mois}</p>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: colors.text, margin: 0 }}>{p.eleveNom}</p>
+                    <p style={{ fontSize: 12, color: colors.textLight, margin: "2px 0 0" }}>{p.mois}</p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    {!isGestionnaire && <p style={{ fontSize: 14, fontWeight: 600, color: "#1e293b", margin: 0 }}>{p.montantPaye?.toLocaleString()} FCFA</p>}
+                    {!isGestionnaire && <p style={{ fontSize: 14, fontWeight: 600, color: colors.text, margin: 0 }}>{p.montantPaye?.toLocaleString()} FCFA</p>}
                     <span style={{
                       fontSize: 11,
                       padding: "2px 8px",
                       borderRadius: 10,
-                      background: p.statut === "paye" ? "#ecfdf5" : p.statut === "partiel" ? "#fffbeb" : "#fef2f2",
-                      color: p.statut === "paye" ? "#10b981" : p.statut === "partiel" ? "#f59e0b" : "#ef4444"
+                      background: p.statut === "paye" ? colors.successBg : p.statut === "partiel" ? colors.warningBg : colors.dangerBg,
+                      color: p.statut === "paye" ? colors.success : p.statut === "partiel" ? colors.warning : colors.danger
                     }}>
                       {p.statut === "paye" ? "Paye" : p.statut === "partiel" ? "Partiel" : "Impaye"}
                     </span>
@@ -360,8 +362,8 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: "0 0 20px" }}>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
             Actions rapides
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

@@ -64,7 +64,7 @@ export default function CoursDetail() {
           onClick={() => setShowAppel((v) => !v)}
           className="bg-black text-white px-4 py-2 rounded"
         >
-          {showAppel ? "Fermer l’appel" : "📋 Faire l’appel"}
+          {showAppel ? "Fermer l'appel" : "📋 Faire l'appel"}
         </button>
 
         <Link
@@ -80,6 +80,9 @@ export default function CoursDetail() {
         <PresenceAppel
           coursId={cours.id!}
           classe={cours.classe}
+          date={cours.date}
+          heureDebut={cours.heureDebut}
+          heureFin={cours.heureFin}
         />
       )}
 
