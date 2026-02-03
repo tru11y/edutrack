@@ -1,5 +1,9 @@
 import * as admin from "firebase-admin";
 
-admin.initializeApp();
+// Initialiser une seule fois
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
 export const db = admin.firestore();
 export { admin };
