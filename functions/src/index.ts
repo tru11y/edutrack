@@ -1,9 +1,12 @@
 import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
+import { db, admin } from "./firebase";
 
-admin.initializeApp();
-
-const db = admin.firestore();
+// Export scheduled reports
+export {
+  sendMonthlyPaymentReport,
+  sendPaymentReportManual,
+  configureReportEmail,
+} from "./scheduled.reports";
 
 // ========================================
 // TYPES
