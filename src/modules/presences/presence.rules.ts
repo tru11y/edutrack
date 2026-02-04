@@ -2,6 +2,7 @@ import { getEleveById, updateEleve } from "../eleves/eleve.service";
 import { getPresenceHistoryForEleve } from "./presence.service";
 import { getPaiementsByEleve } from "../paiements/paiement.service";
 import { notifyAdmin } from "../notifications/alert.service";
+import type { PresenceCoursPayload, PresenceItem } from "./presence.types";
 
 export async function computeStatutMetier(eleveId: string) {
   const eleve = await getEleveById(eleveId);
@@ -15,8 +16,8 @@ export async function computeStatutMetier(eleveId: string) {
   }
 
   const history = await getPresenceHistoryForEleve(eleveId);
-  const nbPresences = history.filter((p: any) =>
-    p.presences?.some((x: any) => x.eleveId === eleveId && x.statut === "present")
+  const nbPresences = history.filter((p: PresenceCoursPayload) =>
+    p.presences?.some((x: PresenceItem) => x.eleveId === eleveId && x.statut === "present")
   ).length;
 
   if (nbPresences < 2) {

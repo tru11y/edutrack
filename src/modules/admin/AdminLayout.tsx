@@ -1,15 +1,25 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function AdminLayout() {
   const { logout } = useAuth();
+  const { colors } = useTheme();
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen" style={{ background: colors.bg }}>
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 p-6 flex flex-col">
-        <h2 className="text-xl font-semibold mb-8">EDUTRACK</h2>
+      <aside
+        className="w-64 p-6 flex flex-col"
+        style={{
+          background: colors.bgCard,
+          borderRight: `1px solid ${colors.border}`,
+        }}
+      >
+        <h2 className="text-xl font-semibold mb-8" style={{ color: colors.text }}>
+          EDUTRACK
+        </h2>
 
         <nav className="flex flex-col gap-2 flex-1">
           <NavItem to="/admin">Dashboard</NavItem>
@@ -26,9 +36,10 @@ export default function AdminLayout() {
             await logout();
             navigate("/login");
           }}
-          className="mt-6 text-left text-sm text-red-600 hover:underline"
+          className="mt-6 text-left text-sm hover:underline"
+          style={{ color: colors.danger }}
         >
-          🚪 Déconnexion
+          Déconnexion
         </button>
       </aside>
 
@@ -41,16 +52,16 @@ export default function AdminLayout() {
 }
 
 function NavItem({ to, children }: { to: string; children: React.ReactNode }) {
+  const { colors } = useTheme();
+
   return (
     <NavLink
       to={to}
-      className={({ isActive }) =>
-        `px-4 py-2 rounded-lg text-sm font-medium transition ${
-          isActive
-            ? "bg-black text-white"
-            : "text-gray-700 hover:bg-gray-100"
-        }`
-      }
+      className="px-4 py-2 rounded-lg text-sm font-medium transition"
+      style={({ isActive }) => ({
+        background: isActive ? colors.primary : "transparent",
+        color: isActive ? "#fff" : colors.textSecondary,
+      })}
     >
       {children}
     </NavLink>

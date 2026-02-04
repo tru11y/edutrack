@@ -3,10 +3,6 @@ import * as nodemailer from "nodemailer";
 import * as ExcelJS from "exceljs";
 import { db, admin } from "./firebase";
 
-// ========================================
-// CONFIGURATION
-// ========================================
-
 interface ReportConfig {
   emailTo: string;
   emailFrom: string;
@@ -16,15 +12,23 @@ interface ReportConfig {
   smtpPass: string;
 }
 
+interface PaiementData {
+  id: string;
+  eleveNom?: string;
+  classe?: string;
+  mois?: string;
+  montantTotal?: number;
+  montantPaye?: number;
+  montantRestant?: number;
+  statut?: string;
+  createdAt?: { toDate?: () => Date };
+}
+
 async function getReportConfig(): Promise<ReportConfig | null> {
   const configDoc = await db.collection("config").doc("reports").get();
   if (!configDoc.exists) return null;
   return configDoc.data() as ReportConfig;
 }
-
-// ========================================
-// HELPERS
-// ========================================
 
 function getPreviousMonth(): { mois: string; label: string } {
   const now = new Date();
@@ -37,25 +41,21 @@ function getPreviousMonth(): { mois: string; label: string } {
 }
 
 async function generateExcelReport(mois: string): Promise<Buffer> {
-  // Récupérer tous les paiements du mois
   const paiementsSnap = await db.collection("paiements")
     .where("mois", "==", mois)
     .get();
 
-  const paiements = paiementsSnap.docs.map(doc => ({
+  const paiements: PaiementData[] = paiementsSnap.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
-  }));
+  })) as PaiementData[];
 
-  // Créer le workbook Excel
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "EduTrack";
   workbook.created = new Date();
 
-  // Feuille des paiements
   const sheet = workbook.addWorksheet("Paiements");
 
-  // En-têtes
   sheet.columns = [
     { header: "ID", key: "id", width: 25 },
     { header: "Élève", key: "eleveNom", width: 30 },
@@ -68,7 +68,6 @@ async function generateExcelReport(mois: string): Promise<Buffer> {
     { header: "Date Création", key: "createdAt", width: 20 },
   ];
 
-  // Style des en-têtes
   sheet.getRow(1).font = { bold: true };
   sheet.getRow(1).fill = {
     type: "pattern",
@@ -77,31 +76,28 @@ async function generateExcelReport(mois: string): Promise<Buffer> {
   };
   sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
 
-  // Ajouter les données
   for (const p of paiements) {
-    const data = p as any;
     sheet.addRow({
       id: p.id,
-      eleveNom: data.eleveNom || "",
-      classe: data.classe || "",
-      mois: data.mois || "",
-      montantTotal: data.montantTotal || 0,
-      montantPaye: data.montantPaye || 0,
-      montantRestant: data.montantRestant || 0,
-      statut: data.statut || "",
-      createdAt: data.createdAt?.toDate?.()?.toLocaleDateString("fr-FR") || "",
+      eleveNom: p.eleveNom || "",
+      classe: p.classe || "",
+      mois: p.mois || "",
+      montantTotal: p.montantTotal || 0,
+      montantPaye: p.montantPaye || 0,
+      montantRestant: p.montantRestant || 0,
+      statut: p.statut || "",
+      createdAt: p.createdAt?.toDate?.()?.toLocaleDateString("fr-FR") || "",
     });
   }
 
-  // Feuille de résumé
   const summarySheet = workbook.addWorksheet("Résumé");
 
-  const totalMontant = paiements.reduce((sum, p: any) => sum + (p.montantTotal || 0), 0);
-  const totalPaye = paiements.reduce((sum, p: any) => sum + (p.montantPaye || 0), 0);
-  const totalRestant = paiements.reduce((sum, p: any) => sum + (p.montantRestant || 0), 0);
-  const nbPayes = paiements.filter((p: any) => p.statut === "paye").length;
-  const nbPartiels = paiements.filter((p: any) => p.statut === "partiel").length;
-  const nbImpayes = paiements.filter((p: any) => p.statut === "impaye").length;
+  const totalMontant = paiements.reduce((sum, p) => sum + (p.montantTotal || 0), 0);
+  const totalPaye = paiements.reduce((sum, p) => sum + (p.montantPaye || 0), 0);
+  const totalRestant = paiements.reduce((sum, p) => sum + (p.montantRestant || 0), 0);
+  const nbPayes = paiements.filter((p) => p.statut === "paye").length;
+  const nbPartiels = paiements.filter((p) => p.statut === "partiel").length;
+  const nbImpayes = paiements.filter((p) => p.statut === "impaye").length;
 
   summarySheet.columns = [
     { header: "Métrique", key: "metric", width: 30 },
@@ -125,7 +121,6 @@ async function generateExcelReport(mois: string): Promise<Buffer> {
   summarySheet.addRow({ metric: "Impayés", value: nbImpayes });
   summarySheet.addRow({ metric: "Taux de recouvrement", value: `${totalMontant > 0 ? Math.round((totalPaye / totalMontant) * 100) : 0}%` });
 
-  // Générer le buffer
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
@@ -162,14 +157,6 @@ async function sendEmailWithAttachment(
   });
 }
 
-// ========================================
-// SCHEDULED FUNCTION - Rapport mensuel
-// ========================================
-
-/**
- * Envoi automatique du rapport de paiements chaque 1er du mois à 8h
- * Cron: 0 8 1 * * (1er jour du mois à 8h00)
- */
 export const sendMonthlyPaymentReport = functions
   .region("europe-west1")
   .pubsub.schedule("0 8 1 * *")
@@ -185,10 +172,8 @@ export const sendMonthlyPaymentReport = functions
     const { mois, label } = getPreviousMonth();
 
     try {
-      // Générer le rapport Excel
       const excelBuffer = await generateExcelReport(mois);
 
-      // Préparer l'email
       const subject = `[EduTrack] Rapport des paiements - ${label}`;
       const body = `
         <h2>Rapport mensuel des paiements</h2>
@@ -203,10 +188,8 @@ export const sendMonthlyPaymentReport = functions
       `;
       const filename = `rapport-paiements-${mois}.xlsx`;
 
-      // Envoyer l'email
       await sendEmailWithAttachment(config, subject, body, excelBuffer, filename);
 
-      // Log de l'envoi
       await db.collection("audit_logs").add({
         action: "MONTHLY_REPORT_SENT",
         mois,
@@ -219,7 +202,6 @@ export const sendMonthlyPaymentReport = functions
     } catch (error) {
       console.error("Erreur lors de l'envoi du rapport:", error);
 
-      // Log de l'erreur
       await db.collection("audit_logs").add({
         action: "MONTHLY_REPORT_FAILED",
         mois,
@@ -231,27 +213,17 @@ export const sendMonthlyPaymentReport = functions
     }
   });
 
-// ========================================
-// CALLABLE FUNCTION - Envoi manuel
-// ========================================
-
-/**
- * Permet à un admin d'envoyer manuellement le rapport
- */
 export const sendPaymentReportManual = functions
   .region("europe-west1")
-  .https.onCall(async (request) => {
-    const { data, auth } = request;
-
-    if (!auth?.uid) {
+  .https.onCall(async (data: { mois?: string; emailTo?: string }, context) => {
+    if (!context.auth?.uid) {
       throw new functions.https.HttpsError(
         "unauthenticated",
         "Vous devez être connecté."
       );
     }
 
-    // Vérifier admin
-    const userDoc = await db.collection("users").doc(auth.uid).get();
+    const userDoc = await db.collection("users").doc(context.auth.uid).get();
     if (!userDoc.exists || userDoc.data()?.role !== "admin") {
       throw new functions.https.HttpsError(
         "permission-denied",
@@ -259,10 +231,7 @@ export const sendPaymentReportManual = functions
       );
     }
 
-    const { mois, emailTo } = data as { mois?: string; emailTo?: string };
-
-    // Utiliser le mois précédent par défaut
-    const targetMois = mois || getPreviousMonth().mois;
+    const targetMois = data?.mois || getPreviousMonth().mois;
     const label = new Date(`${targetMois}-01`).toLocaleDateString("fr-FR", {
       month: "long",
       year: "numeric",
@@ -277,7 +246,7 @@ export const sendPaymentReportManual = functions
       );
     }
 
-    const targetEmail = emailTo || config.emailTo;
+    const targetEmail = data?.emailTo || config.emailTo;
 
     if (!targetEmail) {
       throw new functions.https.HttpsError(
@@ -307,12 +276,11 @@ export const sendPaymentReportManual = functions
         filename
       );
 
-      // Log
       await db.collection("audit_logs").add({
         action: "MANUAL_REPORT_SENT",
         mois: targetMois,
         emailTo: targetEmail,
-        performedBy: auth.uid,
+        performedBy: context.auth.uid,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 
@@ -328,27 +296,17 @@ export const sendPaymentReportManual = functions
     }
   });
 
-// ========================================
-// CALLABLE FUNCTION - Configurer email
-// ========================================
-
-/**
- * Configurer les paramètres d'envoi email - ADMIN uniquement
- */
 export const configureReportEmail = functions
   .region("europe-west1")
-  .https.onCall(async (request) => {
-    const { data, auth } = request;
-
-    if (!auth?.uid) {
+  .https.onCall(async (data: Partial<ReportConfig>, context) => {
+    if (!context.auth?.uid) {
       throw new functions.https.HttpsError(
         "unauthenticated",
         "Vous devez être connecté."
       );
     }
 
-    // Vérifier admin
-    const userDoc = await db.collection("users").doc(auth.uid).get();
+    const userDoc = await db.collection("users").doc(context.auth.uid).get();
     if (!userDoc.exists || userDoc.data()?.role !== "admin") {
       throw new functions.https.HttpsError(
         "permission-denied",
@@ -356,9 +314,7 @@ export const configureReportEmail = functions
       );
     }
 
-    const config = data as Partial<ReportConfig>;
-
-    if (!config.emailTo) {
+    if (!data?.emailTo) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "L'adresse email destinataire est requise."
@@ -368,22 +324,21 @@ export const configureReportEmail = functions
     try {
       await db.collection("config").doc("reports").set(
         {
-          emailTo: config.emailTo,
-          emailFrom: config.emailFrom || "noreply@edutrack.com",
-          smtpHost: config.smtpHost || "",
-          smtpPort: config.smtpPort || 587,
-          smtpUser: config.smtpUser || "",
-          smtpPass: config.smtpPass || "",
+          emailTo: data.emailTo,
+          emailFrom: data.emailFrom || "noreply@edutrack.com",
+          smtpHost: data.smtpHost || "",
+          smtpPort: data.smtpPort || 587,
+          smtpUser: data.smtpUser || "",
+          smtpPass: data.smtpPass || "",
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedBy: auth.uid,
+          updatedBy: context.auth.uid,
         },
         { merge: true }
       );
 
-      // Log
       await db.collection("audit_logs").add({
         action: "REPORT_CONFIG_UPDATED",
-        performedBy: auth.uid,
+        performedBy: context.auth.uid,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 
@@ -391,7 +346,7 @@ export const configureReportEmail = functions
         success: true,
         message: "Configuration enregistrée.",
       };
-    } catch (error) {
+    } catch {
       throw new functions.https.HttpsError(
         "internal",
         "Erreur lors de la sauvegarde de la configuration."

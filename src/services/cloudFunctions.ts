@@ -1,22 +1,12 @@
-/**
- * Service pour appeler les Cloud Functions securisees
- * Ces fonctions valident les operations cote serveur
- */
+import { httpsCallable } from "firebase/functions";
+import { functions, ensureAuth } from "./firebase";
 
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { app } from "./firebase";
-
-// Initialiser Functions avec la region europe-west1
-const functions = getFunctions(app, "europe-west1");
-
-// Connecter a l'emulateur en dev (decommentez si necessaire)
-// if (import.meta.env.DEV) {
-//   connectFunctionsEmulator(functions, "localhost", 5001);
-// }
-
-// ========================================
-// TYPES
-// ========================================
+async function callFunction<T, R>(name: string, data?: T): Promise<R> {
+  await ensureAuth();
+  const fn = httpsCallable<T, R>(functions, name);
+  const result = await fn(data as T);
+  return result.data;
+}
 
 export interface CreateUserParams {
   email: string;
@@ -63,105 +53,88 @@ export interface AuditLog {
   timestamp: string;
 }
 
-// ========================================
-// CLOUD FUNCTIONS
-// ========================================
-
-/**
- * Creer un utilisateur via Cloud Function (securise)
- * Seuls les admins peuvent appeler cette fonction
- */
-export async function createUserSecure(params: CreateUserParams): Promise<CreateUserResult> {
-  const createUserFn = httpsCallable<CreateUserParams, CreateUserResult>(functions, "createUser");
-  const result = await createUserFn(params);
-  return result.data;
+export interface CahierEntryEleve {
+  id: string;
+  nom: string;
+  prenom: string;
+  nomComplet: string;
 }
 
-/**
- * Supprimer un utilisateur via Cloud Function (securise)
- * Seuls les admins peuvent appeler cette fonction
- */
-export async function deleteUserSecure(userId: string): Promise<{ success: boolean; message: string }> {
-  const deleteUserFn = httpsCallable<{ userId: string }, { success: boolean; message: string }>(
-    functions,
-    "deleteUser"
-  );
-  const result = await deleteUserFn({ userId });
-  return result.data;
+export interface CahierEntryAdmin {
+  id: string;
+  date: string;
+  classe: string;
+  coursId: string;
+  profId: string;
+  profNom: string;
+  contenu: string;
+  devoirs: string;
+  isSigned: boolean;
+  signedAt: string | null;
+  eleves: string[];
+  elevesDetails: CahierEntryEleve[];
+  createdAt: string | null;
 }
 
-/**
- * Creer un paiement via Cloud Function (securise)
- * Admins et gestionnaires peuvent appeler cette fonction
- * Inclut validation serveur des montants et doublons
- */
-export async function createPaiementSecure(params: CreatePaiementParams): Promise<CreatePaiementResult> {
-  const createPaiementFn = httpsCallable<CreatePaiementParams, CreatePaiementResult>(
-    functions,
-    "createPaiement"
-  );
-  const result = await createPaiementFn(params);
-  return result.data;
+export interface GetCahierTextesAdminParams {
+  classe?: string;
+  profId?: string;
+  mois?: string;
 }
 
-/**
- * Activer/Desactiver un utilisateur via Cloud Function (securise)
- * Seuls les admins peuvent appeler cette fonction
- */
-export async function toggleUserStatusSecure(
-  params: ToggleUserStatusParams
-): Promise<{ success: boolean; message: string }> {
-  const toggleFn = httpsCallable<ToggleUserStatusParams, { success: boolean; message: string }>(
-    functions,
-    "toggleUserStatus"
-  );
-  const result = await toggleFn(params);
-  return result.data;
+export interface CahierTexteAdmin {
+  id: string;
+  date: string;
+  classe: string;
+  coursId: string;
+  profId: string;
+  profNom: string;
+  contenu: string;
+  devoirs: string;
+  isSigned: boolean;
+  signedAt: string | null;
+  createdAt: string | null;
 }
 
-/**
- * Obtenir les logs d'audit via Cloud Function (securise)
- * Seuls les admins peuvent voir les logs
- */
-export async function getAuditLogsSecure(limit = 100): Promise<{ success: boolean; logs: AuditLog[] }> {
-  const getLogsFn = httpsCallable<{ limit: number }, { success: boolean; logs: AuditLog[] }>(
-    functions,
-    "getAuditLogs"
-  );
-  const result = await getLogsFn({ limit });
-  return result.data;
+export function createUserSecure(params: CreateUserParams): Promise<CreateUserResult> {
+  return callFunction("createUser", params);
 }
 
-// ========================================
-// HELPER - Gestion des erreurs
-// ========================================
+export function deleteUserSecure(userId: string): Promise<{ success: boolean; message: string }> {
+  return callFunction("deleteUser", { userId });
+}
 
-/**
- * Extraire un message d'erreur lisible depuis une erreur Cloud Function
- */
+export function createPaiementSecure(params: CreatePaiementParams): Promise<CreatePaiementResult> {
+  return callFunction("createPaiement", params);
+}
+
+export function toggleUserStatusSecure(params: ToggleUserStatusParams): Promise<{ success: boolean; message: string }> {
+  return callFunction("toggleUserStatus", params);
+}
+
+export function getAuditLogsSecure(limit = 100): Promise<{ success: boolean; logs: AuditLog[] }> {
+  return callFunction("getAuditLogs", { limit });
+}
+
+export function getAllCahierEntriesSecure(): Promise<{ success: boolean; entries: CahierEntryAdmin[] }> {
+  return callFunction("getAllCahierEntries", undefined);
+}
+
+export function getCahierTextesAdmin(params: GetCahierTextesAdminParams = {}): Promise<{ success: boolean; entries: CahierTexteAdmin[] }> {
+  return callFunction("getCahierTextesAdmin", params);
+}
+
 export function getCloudFunctionErrorMessage(error: unknown): string {
   if (error && typeof error === "object" && "message" in error) {
     const msg = (error as { message: string }).message;
-
-    // Messages d'erreur Firebase Functions
-    if (msg.includes("unauthenticated")) {
+    if (msg.includes("NOT_AUTHENTICATED") || msg.includes("unauthenticated")) {
       return "Vous devez etre connecte pour effectuer cette action.";
     }
-    if (msg.includes("permission-denied")) {
-      return "Vous n'avez pas les droits necessaires.";
-    }
-    if (msg.includes("already-exists")) {
-      return "Cet element existe deja.";
-    }
-    if (msg.includes("not-found")) {
-      return "Element non trouve.";
-    }
-    if (msg.includes("invalid-argument")) {
-      return msg.replace("invalid-argument: ", "");
-    }
-
+    if (msg.includes("permission-denied")) return "Vous n'avez pas les droits necessaires.";
+    if (msg.includes("already-exists")) return "Cet element existe deja.";
+    if (msg.includes("not-found")) return "Element non trouve.";
+    if (msg.includes("invalid-argument")) return msg.replace("invalid-argument: ", "");
     return msg;
   }
-
   return "Une erreur inattendue s'est produite.";
 }

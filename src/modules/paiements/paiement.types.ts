@@ -26,5 +26,6 @@ export interface Paiement {
 
   versements: Versement[];
 
+  datePaiement?: Timestamp | Date;
   createdAt?: Timestamp | FieldValue;
 }

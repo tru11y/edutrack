@@ -5,11 +5,13 @@ import {
   updateProfesseur,
   desactiverProfesseur,
 } from "./professeur.service";
+import { useTheme } from "../../context/ThemeContext";
 import type { Professeur } from "./professeur.types";
 
 export default function ProfesseurProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { colors } = useTheme();
 
   const [prof, setProf] = useState<Professeur | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,7 @@ export default function ProfesseurProfile() {
         classes: form.classes.split(",").map((c) => c.trim()).filter(Boolean),
       });
       setEditing(false);
-    } catch (e) {
+    } catch {
       alert("Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
@@ -82,10 +84,10 @@ export default function ProfesseurProfile() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{
-            width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#8b5cf6",
+            width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.primary,
             borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px"
           }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement...</p>
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -95,8 +97,8 @@ export default function ProfesseurProfile() {
   if (!prof) {
     return (
       <div style={{ textAlign: "center", padding: 60 }}>
-        <p style={{ fontSize: 16, color: "#64748b" }}>Professeur introuvable</p>
-        <Link to="/admin/professeurs" style={{ color: "#6366f1" }}>Retour a la liste</Link>
+        <p style={{ fontSize: 16, color: colors.textMuted }}>Professeur introuvable</p>
+        <Link to="/admin/professeurs" style={{ color: colors.primary }}>Retour a la liste</Link>
       </div>
     );
   }
@@ -111,7 +113,7 @@ export default function ProfesseurProfile() {
             display: "inline-flex",
             alignItems: "center",
             gap: 8,
-            color: "#64748b",
+            color: colors.textMuted,
             textDecoration: "none",
             fontSize: 14,
             marginBottom: 16
@@ -123,7 +125,7 @@ export default function ProfesseurProfile() {
           Retour aux professeurs
         </Link>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>
             Profil Professeur
           </h1>
           {!editing && (
@@ -132,7 +134,7 @@ export default function ProfesseurProfile() {
                 onClick={() => setEditing(true)}
                 style={{
                   padding: "10px 20px",
-                  background: "#8b5cf6",
+                  background: colors.primary,
                   color: "#fff",
                   border: "none",
                   borderRadius: 10,
@@ -153,9 +155,9 @@ export default function ProfesseurProfile() {
                 onClick={handleDelete}
                 style={{
                   padding: "10px 20px",
-                  background: "#fef2f2",
-                  color: "#dc2626",
-                  border: "1px solid #fecaca",
+                  background: colors.dangerBg,
+                  color: colors.danger,
+                  border: `1px solid ${colors.danger}40`,
                   borderRadius: 10,
                   fontSize: 14,
                   fontWeight: 500,
@@ -171,15 +173,15 @@ export default function ProfesseurProfile() {
 
       {/* Profile Card */}
       <div style={{
-        background: "#fff",
+        background: colors.bgCard,
         borderRadius: 16,
-        border: "1px solid #e2e8f0",
+        border: `1px solid ${colors.border}`,
         overflow: "hidden"
       }}>
         {/* Header with avatar */}
         <div style={{
           padding: 24,
-          background: "linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)",
+          background: `linear-gradient(135deg, ${colors.primary} 0%, #a855f7 100%)`,
           display: "flex",
           alignItems: "center",
           gap: 20
@@ -226,7 +228,7 @@ export default function ProfesseurProfile() {
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
                     Nom
                   </label>
                   <input
@@ -235,15 +237,17 @@ export default function ProfesseurProfile() {
                     style={{
                       width: "100%",
                       padding: "12px 14px",
-                      border: "1px solid #e2e8f0",
+                      border: `1px solid ${colors.border}`,
                       borderRadius: 10,
                       fontSize: 14,
-                      boxSizing: "border-box"
+                      boxSizing: "border-box",
+                      background: colors.bgInput,
+                      color: colors.text,
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
                     Prenom
                   </label>
                   <input
@@ -252,17 +256,19 @@ export default function ProfesseurProfile() {
                     style={{
                       width: "100%",
                       padding: "12px 14px",
-                      border: "1px solid #e2e8f0",
+                      border: `1px solid ${colors.border}`,
                       borderRadius: 10,
                       fontSize: 14,
-                      boxSizing: "border-box"
+                      boxSizing: "border-box",
+                      background: colors.bgInput,
+                      color: colors.text,
                     }}
                   />
                 </div>
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
                   Telephone
                 </label>
                 <input
@@ -271,16 +277,18 @@ export default function ProfesseurProfile() {
                   style={{
                     width: "100%",
                     padding: "12px 14px",
-                    border: "1px solid #e2e8f0",
+                    border: `1px solid ${colors.border}`,
                     borderRadius: 10,
                     fontSize: 14,
-                    boxSizing: "border-box"
+                    boxSizing: "border-box",
+                    background: colors.bgInput,
+                    color: colors.text,
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
                   Matieres (separees par des virgules)
                 </label>
                 <input
@@ -290,16 +298,18 @@ export default function ProfesseurProfile() {
                   style={{
                     width: "100%",
                     padding: "12px 14px",
-                    border: "1px solid #e2e8f0",
+                    border: `1px solid ${colors.border}`,
                     borderRadius: 10,
                     fontSize: 14,
-                    boxSizing: "border-box"
+                    boxSizing: "border-box",
+                    background: colors.bgInput,
+                    color: colors.text,
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
                   Classes (separees par des virgules)
                 </label>
                 <input
@@ -309,10 +319,12 @@ export default function ProfesseurProfile() {
                   style={{
                     width: "100%",
                     padding: "12px 14px",
-                    border: "1px solid #e2e8f0",
+                    border: `1px solid ${colors.border}`,
                     borderRadius: 10,
                     fontSize: 14,
-                    boxSizing: "border-box"
+                    boxSizing: "border-box",
+                    background: colors.bgInput,
+                    color: colors.text,
                   }}
                 />
               </div>
@@ -323,7 +335,7 @@ export default function ProfesseurProfile() {
                   disabled={saving}
                   style={{
                     padding: "12px 24px",
-                    background: "#10b981",
+                    background: colors.success,
                     color: "#fff",
                     border: "none",
                     borderRadius: 10,
@@ -339,8 +351,8 @@ export default function ProfesseurProfile() {
                   onClick={() => setEditing(false)}
                   style={{
                     padding: "12px 24px",
-                    background: "#f1f5f9",
-                    color: "#64748b",
+                    background: colors.bgSecondary,
+                    color: colors.textMuted,
                     border: "none",
                     borderRadius: 10,
                     fontSize: 14,
@@ -354,13 +366,13 @@ export default function ProfesseurProfile() {
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-              <InfoBlock label="Nom" value={prof.nom} />
-              <InfoBlock label="Prenom" value={prof.prenom} />
-              <InfoBlock label="Telephone" value={prof.telephone || "Non renseigne"} />
-              <InfoBlock label="Statut" value={prof.statut === "actif" ? "Actif" : "Inactif"} />
+              <InfoBlock label="Nom" value={prof.nom} colors={colors} />
+              <InfoBlock label="Prenom" value={prof.prenom} colors={colors} />
+              <InfoBlock label="Telephone" value={prof.telephone || "Non renseigne"} colors={colors} />
+              <InfoBlock label="Statut" value={prof.statut === "actif" ? "Actif" : "Inactif"} colors={colors} />
 
               <div style={{ gridColumn: "1 / -1" }}>
-                <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                <p style={{ fontSize: 12, color: colors.textLight, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
                   Matieres
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -368,8 +380,8 @@ export default function ProfesseurProfile() {
                     prof.matieres.map((m, i) => (
                       <span key={i} style={{
                         padding: "6px 14px",
-                        background: "#f5f3ff",
-                        color: "#7c3aed",
+                        background: colors.primaryBg,
+                        color: colors.primary,
                         borderRadius: 8,
                         fontSize: 13,
                         fontWeight: 500
@@ -378,13 +390,13 @@ export default function ProfesseurProfile() {
                       </span>
                     ))
                   ) : (
-                    <span style={{ color: "#94a3b8", fontSize: 14 }}>Aucune matiere</span>
+                    <span style={{ color: colors.textLight, fontSize: 14 }}>Aucune matiere</span>
                   )}
                 </div>
               </div>
 
               <div style={{ gridColumn: "1 / -1" }}>
-                <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                <p style={{ fontSize: 12, color: colors.textLight, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
                   Classes
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -392,8 +404,8 @@ export default function ProfesseurProfile() {
                     prof.classes.map((c, i) => (
                       <span key={i} style={{
                         padding: "6px 14px",
-                        background: "#eef2ff",
-                        color: "#6366f1",
+                        background: colors.infoBg,
+                        color: colors.info,
                         borderRadius: 8,
                         fontSize: 13,
                         fontWeight: 500
@@ -402,7 +414,7 @@ export default function ProfesseurProfile() {
                       </span>
                     ))
                   ) : (
-                    <span style={{ color: "#94a3b8", fontSize: 14 }}>Aucune classe</span>
+                    <span style={{ color: colors.textLight, fontSize: 14 }}>Aucune classe</span>
                   )}
                 </div>
               </div>
@@ -414,13 +426,13 @@ export default function ProfesseurProfile() {
   );
 }
 
-function InfoBlock({ label, value }: { label: string; value: string }) {
+function InfoBlock({ label, value, colors }: { label: string; value: string; colors: any }) {
   return (
     <div>
-      <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+      <p style={{ fontSize: 12, color: colors.textLight, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
         {label}
       </p>
-      <p style={{ fontSize: 16, color: "#1e293b", margin: 0, fontWeight: 500 }}>
+      <p style={{ fontSize: 16, color: colors.text, margin: 0, fontWeight: 500 }}>
         {value}
       </p>
     </div>

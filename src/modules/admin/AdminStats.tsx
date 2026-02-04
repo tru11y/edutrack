@@ -71,9 +71,13 @@ export default function AdminStats() {
     );
   }
 
-  const tauxRecouvrement = stats.totalAttendu > 0
-    ? Math.round((stats.totalEncaisse / stats.totalAttendu) * 100)
-    : 0;
+  // Taux de couverture calculé dans paiement.stats.ts
+  // = (totalPaye / totalAttendu) * 100
+  const tauxRecouvrement = stats.tauxCouverture ?? (
+    stats.totalAttendu > 0
+      ? Math.round((stats.totalEncaisse / stats.totalAttendu) * 100)
+      : 0
+  );
 
   const tauxBan = totalEleves > 0 ? Math.round((bannis.length / totalEleves) * 100) : 0;
 

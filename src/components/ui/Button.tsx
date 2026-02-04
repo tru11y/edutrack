@@ -1,4 +1,5 @@
 import React from "react";
+import { useTheme } from "../../context/ThemeContext";
 
 type Variant = "primary" | "secondary" | "danger";
 
@@ -9,19 +10,42 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export default function Button({
   children,
   variant = "primary",
+  style,
   ...props
 }: Props) {
-  const base =
-    "px-4 py-2 rounded font-medium transition disabled:opacity-50";
+  const { colors } = useTheme();
 
-  const styles: Record<Variant, string> = {
-    primary: "bg-black text-white hover:bg-gray-800",
-    secondary: "bg-gray-200 text-black hover:bg-gray-300",
-    danger: "bg-red-600 text-white hover:bg-red-700",
+  const baseStyle: React.CSSProperties = {
+    padding: "8px 16px",
+    borderRadius: 8,
+    fontWeight: 500,
+    transition: "all 0.2s",
+    border: "none",
+    cursor: props.disabled ? "not-allowed" : "pointer",
+    opacity: props.disabled ? 0.5 : 1,
+  };
+
+  const variantStyles: Record<Variant, React.CSSProperties> = {
+    primary: {
+      background: colors.primary,
+      color: "#fff",
+    },
+    secondary: {
+      background: colors.bgSecondary,
+      color: colors.text,
+      border: `1px solid ${colors.border}`,
+    },
+    danger: {
+      background: colors.danger,
+      color: "#fff",
+    },
   };
 
   return (
-    <button className={`${base} ${styles[variant]}`} {...props}>
+    <button
+      style={{ ...baseStyle, ...variantStyles[variant], ...style }}
+      {...props}
+    >
       {children}
     </button>
   );

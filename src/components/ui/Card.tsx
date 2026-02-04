@@ -16,7 +16,7 @@ const paddingMap = {
   lg: 32,
 };
 
-export default function Card({
+export function Card({
   children,
   padding = "md",
   hover = false,
@@ -154,3 +154,5 @@ export function ActionCard({ icon, title, description, onClick }: ActionCardProp
     </button>
   );
 }
+
+export default Card;

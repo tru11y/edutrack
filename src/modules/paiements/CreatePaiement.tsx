@@ -1,57 +1,162 @@
 import { useState } from "react";
-import { updateDoc, doc } from "firebase/firestore";
+import { updateDoc, doc, Timestamp } from "firebase/firestore";
 import { db } from "../../services/firebase";
+import { useTheme } from "../../context/ThemeContext";
+import { calculerPaiement } from "./paiement.logic";
 
-// Fonction d'ajout de versement - intégrée depuis paiement.service
+// Fonction d'ajout de versement avec mise à jour du statut
 async function ajouterVersement(paiementId: string, versement: any, paiement: any) {
   const ref = doc(db, "paiements", paiementId);
   const versements = paiement.versements ?? [];
-  await updateDoc(ref, { versements: [...versements, versement] });
+  const nouveauPaye = (paiement.montantPaye || 0) + versement.montant;
+  const { statut, montantRestant } = calculerPaiement(paiement.montantTotal, nouveauPaye);
+
+  await updateDoc(ref, {
+    versements: [...versements, versement],
+    montantPaye: nouveauPaye,
+    montantRestant,
+    statut,
+    datePaiement: Timestamp.fromDate(versement.date),
+  });
 }
 
-export default function CreatePaiement({ paiement }: any) {
+export default function CreatePaiement({ paiement, onSuccess }: { paiement: any; onSuccess?: () => void }) {
+  const { colors } = useTheme();
   const [montant, setMontant] = useState(0);
   const [methode, setMethode] = useState("especes");
+  const [datePaiement, setDatePaiement] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    if (montant <= 0) {
+      alert("Le montant doit être supérieur à 0");
+      return;
+    }
 
-    await ajouterVersement(
-      paiement.id,
-      {
-        date: new Date(),
-        montant,
-        methode,
-      },
-      paiement
-    );
+    setLoading(true);
+    try {
+      await ajouterVersement(
+        paiement.id,
+        {
+          date: new Date(datePaiement),
+          montant,
+          methode,
+        },
+        paiement
+      );
 
-    alert("Paiement enregistré");
+      alert("Paiement enregistré");
+      setMontant(0);
+      onSuccess?.();
+    } catch (error) {
+      alert("Erreur lors de l'enregistrement");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded">
-      <h4 className="font-semibold mb-2">💳 Nouveau versement</h4>
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        background: colors.bgSecondary,
+        padding: 16,
+        borderRadius: 12,
+        border: `1px solid ${colors.border}`,
+      }}
+    >
+      <h4 style={{ fontWeight: 600, marginBottom: 12, color: colors.text }}>
+        Nouveau versement
+      </h4>
 
-      <input
-        type="number"
-        className="input"
-        placeholder="Montant"
-        onChange={(e) => setMontant(Number(e.target.value))}
-      />
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ display: "block", fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+          Date du paiement
+        </label>
+        <input
+          type="date"
+          value={datePaiement}
+          onChange={(e) => setDatePaiement(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            border: `1px solid ${colors.border}`,
+            borderRadius: 8,
+            fontSize: 14,
+            background: colors.bgInput,
+            color: colors.text,
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
 
-      <select className="input" onChange={(e) => setMethode(e.target.value)}>
-        <option value="especes">Espèces</option>
-        <option value="mobile_money">Mobile Money</option>
-        <option value="virement">Virement</option>
-        <option value="cheque">Chèque</option>
-      </select>
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ display: "block", fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+          Montant
+        </label>
+        <input
+          type="number"
+          placeholder="Montant"
+          value={montant || ""}
+          onChange={(e) => setMontant(Number(e.target.value))}
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            border: `1px solid ${colors.border}`,
+            borderRadius: 8,
+            fontSize: 14,
+            background: colors.bgInput,
+            color: colors.text,
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ display: "block", fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+          Méthode
+        </label>
+        <select
+          value={methode}
+          onChange={(e) => setMethode(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            border: `1px solid ${colors.border}`,
+            borderRadius: 8,
+            fontSize: 14,
+            background: colors.bgInput,
+            color: colors.text,
+            boxSizing: "border-box",
+          }}
+        >
+          <option value="especes">Espèces</option>
+          <option value="mobile_money">Mobile Money</option>
+          <option value="virement">Virement</option>
+          <option value="cheque">Chèque</option>
+        </select>
+      </div>
 
       <button
-        className="w-full rounded-2xl px-6 py-3 font-semibold text-white shadow-lg bg-gradient-to-tr from-yellow-500 to-yellow-300 hover:from-yellow-600 hover:to-yellow-400 transition text-lg mt-4 disabled:opacity-50"
-        style={{ letterSpacing: 1 }}
+        type="submit"
+        disabled={loading || montant <= 0}
+        style={{
+          width: "100%",
+          padding: "12px 20px",
+          background: colors.primary,
+          color: "#fff",
+          border: "none",
+          borderRadius: 10,
+          fontSize: 14,
+          fontWeight: 600,
+          cursor: loading ? "not-allowed" : "pointer",
+          opacity: loading || montant <= 0 ? 0.6 : 1,
+        }}
       >
-        Enregistrer
+        {loading ? "Enregistrement..." : "Enregistrer"}
       </button>
     </form>
   );
