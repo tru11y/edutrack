@@ -28,6 +28,7 @@ interface CreatePaiementData {
   mois: string;
   montantTotal: number;
   montantPaye: number;
+  datePaiement: string;
 }
 
 // ========================================
@@ -273,6 +274,32 @@ export const createPaiement = functions
       );
     }
 
+    // Validation datePaiement obligatoire
+    if (!paiementData.datePaiement) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "La date de paiement est requise."
+      );
+    }
+
+    // Validation format datePaiement (YYYY-MM-DD)
+    const datePaiementRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!datePaiementRegex.test(paiementData.datePaiement)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Format de date de paiement invalide (attendu: YYYY-MM-DD)."
+      );
+    }
+
+    // Validation que la date est valide
+    const datePaiementParsed = new Date(paiementData.datePaiement);
+    if (isNaN(datePaiementParsed.getTime())) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Date de paiement invalide."
+      );
+    }
+
     // Validation format mois (YYYY-MM)
     const moisRegex = /^\d{4}-\d{2}$/;
     if (!moisRegex.test(paiementData.mois)) {
@@ -335,6 +362,7 @@ export const createPaiement = functions
         montantPaye: paiementData.montantPaye,
         montantRestant,
         statut,
+        datePaiement: admin.firestore.Timestamp.fromDate(datePaiementParsed),
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: auth.uid,
       });
@@ -433,7 +461,7 @@ export const toggleUserStatus = functions
   });
 
 
-  
+
 /**
  * Obtenir les logs d'audit - ADMIN UNIQUEMENT
  */

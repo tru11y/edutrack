@@ -40,6 +40,7 @@ export interface CreatePaiementParams {
   mois: string;
   montantTotal: number;
   montantPaye: number;
+  datePaiement: string;
 }
 
 export interface CreatePaiementResult {
