@@ -1,52 +1,33 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { getAllCahierEntriesSecure, type CahierEntryAdmin } from "../../services/cloudFunctions";
 import { exportCahierToPDF } from "./cahier.export";
 
-interface CahierEntry {
-  id: string;
-  date: string;
-  classe: string;
-  coursId: string;
-  coursNom?: string;
-  profId: string;
-  profNom?: string;
-  contenu: string;
-  devoirs?: string;
-  isSigned: boolean;
-  eleves?: string[];
-}
-
 export default function AdminCahierList() {
-  const [entries, setEntries] = useState<CahierEntry[]>([]);
+  const [entries, setEntries] = useState<CahierEntryAdmin[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "signed" | "unsigned">("all");
   const [selectedClasse, setSelectedClasse] = useState("");
-  const [classes, setClasses] = useState<string[]>([]);
+  const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const load = async () => {
-      const [cahierSnap, elevesSnap] = await Promise.all([
-        getDocs(collection(db, "cahier")),
-        getDocs(collection(db, "eleves"))
-      ]);
-
-      const cls = new Set<string>();
-      elevesSnap.forEach((d) => cls.add(d.data().classe));
-      setClasses(Array.from(cls).sort());
-
-      const data = cahierSnap.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Omit<CahierEntry, "id">)
-      }));
-
-      data.sort((a, b) => b.date.localeCompare(a.date));
-      setEntries(data);
-      setLoading(false);
+      try {
+        setError(null);
+        const result = await getAllCahierEntriesSecure();
+        setEntries(result.entries);
+      } catch (err) {
+        setError("Erreur lors du chargement du cahier de texte");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     load();
   }, []);
+
+  const classes = [...new Set(entries.map((e) => e.classe))].sort();
 
   const filteredEntries = entries.filter((e) => {
     const matchFilter = filter === "all" ||
@@ -60,6 +41,18 @@ export default function AdminCahierList() {
     total: entries.length,
     signed: entries.filter(e => e.isSigned).length,
     unsigned: entries.filter(e => !e.isSigned).length
+  };
+
+  const toggleExpanded = (id: string) => {
+    setExpandedEntries((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   if (loading) {
@@ -77,9 +70,22 @@ export default function AdminCahierList() {
     );
   }
 
+  if (error) {
+    return (
+      <div style={{
+        background: "#fef2f2",
+        border: "1px solid #fecaca",
+        borderRadius: 12,
+        padding: 24,
+        textAlign: "center"
+      }}>
+        <p style={{ color: "#dc2626", margin: 0 }}>{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div>
-      {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>Cahier de texte</h1>
@@ -108,17 +114,15 @@ export default function AdminCahierList() {
             Exporter PDF
           </button>
         </div>
-        <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Consultez et gerez les cahiers de texte de toutes les classes</p>
+        <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Consultez les cahiers de texte de toutes les classes</p>
       </div>
 
-      {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 32 }}>
         <StatCard label="Total entrees" value={stats.total} color="#6366f1" />
         <StatCard label="Signes" value={stats.signed} color="#10b981" />
         <StatCard label="Non signes" value={stats.unsigned} color="#f59e0b" />
       </div>
 
-      {/* Filters */}
       <div style={{
         background: "#fff",
         borderRadius: 16,
@@ -127,7 +131,6 @@ export default function AdminCahierList() {
         marginBottom: 24
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          {/* Classe filter */}
           <div>
             <select
               value={selectedClasse}
@@ -153,7 +156,6 @@ export default function AdminCahierList() {
             </select>
           </div>
 
-          {/* Status filter */}
           <div style={{ display: "flex", gap: 8 }}>
             {[
               { value: "all", label: "Tous", count: stats.total },
@@ -195,7 +197,6 @@ export default function AdminCahierList() {
         </div>
       </div>
 
-      {/* List */}
       {filteredEntries.length === 0 ? (
         <div style={{
           background: "#fff",
@@ -228,7 +229,6 @@ export default function AdminCahierList() {
                 overflow: "hidden"
               }}
             >
-              {/* Header */}
               <div style={{
                 padding: "16px 20px",
                 borderBottom: "1px solid #f1f5f9",
@@ -267,11 +267,11 @@ export default function AdminCahierList() {
                         {entry.classe}
                       </span>
                       <span style={{ fontSize: 14, color: "#1e293b", fontWeight: 500 }}>
-                        {entry.coursNom || entry.coursId}
+                        {entry.coursId}
                       </span>
                     </div>
                     <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
-                      Prof: {entry.profNom || entry.profId} | {entry.eleves?.length || 0} eleves presents
+                      Prof: {entry.profNom || entry.profId} | {entry.elevesDetails.length} eleves presents
                     </p>
                   </div>
                 </div>
@@ -305,7 +305,6 @@ export default function AdminCahierList() {
                 </div>
               </div>
 
-              {/* Content */}
               <div style={{ padding: 20 }}>
                 <div style={{ marginBottom: 16 }}>
                   <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
@@ -321,7 +320,8 @@ export default function AdminCahierList() {
                     padding: 16,
                     background: "#fffbeb",
                     borderRadius: 10,
-                    border: "1px solid #fef3c7"
+                    border: "1px solid #fef3c7",
+                    marginBottom: 16
                   }}>
                     <p style={{ fontSize: 12, color: "#92400e", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -335,6 +335,78 @@ export default function AdminCahierList() {
                     </p>
                   </div>
                 )}
+
+                <div>
+                  <button
+                    onClick={() => toggleExpanded(entry.id)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "10px 14px",
+                      background: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 8,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "#475569",
+                      cursor: "pointer",
+                      width: "100%",
+                      justifyContent: "space-between"
+                    }}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 4V8M8 8V12M8 8H12M8 8H4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      Eleves presents ({entry.elevesDetails.length})
+                    </span>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      style={{
+                        transform: expandedEntries.has(entry.id) ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 0.2s"
+                      }}
+                    >
+                      <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+
+                  {expandedEntries.has(entry.id) && (
+                    <div style={{
+                      marginTop: 12,
+                      padding: 16,
+                      background: "#f8fafc",
+                      borderRadius: 10,
+                      border: "1px solid #e2e8f0"
+                    }}>
+                      {entry.elevesDetails.length === 0 ? (
+                        <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>Aucun eleve enregistre</p>
+                      ) : (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {entry.elevesDetails.map((eleve) => (
+                            <span
+                              key={eleve.id}
+                              style={{
+                                padding: "6px 12px",
+                                background: "#fff",
+                                border: "1px solid #e2e8f0",
+                                borderRadius: 6,
+                                fontSize: 13,
+                                color: "#1e293b"
+                              }}
+                            >
+                              {eleve.nomComplet}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}

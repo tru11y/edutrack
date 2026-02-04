@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getEleveById } from "./eleve.service";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function EleveProfile() {
   const { id } = useParams<{ id: string }>();
+  const { colors } = useTheme();
 
   const [eleve, setEleve] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,9 +29,9 @@ export default function EleveProfile() {
       });
   }, [id]);
 
-  if (loading) return <div className="p-6">Chargement…</div>;
-  if (error) return <div className="p-6 text-red-600">{error}</div>;
-  if (!eleve) return <div className="p-6 text-red-600">Élève introuvable</div>;
+  if (loading) return <div className="p-6" style={{ color: colors.text }}>Chargement…</div>;
+  if (error) return <div className="p-6" style={{ color: colors.danger }}>{error}</div>;
+  if (!eleve) return <div className="p-6" style={{ color: colors.danger }}>Élève introuvable</div>;
 
   return (
     <div className="p-6 max-w-3xl space-y-6">
@@ -37,77 +39,79 @@ export default function EleveProfile() {
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">
-            👨‍🎓 {eleve.prenom} {eleve.nom}
+          <h1 className="text-2xl font-bold" style={{ color: colors.text }}>
+            {eleve.prenom} {eleve.nom}
           </h1>
-          <p className="text-gray-500">
+          <p style={{ color: colors.textMuted }}>
             Classe : {eleve.classe}
           </p>
         </div>
 
         {eleve.isBanned && (
-          <span className="px-3 py-1 rounded bg-red-100 text-red-700 text-sm font-semibold">
-            🚫 Banni
+          <span
+            className="px-3 py-1 rounded text-sm font-semibold"
+            style={{ background: colors.dangerBg, color: colors.danger }}
+          >
+            Banni
           </span>
         )}
       </div>
 
       {/* INFOS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        <Info label="Nom" value={eleve.nom} />
-        <Info label="Prénom" value={eleve.prenom} />
-        <Info label="Sexe" value={eleve.sexe} />
-        <Info label="Classe" value={eleve.classe} />
-        <Info label="Statut" value={eleve.statut} />
-        <Info label="École d’origine" value={eleve.ecoleOrigine || "—"} />
-
+        <Info label="Nom" value={eleve.nom} colors={colors} />
+        <Info label="Prénom" value={eleve.prenom} colors={colors} />
+        <Info label="Sexe" value={eleve.sexe} colors={colors} />
+        <Info label="Classe" value={eleve.classe} colors={colors} />
+        <Info label="Statut" value={eleve.statut} colors={colors} />
+        <Info label="École d'origine" value={eleve.ecoleOrigine || "—"} colors={colors} />
       </div>
 
       {/* ACTIONS */}
       <div className="flex gap-4">
-
         <Link
           to={`/admin/eleves/${eleve.id}/paiements`}
-          className="px-4 py-2 rounded bg-black text-white"
+          className="px-4 py-2 rounded"
+          style={{ background: colors.primary, color: "#fff" }}
         >
-          💰 Paiements
+          Paiements
         </Link>
 
         <Link
           to={`/admin/eleves`}
-          className="px-4 py-2 rounded border"
+          className="px-4 py-2 rounded"
+          style={{ background: colors.bgSecondary, color: colors.textSecondary, border: `1px solid ${colors.border}` }}
         >
-          ⬅ Retour
+          Retour
         </Link>
-
       </div>
 
       {/* BANNISSEMENT */}
       {eleve.isBanned && (
-        <div className="p-4 rounded bg-red-50 border border-red-200">
-          <p className="text-red-700 font-semibold">
+        <div
+          className="p-4 rounded"
+          style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}40` }}
+        >
+          <p style={{ color: colors.danger, fontWeight: 600 }}>
             Élève suspendu
           </p>
-          <p className="text-sm text-red-600">
+          <p style={{ fontSize: 14, color: colors.danger }}>
             Raison : {eleve.banReason || "—"}
           </p>
         </div>
       )}
-
     </div>
   );
 }
 
-/* ======================
-   UI COMPONENT
-====================== */
-
-function Info({ label, value }: { label: string; value: any }) {
+function Info({ label, value, colors }: { label: string; value: any; colors: any }) {
   return (
-    <div className="p-4 rounded border bg-white">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="font-semibold">{value || "—"}</p>
+    <div
+      className="p-4 rounded"
+      style={{ background: colors.bgCard, border: `1px solid ${colors.border}` }}
+    >
+      <p style={{ fontSize: 14, color: colors.textMuted }}>{label}</p>
+      <p style={{ fontWeight: 600, color: colors.text }}>{value || "—"}</p>
     </div>
   );
 }

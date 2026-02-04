@@ -2,9 +2,11 @@ import { useState } from "react";
 import type { ParentContact } from "./eleve.types";
 import { useNavigate } from "react-router-dom";
 import { createEleve, createEleveWithAccount } from "./eleve.service";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function CreateEleve() {
   const navigate = useNavigate();
+  const { colors } = useTheme();
 
   const [form, setForm] = useState({
     nom: "",
@@ -98,16 +100,27 @@ export default function CreateEleve() {
     }
   };
 
+  const inputStyle = {
+    width: "100%",
+    padding: "10px 14px",
+    border: `1px solid ${colors.border}`,
+    borderRadius: 8,
+    fontSize: 14,
+    background: colors.bgInput,
+    color: colors.text,
+    boxSizing: "border-box" as const,
+  };
+
   return (
     <div className="p-6 max-w-xl space-y-4">
-      <h1 className="text-xl font-bold">➕ Nouvel élève</h1>
+      <h1 className="text-xl font-bold" style={{ color: colors.text }}>Nouvel élève</h1>
 
       <input
         name="nom"
         placeholder="Nom"
         value={form.nom}
         onChange={handleChange}
-        className="w-full border p-2 rounded"
+        style={inputStyle}
       />
 
       <input
@@ -115,7 +128,7 @@ export default function CreateEleve() {
         placeholder="Prénom"
         value={form.prenom}
         onChange={handleChange}
-        className="w-full border p-2 rounded"
+        style={inputStyle}
       />
 
       <input
@@ -123,35 +136,38 @@ export default function CreateEleve() {
         placeholder="Classe"
         value={form.classe}
         onChange={handleChange}
-        className="w-full border p-2 rounded"
+        style={inputStyle}
       />
 
-      <label htmlFor="sexe" className="block font-medium mb-1">Sexe</label>
+      <label htmlFor="sexe" className="block font-medium mb-1" style={{ color: colors.text }}>Sexe</label>
       <select
         id="sexe"
         name="sexe"
         value={form.sexe}
         onChange={handleChange}
-        className="w-full border p-2 rounded"
+        style={inputStyle}
         aria-label="Sexe"
       >
         <option value="M">Masculin</option>
         <option value="F">Féminin</option>
       </select>
 
-
-      <hr />
+      <hr style={{ borderColor: colors.border }} />
       <div className="space-y-2">
-        <div className="font-semibold">Parents</div>
+        <div className="font-semibold" style={{ color: colors.text }}>Parents</div>
         {form.parents.map((parent, idx) => (
-          <div key={idx} className="flex gap-2 items-end border p-2 rounded mb-2 bg-gray-50">
+          <div
+            key={idx}
+            className="flex gap-2 items-end p-2 rounded mb-2"
+            style={{ background: colors.bgSecondary, border: `1px solid ${colors.border}` }}
+          >
             <div className="flex-1">
               <input
                 name="nom"
                 placeholder="Nom du parent"
                 value={parent.nom}
                 onChange={e => handleParentChange(idx, e)}
-                className="w-full border p-2 rounded mb-1"
+                style={{ ...inputStyle, marginBottom: 4 }}
                 required
               />
               <input
@@ -159,14 +175,14 @@ export default function CreateEleve() {
                 placeholder="Téléphone"
                 value={parent.telephone}
                 onChange={e => handleParentChange(idx, e)}
-                className="w-full border p-2 rounded mb-1"
+                style={{ ...inputStyle, marginBottom: 4 }}
                 required
               />
               <select
                 name="lien"
                 value={parent.lien}
                 onChange={e => handleParentChange(idx, e)}
-                className="w-full border p-2 rounded"
+                style={inputStyle}
                 aria-label="Lien avec l'élève"
               >
                 <option value="pere">Père</option>
@@ -175,16 +191,32 @@ export default function CreateEleve() {
               </select>
             </div>
             {form.parents.length > 1 && (
-              <button type="button" onClick={() => removeParent(idx)} className="text-red-600 font-bold px-2">✕</button>
+              <button
+                type="button"
+                onClick={() => removeParent(idx)}
+                className="font-bold px-2"
+                style={{ color: colors.danger }}
+              >
+                ✕
+              </button>
             )}
           </div>
         ))}
-        <button type="button" onClick={addParent} className="bg-gray-200 px-3 py-1 rounded">+ Ajouter un parent</button>
+        <button
+          type="button"
+          onClick={addParent}
+          style={{ background: colors.bgSecondary, color: colors.textSecondary, padding: "6px 12px", borderRadius: 6, border: `1px solid ${colors.border}` }}
+        >
+          + Ajouter un parent
+        </button>
       </div>
-      <hr />
+      <hr style={{ borderColor: colors.border }} />
 
       {/* Option pour créer un compte */}
-      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+      <div
+        className="flex items-center gap-3 p-3 rounded-lg"
+        style={{ background: colors.bgSecondary }}
+      >
         <input
           type="checkbox"
           id="createAccount"
@@ -192,21 +224,24 @@ export default function CreateEleve() {
           onChange={(e) => setCreateAccount(e.target.checked)}
           className="w-4 h-4"
         />
-        <label htmlFor="createAccount" className="text-sm text-gray-700">
+        <label htmlFor="createAccount" className="text-sm" style={{ color: colors.textSecondary }}>
           Créer un compte de connexion pour cet élève (optionnel)
         </label>
       </div>
 
       {createAccount && (
-        <div className="space-y-3 p-4 border border-blue-200 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-700 font-medium">Identifiants de connexion</p>
+        <div
+          className="space-y-3 p-4 rounded-lg"
+          style={{ background: colors.infoBg, border: `1px solid ${colors.info}40` }}
+        >
+          <p className="text-sm font-medium" style={{ color: colors.info }}>Identifiants de connexion</p>
           <input
             name="email"
             type="email"
             placeholder="Email élève"
             value={form.email}
             onChange={handleChange}
-            className="w-full border p-2 rounded"
+            style={inputStyle}
           />
           <input
             type="password"
@@ -214,7 +249,7 @@ export default function CreateEleve() {
             placeholder="Mot de passe (min. 6 caractères)"
             value={form.password}
             onChange={handleChange}
-            className="w-full border p-2 rounded"
+            style={inputStyle}
           />
         </div>
       )}
@@ -222,13 +257,24 @@ export default function CreateEleve() {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full rounded-2xl px-6 py-3 font-semibold text-white shadow-lg bg-gradient-to-tr from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 transition text-lg mt-4 disabled:opacity-50"
-        style={{ letterSpacing: 1 }}
+        style={{
+          width: "100%",
+          padding: "14px 24px",
+          background: colors.primary,
+          color: "#fff",
+          border: "none",
+          borderRadius: 10,
+          fontSize: 16,
+          fontWeight: 600,
+          cursor: loading ? "not-allowed" : "pointer",
+          opacity: loading ? 0.6 : 1,
+          marginTop: 16,
+        }}
       >
-        {loading ? "Création..." : "Créer l’élève"}
+        {loading ? "Création..." : "Créer l'élève"}
       </button>
 
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p style={{ color: colors.danger }}>{error}</p>}
     </div>
   );
 }

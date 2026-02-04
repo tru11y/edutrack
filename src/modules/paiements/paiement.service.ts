@@ -98,9 +98,11 @@ export const createPaiementMensuel = async (
 export const enregistrerVersement = async (
   paiement: Paiement,
   montant: number,
-  methode: MethodePaiement
+  methode: MethodePaiement,
+  datePaiement?: Date
 ) => {
   const nouveauPaye = paiement.montantPaye + montant;
+  const dateVersement = datePaiement || new Date();
 
   const { statut, montantRestant } = calculerPaiement(
     paiement.montantTotal,
@@ -113,12 +115,13 @@ export const enregistrerVersement = async (
     montantPaye: nouveauPaye,
     montantRestant,
     statut,
+    datePaiement: dateVersement,
     versements: [
       ...(paiement.versements || []),
       {
         montant,
         methode,
-        date: new Date(),
+        date: dateVersement,
       },
     ],
   });

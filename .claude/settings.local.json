@@ -20,7 +20,12 @@
       "Bash(firebase deploy:*)",
       "Bash(git push:*)",
       "Bash(npm install:*)",
-      "Bash(npx firebase functions:artifacts:setpolicy:*)"
+      "Bash(npx firebase functions:artifacts:setpolicy:*)",
+      "Bash(npx tsc:*)",
+      "Bash(start /b npm run dev)",
+      "Bash(find:*)",
+      "Bash(firebase functions:list:*)",
+      "Bash(firebase functions:log:*)"
     ]
   }
 }

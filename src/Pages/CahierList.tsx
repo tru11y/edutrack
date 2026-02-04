@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAllCahiers, moveCahierToTrash } from "../modules/cahier/cahier.service";
+import { moveCahierToTrash } from "../modules/cahier/cahier.service";
+import { getAllCahierEntriesSecure, type CahierEntryAdmin } from "../services/cloudFunctions";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import type { CahierEntry } from "../modules/cahier/cahier.types";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../services/firebase";
+
+type CahierDisplay = CahierEntry & { id: string };
 
 export default function CahierList() {
   const { user } = useAuth();
@@ -11,15 +16,15 @@ export default function CahierList() {
   const isAdmin = user?.role === "admin";
   const isGestionnaire = user?.role === "gestionnaire";
   const isProf = user?.role === "prof";
-  const [cahiers, setCahiers] = useState<CahierEntry[]>([]);
+  const [cahiers, setCahiers] = useState<CahierDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterClasse, setFilterClasse] = useState("");
   const [filterDate, setFilterDate] = useState("");
 
   // Verifier si une entree est modifiable (moins de 24h)
-  const isWithin24h = (cahier: CahierEntry): boolean => {
-    if (!cahier.createdAt) return true; // Si pas de date, autoriser par defaut
+  const isWithin24h = (cahier: CahierDisplay): boolean => {
+    if (!cahier.createdAt) return true;
     const createdTime = cahier.createdAt.toDate().getTime();
     const now = Date.now();
     const hours24 = 24 * 60 * 60 * 1000;
@@ -27,37 +32,67 @@ export default function CahierList() {
   };
 
   // Verifier si l'utilisateur peut modifier une entree
-  const canEdit = (cahier: CahierEntry): boolean => {
-    if (cahier.isSigned) return false; // Pas de modif si signe
-    if (isAdmin) return true; // Admin peut toujours modifier
-    if (isGestionnaire) return true; // Gestionnaire peut modifier
+  const canEdit = (cahier: CahierDisplay): boolean => {
+    if (cahier.isSigned) return false;
+    if (isAdmin) return true;
+    if (isGestionnaire) return true;
     if (isProf && cahier.profId === user?.uid) {
-      return isWithin24h(cahier); // Prof: seulement ses entrees et dans les 24h
+      return isWithin24h(cahier);
     }
     return false;
   };
 
   // Verifier si l'utilisateur peut supprimer une entree
-  const canDelete = (cahier: CahierEntry): boolean => {
-    if (cahier.isSigned) return false; // Pas de suppression si signe
-    if (isAdmin) return true; // Admin peut tout supprimer
+  const canDelete = (cahier: CahierDisplay): boolean => {
+    if (cahier.isSigned) return false;
+    if (isAdmin) return true;
     if (isGestionnaire) {
-      // Gestionnaire peut supprimer seulement ses propres entrees
       return cahier.profId === user?.uid;
     }
     if (isProf && cahier.profId === user?.uid) {
-      return isWithin24h(cahier); // Prof: seulement ses entrees et dans les 24h
+      return isWithin24h(cahier);
     }
     return false;
   };
 
   const loadCahiers = async () => {
     try {
-      let data = await getAllCahiers();
+      let data: CahierDisplay[] = [];
 
-      // Filtrer: les profs ne voient que leurs propres entrees
-      if (isProf && user?.uid) {
-        data = data.filter(c => c.profId === user.uid);
+      if (isAdmin) {
+        // ADMIN: Utiliser Cloud Function UNIQUEMENT
+        const result = await getAllCahierEntriesSecure();
+        data = result.entries.map((entry: CahierEntryAdmin) => ({
+          id: entry.id,
+          coursId: entry.coursId,
+          classe: entry.classe,
+          profId: entry.profId,
+          profNom: entry.profNom,
+          date: entry.date,
+          eleves: entry.eleves,
+          contenu: entry.contenu,
+          devoirs: entry.devoirs,
+          isSigned: entry.isSigned,
+          signedAt: entry.signedAt ? { toDate: () => new Date(entry.signedAt!) } : undefined,
+          createdAt: entry.createdAt ? { toDate: () => new Date(entry.createdAt!) } : undefined,
+        } as CahierDisplay));
+      } else if (isGestionnaire) {
+        // GESTIONNAIRE: Lecture Firestore directe
+        const cahierRef = collection(db, "cahier");
+        const snap = await getDocs(cahierRef);
+        data = snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as CahierEntry),
+        }));
+      } else if (isProf && user?.uid) {
+        // PROF: Seulement ses propres entrees via Firestore
+        const cahierRef = collection(db, "cahier");
+        const q = query(cahierRef, where("profId", "==", user.uid));
+        const snap = await getDocs(q);
+        data = snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as CahierEntry),
+        }));
       }
 
       setCahiers(data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -70,9 +105,9 @@ export default function CahierList() {
 
   useEffect(() => {
     loadCahiers();
-  }, [user?.uid, isProf]);
+  }, [user?.uid, isProf, isAdmin, isGestionnaire]);
 
-  const handleDelete = async (cahier: CahierEntry) => {
+  const handleDelete = async (cahier: CahierDisplay) => {
     if (!cahier.id) return;
     if (!canDelete(cahier)) {
       alert("Vous n'avez pas la permission de supprimer cette entree.");

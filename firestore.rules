@@ -123,9 +123,11 @@ service cloud.firestore {
       allow read, write: if isAdminOrGestionnaire();
     }
 
-    // CAHIER DE TEXTE - Staff peut gerer, tous peuvent lire
+    // CAHIER DE TEXTE - Admin via Cloud Function uniquement, autres staff peuvent lire directement
     match /cahier/{docId} {
-      allow read: if signedIn();
+      // Admin INTERDIT en lecture directe (doit utiliser Cloud Function getAllCahierEntries)
+      // Gestionnaire et Prof peuvent lire directement
+      allow read: if signedIn() && getUserData().role != "admin";
       allow write: if isStaff();
     }
 
