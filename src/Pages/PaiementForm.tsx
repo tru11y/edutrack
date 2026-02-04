@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useParams, Link } from "react-router-dom";
 import { getAllEleves } from "../modules/eleves/eleve.service";
-import { createPaiementMensuel, getPaiementsByEleve, enregistrerVersement, getPaiementById, updatePaiement } from "../modules/paiements/paiement.service";
+import { getPaiementsByEleve, enregistrerVersement, getPaiementById, updatePaiement } from "../modules/paiements/paiement.service";
+import { createPaiementSecure, getCloudFunctionErrorMessage } from "../services/cloudFunctions";
 import type { Eleve } from "../modules/eleves/eleve.types";
 import type { Paiement, MethodePaiement } from "../modules/paiements/paiement.types";
 
@@ -23,7 +24,8 @@ export default function PaiementForm() {
     mois: new Date().toISOString().slice(0, 7),
     montantTotal: 50000,
     montantPaye: 0,
-    methode: "especes" as MethodePaiement
+    methode: "especes" as MethodePaiement,
+    datePaiement: new Date().toISOString().slice(0, 10)
   });
 
   useEffect(() => {
@@ -41,7 +43,8 @@ export default function PaiementForm() {
               mois: paiement.mois || new Date().toISOString().slice(0, 7),
               montantTotal: paiement.montantTotal || 50000,
               montantPaye: paiement.montantPaye || 0,
-              methode: "especes"
+              methode: "especes",
+              datePaiement: new Date().toISOString().slice(0, 10)
             });
           } else {
             alert("Paiement introuvable");
@@ -68,8 +71,6 @@ export default function PaiementForm() {
     }
   }, [form.eleveId, isEditing]);
 
-  const selectedEleve = eleves.find((e) => e.id === form.eleveId);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: name.includes("montant") ? parseInt(value) || 0 : value });
@@ -94,12 +95,13 @@ export default function PaiementForm() {
         });
       } else if (mode === "nouveau") {
         if (!form.mois) { setError("Selectionnez un mois"); return; }
-        await createPaiementMensuel({
+        if (!form.datePaiement) { setError("Selectionnez une date de paiement"); return; }
+        await createPaiementSecure({
           eleveId: form.eleveId,
-          eleveNom: `${selectedEleve?.prenom} ${selectedEleve?.nom}`,
           mois: form.mois,
           montantTotal: form.montantTotal,
-          montantPaye: form.montantPaye
+          montantPaye: form.montantPaye,
+          datePaiement: form.datePaiement
         });
       } else if (mode === "versement" && selectedPaiement) {
         if (form.montantPaye <= 0) { setError("Montant invalide"); return; }
@@ -108,7 +110,7 @@ export default function PaiementForm() {
       navigate("/paiements");
     } catch (err: unknown) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "Erreur");
+      setError(getCloudFunctionErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -191,10 +193,16 @@ export default function PaiementForm() {
           {(isEditing || mode === "nouveau") && (
             <>
               {!isEditing && (
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Mois *</label>
-                  <input type="month" name="mois" value={form.mois} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
-                </div>
+                <>
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Mois *</label>
+                    <input type="month" name="mois" value={form.mois} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                  </div>
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Date de paiement *</label>
+                    <input type="date" name="datePaiement" value={form.datePaiement} onChange={handleChange} required style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                  </div>
+                </>
               )}
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Montant total (FCFA)</label>
