@@ -124,6 +124,21 @@ export function getCahierTextesAdmin(params: GetCahierTextesAdminParams = {}): P
   return callFunction("getCahierTextesAdmin", params);
 }
 
+export interface AdminDashboardStats {
+  totalEleves: number;
+  totalProfesseurs: number;
+  totalClasses: number;
+  totalPaiementsRecus: number;
+  totalPaiementsAttendus: number;
+  tauxCouverture: number;
+  totalDepenses: number;
+  totalSalaires: number;
+}
+
+export function getAdminDashboardStatsSecure(): Promise<{ success: boolean; stats: AdminDashboardStats }> {
+  return callFunction("getAdminDashboardStats", undefined);
+}
+
 export function getCloudFunctionErrorMessage(error: unknown): string {
   if (error && typeof error === "object" && "message" in error) {
     const msg = (error as { message: string }).message;

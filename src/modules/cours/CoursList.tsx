@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAllCours } from "./cours.service";
+import { useTheme } from "../../context/ThemeContext";
 import type { Cours } from "./cours.types";
 
 export default function CoursList() {
+  const { colors } = useTheme();
   const [cours, setCours] = useState<Cours[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,46 +25,47 @@ export default function CoursList() {
     load();
   }, []);
 
-  if (loading) return <div className="p-6">Chargement…</div>;
-  if (error) return <div className="p-6 text-red-600">{error}</div>;
+  if (loading) return <div className="p-6" style={{ color: colors.textMuted }}>Chargement…</div>;
+  if (error) return <div className="p-6" style={{ color: colors.danger }}>{error}</div>;
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">📚 Cours</h1>
+        <h1 className="text-xl font-bold" style={{ color: colors.text }}>📚 Cours</h1>
 
         <Link
           to="/admin/cours/create"
-          className="bg-black text-white px-3 py-2 rounded"
+          className="px-3 py-2 rounded"
+          style={{ background: colors.text, color: colors.bg }}
         >
           ➕ Ajouter un cours
         </Link>
       </div>
 
       {cours.length === 0 ? (
-        <p className="text-gray-500">Aucun cours enregistré</p>
+        <p style={{ color: colors.textMuted }}>Aucun cours enregistré</p>
       ) : (
-        <table className="w-full border">
-          <thead className="bg-gray-100">
+        <table className="w-full" style={{ border: `1px solid ${colors.border}` }}>
+          <thead style={{ background: colors.bgSecondary }}>
             <tr>
-              <th className="p-2 border">Classe</th>
-              <th className="p-2 border">Matière</th>
-              <th className="p-2 border">Date</th>
-              <th className="p-2 border">Statut</th>
-              <th className="p-2 border">Actions</th>
+              <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Classe</th>
+              <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Matière</th>
+              <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Date</th>
+              <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Statut</th>
+              <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {cours.map((c) => (
-              <tr key={c.id!}>
-                <td className="p-2 border">{c.classe}</td>
-                <td className="p-2 border">{c.matiere}</td>
-                <td className="p-2 border">{c.date}</td>
-                <td className="p-2 border">{c.statut}</td>
-                <td className="p-2 border">
+              <tr key={c.id!} style={{ background: colors.bgCard }}>
+                <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>{c.classe}</td>
+                <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>{c.matiere}</td>
+                <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>{c.date}</td>
+                <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>{c.statut}</td>
+                <td className="p-2" style={{ border: `1px solid ${colors.border}` }}>
                   <Link
                     to={`/admin/cours/${c.id}`}
-                    className="text-blue-600 underline"
+                    style={{ color: colors.primary, textDecoration: "underline" }}
                   >
                     Voir
                   </Link>

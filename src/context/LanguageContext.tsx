@@ -87,6 +87,9 @@ const translations = {
     // Payments
     newPayment: "Nouveau paiement",
     managePayments: "Gerez les paiements de tous les eleves",
+
+    // Accounting
+    accounting: "Comptabilite",
   },
   en: {
     // Navigation
@@ -171,6 +174,9 @@ const translations = {
     // Payments
     newPayment: "New payment",
     managePayments: "Manage all student payments",
+
+    // Accounting
+    accounting: "Accounting",
   },
 };
 

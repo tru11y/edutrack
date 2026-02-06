@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { to: "/stats", labelKey: "statistics", icon: "chart", roles: ["admin", "gestionnaire"] },
   { to: "/utilisateurs", labelKey: "users", icon: "settings", roles: ["admin", "gestionnaire"] },
   { to: "/messages", labelKey: "messages", icon: "message", roles: ["admin", "gestionnaire", "prof"] },
+  { to: "/comptabilite", labelKey: "accounting", icon: "wallet", roles: ["admin"] },
   { to: "/corbeille", labelKey: "trash", icon: "trash", roles: ["admin", "gestionnaire"] },
 ];
 
@@ -34,6 +35,7 @@ const icons: Record<string, React.ReactNode> = {
   chart: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 16V9M7 16V5M12 16V11M17 16V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   settings: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 1V3M10 17V19M1 10H3M17 10H19M3.93 3.93L5.34 5.34M14.66 14.66L16.07 16.07M3.93 16.07L5.34 14.66M14.66 5.34L16.07 3.93" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   message: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M18 10C18 14.42 14.42 18 10 18C8.57 18 7.22 17.64 6.04 17L2 18L3 14C2.36 12.81 2 11.45 2 10C2 5.58 5.58 2 10 2C14.42 2 18 5.58 18 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  wallet: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M2 8H18" stroke="currentColor" strokeWidth="1.5"/><circle cx="14" cy="12" r="1" fill="currentColor"/></svg>,
   trash: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2.5 5H17.5M7.5 5V3.33C7.5 2.6 8.1 2 8.83 2H11.17C11.9 2 12.5 2.6 12.5 3.33V5M8.33 9.17V14.17M11.67 9.17V14.17M4.17 5L5 16.67C5 17.4 5.6 18 6.33 18H13.67C14.4 18 15 17.4 15 16.67L15.83 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   menu: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
   close: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
@@ -44,7 +46,7 @@ const icons: Record<string, React.ReactNode> = {
 
 export default function AdminLayout() {
   const { logout, user, onlineUsers } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, toggleTheme, colors: themeColors } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,7 +54,6 @@ export default function AdminLayout() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showOnlineUsers, setShowOnlineUsers] = useState(false);
 
-  // Stocker le mode par utilisateur dans localStorage
   const storageKey = user?.uid ? `profMode_${user.uid}` : null;
   const [profMode, setProfMode] = useState(() => {
     if (storageKey) return localStorage.getItem(storageKey) === "true";
@@ -97,25 +98,18 @@ export default function AdminLayout() {
   const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole as "admin" | "gestionnaire" | "prof"));
   const sidebarWidth = 260;
 
-  // Theme colors
-  const colors = isDark ? {
-    bg: "#0f172a",
-    bgCard: "#1e293b",
-    bgHover: "#334155",
-    border: "#334155",
-    text: "#e2e8f0",
-    textMuted: "#94a3b8",
-    accent: isProf ? "#10b981" : "#6366f1",
-    accentBg: isProf ? "#064e3b" : "#312e81",
-  } : {
-    bg: "#f8fafc",
-    bgCard: "#ffffff",
-    bgHover: "#f1f5f9",
-    border: "#e2e8f0",
-    text: "#1e293b",
-    textMuted: "#64748b",
-    accent: isProf ? "#10b981" : "#6366f1",
-    accentBg: isProf ? "#ecfdf5" : "#eef2ff",
+  const accent = isProf ? themeColors.success : themeColors.primary;
+  const accentBg = isProf ? themeColors.successBg : themeColors.primaryBg;
+
+  const colors = {
+    bg: themeColors.bg,
+    bgCard: themeColors.bgCard,
+    bgHover: themeColors.bgHover,
+    border: themeColors.border,
+    text: themeColors.text,
+    textMuted: themeColors.textMuted,
+    accent,
+    accentBg,
   };
 
   const getRoleLabel = (role: string) => {

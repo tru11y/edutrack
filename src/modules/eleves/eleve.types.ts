@@ -2,6 +2,7 @@ import type { Timestamp, FieldValue } from "firebase/firestore";
 
 export type Sexe = "M" | "F";
 export type StatutEleve = "actif" | "inactif";
+export type StatutPaiementMensuel = "a_jour" | "non_a_jour";
 
 // Type pour les champs de date qui peuvent etre soit un Timestamp (lecture) soit un FieldValue (ecriture)
 export type FirestoreDate = Timestamp | FieldValue;
@@ -49,6 +50,12 @@ export interface Eleve {
   isBanned?: boolean;
   banReason?: string | null;
   banDate?: FirestoreDate | null;
+
+  // ======================
+  // PAIEMENT MENSUEL
+  // ======================
+  statutPaiementMensuel?: StatutPaiementMensuel;
+  dernierMoisPaye?: string;
 
   createdAt?: FirestoreDate;
   updatedAt?: FirestoreDate;

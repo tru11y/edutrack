@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
 import { getAllEleves } from "../eleves/eleve.service";
 import { getElevesEligibles } from "../eleves/eleve.select.service";
@@ -9,6 +10,7 @@ import { createCahierEntry } from "../cahier/cahier.service";
 import { banEleveByProf } from "../eleves/eleve.ban.service";
 
 import type { PresenceItem } from "./presence.types";
+import type { Eleve } from "../eleves/eleve.types";
 
 interface Props {
   coursId: string;
@@ -18,12 +20,39 @@ interface Props {
   heureFin: string;
 }
 
+type LockStatus = "not-started" | "in-progress" | "ended" | "invalid-date" | "no-data";
+
+function computeLockStatus(date: string, heureDebut: string, heureFin: string): { isLocked: boolean; status: LockStatus } {
+  if (!date || !heureDebut || !heureFin) {
+    return { isLocked: false, status: "no-data" };
+  }
+
+  const now = new Date();
+  const coursStart = new Date(`${date}T${heureDebut}:00`);
+  const coursEnd = new Date(`${date}T${heureFin}:00`);
+
+  if (isNaN(coursStart.getTime()) || isNaN(coursEnd.getTime())) {
+    return { isLocked: false, status: "invalid-date" };
+  }
+
+  if (now < coursStart) {
+    return { isLocked: true, status: "not-started" };
+  }
+
+  if (now > coursEnd) {
+    return { isLocked: true, status: "ended" };
+  }
+
+  return { isLocked: false, status: "in-progress" };
+}
+
 export default function PresenceAppel({ coursId, classe, date, heureDebut, heureFin }: Props) {
   const { user } = useAuth();
+  const { colors } = useTheme();
 
-  const [eleves, setEleves] = useState<any[]>([]);
+  const [eleves, setEleves] = useState<Eleve[]>([]);
   const [presences, setPresences] = useState<PresenceItem[]>([]);
-  const [allEleves, setAllEleves] = useState<any[]>([]);
+  const [allEleves, setAllEleves] = useState<Eleve[]>([]);
 
   const [selectedEleveId, setSelectedEleveId] = useState("");
   const [contenu, setContenu] = useState("");
@@ -32,29 +61,20 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
-  // Modifiable pendant la durée du cours : heureDebut <= now <= heureFin
-  const { isLocked, status } = useMemo(() => {
-    if (!date || !heureDebut || !heureFin) {
-      return { isLocked: false, status: "no-data" };
-    }
+  // État temps réel du verrouillage
+  const [lockState, setLockState] = useState(() => computeLockStatus(date, heureDebut, heureFin));
+  const { isLocked, status } = lockState;
 
-    const now = new Date();
-    const coursStart = new Date(`${date}T${heureDebut}:00`);
-    const coursEnd = new Date(`${date}T${heureFin}:00`);
+  // Mise à jour en temps réel du statut de verrouillage
+  useEffect(() => {
+    const updateLock = () => {
+      setLockState(computeLockStatus(date, heureDebut, heureFin));
+    };
 
-    if (isNaN(coursStart.getTime()) || isNaN(coursEnd.getTime())) {
-      return { isLocked: false, status: "invalid-date" };
-    }
+    updateLock();
+    const interval = setInterval(updateLock, 10000); // Vérifier toutes les 10 secondes
 
-    if (now < coursStart) {
-      return { isLocked: true, status: "not-started" };
-    }
-
-    if (now > coursEnd) {
-      return { isLocked: true, status: "ended" };
-    }
-
-    return { isLocked: false, status: "in-progress" };
+    return () => clearInterval(interval);
   }, [date, heureDebut, heureFin]);
 
   useEffect(() => {
@@ -216,7 +236,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
   };
 
   if (initialLoading) {
-    return <div className="p-4 text-gray-500">Chargement...</div>;
+    return <div className="p-4" style={{ color: colors.textMuted }}>Chargement...</div>;
   }
 
   const statusMessage = {
@@ -229,11 +249,12 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
     <div className="space-y-6">
 
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold">📋 Appel & Cahier de texte</h3>
+        <h3 className="text-lg font-bold" style={{ color: colors.text }}>📋 Appel & Cahier de texte</h3>
         {statusMessage && (
-          <span className={`text-sm font-medium ${
-            status === "in-progress" ? "text-green-600" : "text-red-600"
-          }`}>
+          <span
+            className="text-sm font-medium"
+            style={{ color: status === "in-progress" ? colors.success : colors.danger }}
+          >
             {statusMessage}
           </span>
         )}
@@ -245,7 +266,12 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
           placeholder="Contenu du cours (obligatoire)"
           value={contenu}
           onChange={(e) => setContenu(e.target.value)}
-          className="w-full border p-2 rounded"
+          className="w-full p-2 rounded"
+          style={{
+            background: colors.bgInput,
+            border: `1px solid ${colors.border}`,
+            color: colors.text
+          }}
           rows={4}
           disabled={isLocked}
         />
@@ -254,7 +280,12 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
           placeholder="Devoirs (optionnel)"
           value={devoirs}
           onChange={(e) => setDevoirs(e.target.value)}
-          className="w-full border p-2 rounded"
+          className="w-full p-2 rounded"
+          style={{
+            background: colors.bgInput,
+            border: `1px solid ${colors.border}`,
+            color: colors.text
+          }}
           rows={3}
           disabled={isLocked}
         />
@@ -266,7 +297,12 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
           <select
             value={selectedEleveId}
             onChange={(e) => setSelectedEleveId(e.target.value)}
-            className="border p-2 rounded w-64"
+            className="p-2 rounded w-64"
+            style={{
+              background: colors.bgInput,
+              border: `1px solid ${colors.border}`,
+              color: colors.text
+            }}
             aria-label="Sélectionner un élève à ajouter"
           >
             <option value="">➕ Ajouter un élève...</option>
@@ -279,7 +315,8 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
 
           <button
             onClick={handleAddEleve}
-            className="bg-blue-600 text-white px-3 py-2 rounded"
+            className="px-3 py-2 rounded"
+            style={{ background: colors.primary, color: "#fff" }}
           >
             Ajouter
           </button>
@@ -287,15 +324,15 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
       )}
 
       {/* TABLE */}
-      <table className="w-full border">
-        <thead className="bg-gray-100">
+      <table className="w-full" style={{ border: `1px solid ${colors.border}` }}>
+        <thead style={{ background: colors.bgSecondary }}>
           <tr>
-            <th className="border p-2">Élève</th>
-            <th className="border p-2">Présent</th>
-            <th className="border p-2">Absent</th>
-            <th className="border p-2">Retard</th>
-            <th className="border p-2">Minutes</th>
-            {!isLocked && <th className="border p-2">Action</th>}
+            <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Élève</th>
+            <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Présent</th>
+            <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Absent</th>
+            <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Retard</th>
+            <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Minutes</th>
+            {!isLocked && <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Action</th>}
           </tr>
         </thead>
         <tbody>
@@ -304,9 +341,9 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
           if (!eleve) return null;
 
           return (
-            <tr key={presence.eleveId}>
-              <td className="border p-2">{eleve.prenom} {eleve.nom}</td>
-              <td className="border p-2 text-center">
+            <tr key={presence.eleveId} style={{ background: colors.bgCard }}>
+              <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>{eleve.prenom} {eleve.nom}</td>
+              <td className="p-2 text-center" style={{ border: `1px solid ${colors.border}` }}>
                 <input
                   type="radio"
                   name={`statut-${presence.eleveId}`}
@@ -315,7 +352,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
                   disabled={isLocked}
                 />
               </td>
-              <td className="border p-2 text-center">
+              <td className="p-2 text-center" style={{ border: `1px solid ${colors.border}` }}>
                 <input
                   type="radio"
                   name={`statut-${presence.eleveId}`}
@@ -324,7 +361,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
                   disabled={isLocked}
                 />
               </td>
-              <td className="border p-2 text-center">
+              <td className="p-2 text-center" style={{ border: `1px solid ${colors.border}` }}>
                 <input
                   type="radio"
                   name={`statut-${presence.eleveId}`}
@@ -333,23 +370,29 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
                   disabled={isLocked}
                 />
               </td>
-              <td className="border p-2">
+              <td className="p-2" style={{ border: `1px solid ${colors.border}` }}>
                 {presence.statut === "retard" && (
                   <input
                     type="number"
                     min="0"
                     value={presence.minutesRetard || 0}
                     onChange={(e) => _updatePresence(presence.eleveId, "retard", parseInt(e.target.value))}
-                    className="border p-1 rounded w-16"
+                    className="p-1 rounded w-16"
+                    style={{
+                      background: colors.bgInput,
+                      border: `1px solid ${colors.border}`,
+                      color: colors.text
+                    }}
                     disabled={isLocked}
                   />
                 )}
               </td>
               {!isLocked && (
-                <td className="border p-2">
+                <td className="p-2" style={{ border: `1px solid ${colors.border}` }}>
                   <button
                     onClick={() => _handleExclude(presence.eleveId)}
-                    className="bg-red-500 text-white text-xs px-2 py-1 rounded"
+                    className="text-xs px-2 py-1 rounded"
+                    style={{ background: colors.danger, color: "#fff" }}
                   >
                     Exclure
                   </button>
@@ -365,7 +408,8 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
         <button
           onClick={handleSave}
           disabled={loading || !contenu.trim()}
-          className="bg-black text-white px-4 py-2 rounded"
+          className="px-4 py-2 rounded"
+          style={{ background: colors.text, color: colors.bg }}
         >
           {loading
             ? "Enregistrement…"

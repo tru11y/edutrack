@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { getProfesseurById } from "./professeur.service";
 import { getCoursByProfesseur } from "../cours/cours.service";
+import type { Professeur } from "./professeur.types";
+import type { Cours } from "../cours/cours.types";
 
 export default function ProfesseurDashboard() {
   const { user } = useAuth();
+  const { colors } = useTheme();
 
-  const [prof, setProf] = useState<any>(null);
-  const [cours, setCours] = useState<any[]>([]);
+  const [prof, setProf] = useState<Professeur | null>(null);
+  const [cours, setCours] = useState<Cours[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,7 +25,11 @@ export default function ProfesseurDashboard() {
         return;
       }
 
-      const c = await getCoursByProfesseur(p.id!);
+      if (!p.id) {
+        setLoading(false);
+        return;
+      }
+      const c = await getCoursByProfesseur(p.id);
       setProf(p);
       setCours(c);
       setLoading(false);
@@ -30,50 +38,54 @@ export default function ProfesseurDashboard() {
     load();
   }, [user]);
 
-  if (loading) return <div className="p-6">Chargement…</div>;
-  if (!prof) return <div className="p-6 text-red-600">Profil professeur introuvable</div>;
+  if (loading) return <div className="p-6" style={{ color: colors.textMuted }}>Chargement…</div>;
+  if (!prof) return <div className="p-6" style={{ color: colors.danger }}>Profil professeur introuvable</div>;
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">
+      <h1 className="text-2xl font-bold" style={{ color: colors.text }}>
         👋 Bonjour {prof.prenom} {prof.nom}
       </h1>
 
       {cours.length === 0 ? (
-        <p className="text-gray-500">Aucun cours assigné</p>
+        <p style={{ color: colors.textMuted }}>Aucun cours assigné</p>
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {cours.map((c) => (
             <div
               key={c.id}
-              className="bg-white rounded-lg shadow p-4 space-y-2"
+              className="rounded-lg shadow p-4 space-y-2"
+              style={{ background: colors.bgCard, border: `1px solid ${colors.border}` }}
             >
-              <h2 className="font-semibold text-lg">
-                {c.nom} — {c.classe}
+              <h2 className="font-semibold text-lg" style={{ color: colors.text }}>
+                {c.matiere} — {c.classe}
               </h2>
 
-              <p className="text-sm text-gray-600">
-                {c.description || "—"}
+              <p className="text-sm" style={{ color: colors.textMuted }}>
+                {c.date} | {c.heureDebut} - {c.heureFin}
               </p>
 
               <div className="flex gap-2 pt-2">
                 <Link
                   to={`/prof/cours/${c.id}`}
-                  className="px-3 py-1 bg-black text-white rounded text-sm"
+                  className="px-3 py-1 rounded text-sm"
+                  style={{ background: colors.text, color: colors.bg }}
                 >
                   📋 Appel
                 </Link>
 
                 <Link
                   to={`/prof/cours/${c.id}?tab=cahier`}
-                  className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
+                  className="px-3 py-1 rounded text-sm"
+                  style={{ background: colors.primary, color: "#fff" }}
                 >
                   📘 Cahier
                 </Link>
 
                 <Link
                   to={`/prof/cours/${c.id}?tab=exclusion`}
-                  className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+                  className="px-3 py-1 rounded text-sm"
+                  style={{ background: colors.danger, color: "#fff" }}
                 >
                   🚫 Exclure
                 </Link>

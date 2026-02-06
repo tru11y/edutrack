@@ -1,4 +1,5 @@
 export type EleveStatut = "actif" | "inactif" | "suspendu";
+export type StatutPaiementMensuel = "a_jour" | "non_a_jour";
 
 export interface Eleve {
   id?: string;
@@ -13,6 +14,7 @@ export interface Eleve {
   adresse: string;
   matricule: string;
   statut: EleveStatut;
+  statutPaiementMensuel?: StatutPaiementMensuel;
   dateInscription: Date;
   createdAt: Date;
 }
