@@ -83,8 +83,8 @@ export default function Dashboard() {
           <path d="M3.5 10V16L12 21L20.5 16V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       ),
-      color: "#8b5cf6",
-      bg: "#f5f3ff",
+      color: colors.primary,
+      bg: colors.primaryBg,
       link: "/utilisateurs",
     },
     {
@@ -254,7 +254,7 @@ export default function Dashboard() {
             to="/eleves/nouveau"
             style={{
               padding: "14px 16px",
-              background: `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
+              background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
               color: "#fff", borderRadius: 10, textDecoration: "none",
               fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 10,
             }}
