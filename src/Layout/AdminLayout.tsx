@@ -133,7 +133,7 @@ export default function AdminLayout() {
             <button onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 4 }}>
               {icons.menu}
             </button>
-            <div style={{ width: 32, height: 32, background: isProf ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 32, height: 32, background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>E</span>
             </div>
             <span style={{ fontWeight: 600, color: colors.text, fontSize: 16 }}>EDUTRACK</span>
@@ -162,7 +162,7 @@ export default function AdminLayout() {
         <div style={{ padding: "20px", borderBottom: `1px solid ${colors.border}` }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 42, height: 42, background: isProf ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 42, height: 42, background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>E</span>
               </div>
               <div>
@@ -190,7 +190,7 @@ export default function AdminLayout() {
           </div>
 
           {canSwitchMode && (
-            <button onClick={() => setProfMode(!profMode)} style={{ marginTop: 12, width: "100%", padding: "10px 14px", background: profMode ? "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" : "linear-gradient(135deg, #10b981 0%, #059669 100%)", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <button onClick={() => setProfMode(!profMode)} style={{ marginTop: 12, width: "100%", padding: "10px 14px", background: `linear-gradient(135deg, ${profMode ? themeColors.primary : themeColors.success} 0%, ${profMode ? themeColors.primaryHover : themeColors.success} 100%)`, color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M2 8l3-3M2 8l3 3M14 8l-3-3M14 8l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {profMode ? t("adminMode") : t("profMode")}
             </button>
@@ -200,10 +200,10 @@ export default function AdminLayout() {
           {canSeeOnlineUsers && (
             <button onClick={() => setShowOnlineUsers(!showOnlineUsers)} style={{ marginTop: 8, width: "100%", padding: "10px 14px", background: colors.bgHover, border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", color: colors.text }}>
               <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981" }} />
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: themeColors.success }} />
                 {t("connectedUsers")}
               </span>
-              <span style={{ background: "#10b981", color: "#fff", padding: "2px 8px", borderRadius: 10, fontSize: 11 }}>{onlineCount}</span>
+              <span style={{ background: themeColors.success, color: "#fff", padding: "2px 8px", borderRadius: 10, fontSize: 11 }}>{onlineCount}</span>
             </button>
           )}
 
@@ -212,7 +212,7 @@ export default function AdminLayout() {
             <div style={{ marginTop: 8, maxHeight: 150, overflowY: "auto", background: colors.bgHover, borderRadius: 8, padding: 8 }}>
               {onlineUsers.filter(u => u.isOnline).map((u) => (
                 <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: `1px solid ${colors.border}` }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: themeColors.success }} />
                   <span style={{ fontSize: 11, color: colors.text, flex: 1 }}>{u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email.split("@")[0]}</span>
                   <span style={{ fontSize: 10, color: colors.textMuted }}>{getRoleLabel(u.role)}</span>
                 </div>
@@ -242,7 +242,7 @@ export default function AdminLayout() {
         <div style={{ padding: 16, borderTop: `1px solid ${colors.border}` }}>
           <div style={{ padding: 16, background: colors.bgHover, borderRadius: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: isProf ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 14 }}>
                 {user?.email?.[0]?.toUpperCase() || "A"}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -256,7 +256,7 @@ export default function AdminLayout() {
               <NavLink to="/profil" style={{ flex: 1, padding: "10px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 12, fontWeight: 500, color: colors.textMuted, textDecoration: "none", textAlign: "center" }}>
                 {t("profile")}
               </NavLink>
-              <button onClick={handleLogout} style={{ flex: 1, padding: "10px", background: isDark ? "#7f1d1d" : "#fef2f2", border: `1px solid ${isDark ? "#991b1b" : "#fecaca"}`, borderRadius: 8, fontSize: 12, fontWeight: 500, color: isDark ? "#fca5a5" : "#dc2626", cursor: "pointer" }}>
+              <button onClick={handleLogout} style={{ flex: 1, padding: "10px", background: themeColors.dangerBg, border: `1px solid ${themeColors.danger}40`, borderRadius: 8, fontSize: 12, fontWeight: 500, color: themeColors.danger, cursor: "pointer" }}>
                 {t("logout")}
               </button>
             </div>
