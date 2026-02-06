@@ -426,7 +426,7 @@ export default function ProfesseurProfile() {
   );
 }
 
-function InfoBlock({ label, value, colors }: { label: string; value: string; colors: any }) {
+function InfoBlock({ label, value, colors }: { label: string; value: string; colors: ReturnType<typeof import("../../context/ThemeContext").useTheme>["colors"] }) {
   return (
     <div>
       <p style={{ fontSize: 12, color: colors.textLight, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>

@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { getAllEleves } from "../eleves/eleve.service";
 import { exclureEleve } from "./discipline.service";
 import { useAuth } from "../../context/AuthContext";
+import type { Eleve } from "../eleves/eleve.types";
 
 export default function ExclureEleve() {
   const { user } = useAuth();
 
-  const [eleves, setEleves] = useState<any[]>([]);
+  const [eleves, setEleves] = useState<Eleve[]>([]);
   const [selected, setSelected] = useState("");
   const [motif, setMotif] = useState("");
   const [loading, setLoading] = useState(false);

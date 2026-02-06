@@ -25,7 +25,8 @@
       "Bash(start /b npm run dev)",
       "Bash(find:*)",
       "Bash(firebase functions:list:*)",
-      "Bash(firebase functions:log:*)"
+      "Bash(firebase functions:log:*)",
+      "Bash(npx vite build)"
     ]
   }
 }

@@ -3,9 +3,9 @@ import { updateDoc, doc, Timestamp } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
 import { calculerPaiement } from "./paiement.logic";
+import type { Paiement, Versement } from "./paiement.types";
 
-// Fonction d'ajout de versement avec mise à jour du statut
-async function ajouterVersement(paiementId: string, versement: any, paiement: any) {
+async function ajouterVersement(paiementId: string, versement: Versement, paiement: Paiement) {
   const ref = doc(db, "paiements", paiementId);
   const versements = paiement.versements ?? [];
   const nouveauPaye = (paiement.montantPaye || 0) + versement.montant;
@@ -20,7 +20,7 @@ async function ajouterVersement(paiementId: string, versement: any, paiement: an
   });
 }
 
-export default function CreatePaiement({ paiement, onSuccess }: { paiement: any; onSuccess?: () => void }) {
+export default function CreatePaiement({ paiement, onSuccess }: { paiement: Paiement & { id: string }; onSuccess?: () => void }) {
   const { colors } = useTheme();
   const [montant, setMontant] = useState(0);
   const [methode, setMethode] = useState("especes");
@@ -29,7 +29,7 @@ export default function CreatePaiement({ paiement, onSuccess }: { paiement: any;
   );
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (montant <= 0) {
       alert("Le montant doit être supérieur à 0");

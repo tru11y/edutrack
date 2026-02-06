@@ -93,8 +93,8 @@ export default function CreateEleve() {
       }
 
       navigate("/admin/eleves");
-    } catch (e: any) {
-      setError(e.message || "Erreur lors de la création");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur lors de la création");
     } finally {
       setLoading(false);
     }

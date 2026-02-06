@@ -1,7 +1,17 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export function exportCahierToPDF(entries: any[], options?: {
+interface CahierExportRow {
+  date: string;
+  classe: string;
+  coursId: string;
+  profId: string;
+  eleves?: string[];
+  contenu?: string;
+  devoirs?: string;
+}
+
+export function exportCahierToPDF(entries: CahierExportRow[], options?: {
   titre?: string;
   periode?: string;
 }) {

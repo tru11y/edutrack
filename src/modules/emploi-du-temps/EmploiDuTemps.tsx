@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { getCreneaux } from "./emploi.service";
+import type { Creneau } from "./emploi.types";
 
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
 export default function EmploiDuTemps() {
-  const [creneaux, setCreneaux] = useState<any[]>([]);
+  const [creneaux, setCreneaux] = useState<Creneau[]>([]);
 
   useEffect(() => {
     getCreneaux().then(setCreneaux);

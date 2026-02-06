@@ -61,13 +61,14 @@ export default function CreateAdmin() {
       });
 
       navigate("/admin/admins");
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      if (e.code === "auth/email-already-in-use") {
+      const firebaseError = e as { code?: string; message?: string };
+      if (firebaseError.code === "auth/email-already-in-use") {
         setError("Cet email est deja utilise");
-      } else if (e.code === "auth/invalid-email") {
+      } else if (firebaseError.code === "auth/invalid-email") {
         setError("Email invalide");
-      } else if (e.code === "auth/weak-password") {
+      } else if (firebaseError.code === "auth/weak-password") {
         setError("Mot de passe trop faible");
       } else {
         setError("Erreur lors de la creation de l'administrateur");

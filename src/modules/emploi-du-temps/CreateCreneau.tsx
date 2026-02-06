@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { createCreneau } from "./emploi.service";
+import type { Creneau, Jour } from "./emploi.types";
 
-const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+const JOURS: Jour[] = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+
+type CreneauForm = Omit<Creneau, "id" | "createdAt">;
 
 export default function CreateCreneau() {
-  const [form, setForm] = useState<any>({
+  const [form, setForm] = useState<CreneauForm>({
     jour: "Lundi",
     heureDebut: "",
     heureFin: "",
@@ -14,7 +17,7 @@ export default function CreateCreneau() {
     type: "renforcement",
   });
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await createCreneau(form);
     alert("Créneau ajouté");

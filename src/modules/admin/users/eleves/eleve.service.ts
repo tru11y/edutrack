@@ -11,14 +11,14 @@ export const createEleve = async (data: Eleve) => {
   });
 };
 
-export const getAllEleves = async () => {
+export const getAllEleves = async (): Promise<Eleve[]> => {
   const snap = await getDocs(collection(db, COLLECTION));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Eleve));
 };
 
-export const getEleveById = async (id: string) => {
+export const getEleveById = async (id: string): Promise<Eleve> => {
   const snap = await getDoc(doc(db, COLLECTION, id));
-  return { id: snap.id, ...snap.data() };
+  return { id: snap.id, ...snap.data() } as Eleve;
 };
 
 export const updateEleve = async (id: string, data: Partial<Eleve>) => {

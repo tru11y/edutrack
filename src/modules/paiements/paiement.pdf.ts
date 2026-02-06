@@ -56,7 +56,7 @@ export function exportRecuPaiementPDF(
     styles: { fontSize: 9 },
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY || 110;
+  const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY || 110;
 
   doc.text("Signature Administration :", 14, finalY + 20);
   doc.line(80, finalY + 22, 170, finalY + 22);

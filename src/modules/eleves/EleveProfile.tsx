@@ -104,7 +104,7 @@ export default function EleveProfile() {
   );
 }
 
-function Info({ label, value, colors }: { label: string; value: any; colors: any }) {
+function Info({ label, value, colors }: { label: string; value: string | number | undefined; colors: ReturnType<typeof import("../../context/ThemeContext").useTheme>["colors"] }) {
   return (
     <div
       className="p-4 rounded"

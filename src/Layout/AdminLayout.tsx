@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { useLanguage } from "../context/LanguageContext";
+import { useLanguage, type TranslationKey } from "../context/LanguageContext";
 
 interface NavItem {
   to: string;
-  labelKey: string;
+  labelKey: TranslationKey;
   icon: string;
   end?: boolean;
   roles: ("admin" | "gestionnaire" | "prof")[];
@@ -232,7 +232,7 @@ export default function AdminLayout() {
                 background: isActive ? colors.accentBg : "transparent", textDecoration: "none", transition: "all 0.15s"
               })}>
                 <span style={{ display: "flex", alignItems: "center" }}>{icons[item.icon]}</span>
-                {t(item.labelKey as any)}
+                {t(item.labelKey)}
               </NavLink>
             ))}
           </div>

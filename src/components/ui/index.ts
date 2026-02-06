@@ -10,8 +10,6 @@ export { default as Select, ClassSelect } from "./Select";
 export { default as Avatar, AvatarGroup } from "./Avatar";
 export { default as StatusBadge, ActiveBadge, RoleBadge, PresenceBadge } from "./StatusBadge";
 export { default as EmptyState, EmptyStateIcons } from "./EmptyState";
-export { Badge } from "./Badge";
-export { Table, Th, Td } from "./Table";
 export { default as Loader } from "./Loader";
 export {
   Skeleton,
