@@ -35,7 +35,7 @@ export function exportDisciplinePDF(records: DisciplineRecord[]) {
     },
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY || 260;
+  const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY || 260;
 
   doc.text("Signature Administration :", 14, finalY + 20);
   doc.line(60, finalY + 22, 140, finalY + 22);

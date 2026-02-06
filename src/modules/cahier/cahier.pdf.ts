@@ -42,7 +42,7 @@ export function exportCahierTextePDF(cahier: CahierEntry) {
     styles: { fontSize: 9 },
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY || afterDevoirsY;
+  const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY || afterDevoirsY;
 
   doc.text("Signature Professeur :", 14, finalY + 20);
   doc.line(70, finalY + 22, 150, finalY + 22);

@@ -2,6 +2,7 @@ import { enregistrerVersement } from "./paiement.service";
 import { calculerPaiement } from "./paiement.logic";
 import { updateEleveSystem } from "../eleves/eleve.service";
 import { updateDoc } from "firebase/firestore";
+import type { Paiement } from "./paiement.types";
 
 jest.mock("./paiement.logic", () => ({
   calculerPaiement: jest.fn(),
@@ -24,7 +25,7 @@ describe("enregistrerVersement", () => {
       montantRestant: 0,
     });
 
-    const fakePaiement: any = {
+    const fakePaiement: Partial<Paiement> = {
       id: "p1",
       eleveId: "e1",
       mois: "2026-01",

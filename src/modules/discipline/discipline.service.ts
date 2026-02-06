@@ -1,7 +1,7 @@
 import { doc, updateDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { updateEleveSystem } from "../eleves/eleve.service";
-import type { DisciplineLog } from "./discipline.types";
+import type { DisciplineRecord } from "./discipline.types";
 import type { Eleve } from "../eleves/eleve.types";
 
 /* =========================
@@ -37,13 +37,13 @@ export async function exclureEleve(
    GET ALL DISCIPLINE LOGS
 ========================= */
 
-export async function getAllDiscipline(): Promise<DisciplineLog[]> {
+export async function getAllDiscipline(): Promise<DisciplineRecord[]> {
   try {
     const logsRef = collection(db, "discipline_logs");
     const snapshot = await getDocs(logsRef);
     return snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...(doc.data() as Omit<DisciplineLog, "id">),
+      ...(doc.data() as Omit<DisciplineRecord, "id">),
     }));
   } catch {
     return [];

@@ -1,10 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getEleveById } from "./eleve.service";
+import type { Eleve } from "./eleve.types";
 
 export default function EleveProfile() {
   const { id } = useParams();
-  const [eleve, setEleve] = useState<any>(null);
+  const [eleve, setEleve] = useState<Eleve | null>(null);
 
   useEffect(() => {
     if (id) getEleveById(id).then(setEleve);

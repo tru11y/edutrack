@@ -188,7 +188,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
     setPresences((prev) => [
       ...prev,
       {
-        eleveId: eleve.id,
+        eleveId: eleve.id!,
         statut: "present" as const,
         facturable: true,
         statutMetier: "autorise" as const,
@@ -239,11 +239,14 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
     return <div className="p-4" style={{ color: colors.textMuted }}>Chargement...</div>;
   }
 
-  const statusMessage = {
+  const statusMessages: Record<LockStatus, string> = {
     "not-started": "⏳ Le cours n'a pas encore commencé",
     "ended": "🔒 Cours terminé — lecture seule",
     "in-progress": "✅ Appel en cours",
-  }[status] || "";
+    "invalid-date": "⚠️ Date invalide",
+    "no-data": "",
+  };
+  const statusMessage = statusMessages[status];
 
   return (
     <div className="space-y-6">

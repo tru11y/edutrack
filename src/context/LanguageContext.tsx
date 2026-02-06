@@ -180,7 +180,7 @@ const translations = {
   },
 };
 
-type TranslationKey = keyof typeof translations.fr;
+export type TranslationKey = keyof typeof translations.fr;
 
 interface LanguageContextType {
   language: Language;

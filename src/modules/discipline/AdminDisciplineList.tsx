@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { getAllDiscipline } from "./discipline.service";
 import { exportDisciplinePDF } from "./discipline.pdf";
 import { useTheme } from "../../context/ThemeContext";
+import type { DisciplineRecord } from "./discipline.types";
 
 export default function AdminDisciplineList() {
   const { colors } = useTheme();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<DisciplineRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

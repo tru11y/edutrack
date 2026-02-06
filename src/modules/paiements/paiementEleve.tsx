@@ -4,6 +4,7 @@ import {
   getPaiementsByEleve,
 } from "./paiement.service";
 import { getEleveById } from "../eleves/eleve.service";
+import type { Eleve } from "../eleves/eleve.types";
 import { exportRecuPaiementPDF } from "./paiement.pdf";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -15,7 +16,7 @@ export default function PaiementEleve() {
   const { colors } = useTheme();
 
   const [paiements, setPaiements] = useState<Paiement[]>([]);
-  const [eleve, setEleve] = useState<any>(null);
+  const [eleve, setEleve] = useState<Eleve | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

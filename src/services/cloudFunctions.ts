@@ -139,6 +139,42 @@ export function getAdminDashboardStatsSecure(): Promise<{ success: boolean; stat
   return callFunction("getAdminDashboardStats", undefined);
 }
 
+// Stats detaillees (remplace le fetch all client de Stats.tsx)
+export interface EleveStatDetail {
+  eleveId: string;
+  nom: string;
+  prenom: string;
+  classe: string;
+  sexe: string;
+  presences: number;
+  absences: number;
+  retards: number;
+  tauxPresence: number;
+  paiementTotal: number;
+  paiementPaye: number;
+  paiementStatut: "ok" | "partiel" | "impaye";
+}
+
+export interface DetailedStatsGlobal {
+  totalEleves: number;
+  elevesActifs: number;
+  totalPresences: number;
+  tauxPresenceMoyen: number;
+  totalPaiements: number;
+  totalPaye: number;
+}
+
+export interface DetailedStatsResult {
+  success: boolean;
+  global: DetailedStatsGlobal;
+  classes: string[];
+  eleves: EleveStatDetail[];
+}
+
+export function getDetailedStatsSecure(params: { classe?: string } = {}): Promise<DetailedStatsResult> {
+  return callFunction("getDetailedStats", params);
+}
+
 export function getCloudFunctionErrorMessage(error: unknown): string {
   if (error && typeof error === "object" && "message" in error) {
     const msg = (error as { message: string }).message;
