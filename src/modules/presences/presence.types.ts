@@ -17,6 +17,7 @@ export interface PresenceItem {
 }
 
 export interface PresenceCoursPayload {
+  id?: string;
   coursId: string;
   classe: string;
   date: string;

@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { getAllPresences } from "./presence.service";
+import { useTheme } from "../../context/ThemeContext";
+import type { PresenceCoursPayload } from "./presence.types";
 
 export default function AdminPresences() {
-  const [rows, setRows] = useState<any[]>([]);
+  const { colors } = useTheme();
+  const [rows, setRows] = useState<PresenceCoursPayload[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -12,28 +15,28 @@ export default function AdminPresences() {
     });
   }, []);
 
-  if (loading) return <div className="p-6">Chargement…</div>;
+  if (loading) return <div className="p-6" style={{ color: colors.textMuted }}>Chargement…</div>;
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">📋 Présences – Admin</h1>
+      <h1 className="text-xl font-bold mb-4" style={{ color: colors.text }}>📋 Présences – Admin</h1>
 
-      <table className="w-full border">
-        <thead className="bg-gray-100">
+      <table className="w-full" style={{ border: `1px solid ${colors.border}` }}>
+        <thead style={{ background: colors.bgSecondary }}>
           <tr>
-            <th className="border p-2">Date</th>
-            <th className="border p-2">Cours</th>
-            <th className="border p-2">Classe</th>
-            <th className="border p-2">Total élèves</th>
+            <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Date</th>
+            <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Cours</th>
+            <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Classe</th>
+            <th className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>Total élèves</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((p) => (
-            <tr key={p.id}>
-              <td className="border p-2">{p.date}</td>
-              <td className="border p-2">{p.coursId}</td>
-              <td className="border p-2">{p.classe}</td>
-              <td className="border p-2">
+            <tr key={p.id} style={{ background: colors.bgCard }}>
+              <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>{p.date}</td>
+              <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>{p.coursId}</td>
+              <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>{p.classe}</td>
+              <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>
                 {p.presences?.length || 0}
               </td>
             </tr>

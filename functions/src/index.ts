@@ -1,11 +1,27 @@
 import * as functions from "firebase-functions";
 import { db, admin } from "./firebase";
+import { verifyAdmin, verifyAdminOrGestionnaire } from "./helpers.auth";
 
 export {
   sendMonthlyPaymentReport,
   sendPaymentReportManual,
   configureReportEmail,
 } from "./scheduled.reports";
+
+export {
+  resetStatutPaiementMensuel,
+  getStatsPaiementMensuel,
+} from "./paiement.statut";
+
+export {
+  createDepense,
+  getDepenses,
+  deleteDepense,
+  createSalaire,
+  getSalaires,
+  updateSalaireStatut,
+  getComptaStats,
+} from "./compta";
 
 interface CreateUserData {
   email: string;
@@ -24,20 +40,6 @@ interface CreatePaiementData {
   montantTotal: number;
   montantPaye: number;
   datePaiement: string;
-}
-
-async function verifyAdmin(uid: string): Promise<boolean> {
-  const userDoc = await db.collection("users").doc(uid).get();
-  if (!userDoc.exists) return false;
-  const data = userDoc.data();
-  return data?.role === "admin";
-}
-
-async function verifyAdminOrGestionnaire(uid: string): Promise<boolean> {
-  const userDoc = await db.collection("users").doc(uid).get();
-  if (!userDoc.exists) return false;
-  const data = userDoc.data();
-  return data?.role === "admin" || data?.role === "gestionnaire";
 }
 
 export const createUser = functions
@@ -309,6 +311,12 @@ export const createPaiement = functions
         createdBy: context.auth.uid,
       });
 
+      await db.collection("eleves").doc(data.eleveId).update({
+        statutPaiementMensuel: "a_jour",
+        dernierMoisPaye: data.mois,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
       await db.collection("audit_logs").add({
         action: "PAIEMENT_CREATED",
         paiementId: paiementRef.id,
@@ -501,6 +509,86 @@ export const getAllCahierEntries = functions
       throw new functions.https.HttpsError(
         "internal",
         "Erreur lors de la recuperation du cahier de texte."
+      );
+    }
+  });
+
+// ==================== ADMIN DASHBOARD STATS ====================
+
+export const getAdminDashboardStats = functions
+  .region("europe-west1")
+  .https.onCall(async (_data: unknown, context) => {
+    if (!context.auth?.uid) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Vous devez etre connecte."
+      );
+    }
+
+    const isAdmin = await verifyAdmin(context.auth.uid);
+    if (!isAdmin) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Seuls les administrateurs peuvent acceder aux statistiques."
+      );
+    }
+
+    try {
+      const [elevesSnap, profsSnap, classesSnap, paiementsSnap, depensesSnap, salairesSnap] =
+        await Promise.all([
+          db.collection("eleves").get(),
+          db.collection("professeurs").get(),
+          db.collection("classes").get(),
+          db.collection("paiements").get(),
+          db.collection("depenses").get(),
+          db.collection("salaires").get(),
+        ]);
+
+      const totalEleves = elevesSnap.size;
+      const totalProfesseurs = profsSnap.size;
+      const totalClasses = classesSnap.size;
+
+      let totalPaiementsRecus = 0;
+      let totalPaiementsAttendus = 0;
+
+      paiementsSnap.docs.forEach((doc) => {
+        const d = doc.data();
+        totalPaiementsRecus += d.montantPaye || 0;
+        totalPaiementsAttendus += d.montantTotal || 0;
+      });
+
+      const tauxCouverture =
+        totalPaiementsAttendus > 0
+          ? Math.round((totalPaiementsRecus / totalPaiementsAttendus) * 100)
+          : 0;
+
+      let totalDepenses = 0;
+      depensesSnap.docs.forEach((doc) => {
+        totalDepenses += doc.data().montant || 0;
+      });
+
+      let totalSalaires = 0;
+      salairesSnap.docs.forEach((doc) => {
+        totalSalaires += doc.data().montant || 0;
+      });
+
+      return {
+        success: true,
+        stats: {
+          totalEleves,
+          totalProfesseurs,
+          totalClasses,
+          totalPaiementsRecus,
+          totalPaiementsAttendus,
+          tauxCouverture,
+          totalDepenses,
+          totalSalaires,
+        },
+      };
+    } catch {
+      throw new functions.https.HttpsError(
+        "internal",
+        "Erreur lors du calcul des statistiques."
       );
     }
   });

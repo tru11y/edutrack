@@ -99,6 +99,7 @@ const Profil = lazy(() => import("./pages/Profil"));
 const Users = lazy(() => import("./pages/Users"));
 const Classes = lazy(() => import("./pages/Classes"));
 const Corbeille = lazy(() => import("./pages/Corbeille"));
+const Compta = lazy(() => import("./pages/Compta"));
 
 /* ========== LOGIN ========== */
 function Login() {
@@ -292,30 +293,31 @@ export default function App() {
               <BrowserRouter>
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-                <Route index element={<ProfRedirect />} />
-                <Route path="eleves" element={<AdminRoute><ElevesList /></AdminRoute>} />
-                <Route path="eleves/nouveau" element={<AdminRoute><EleveForm /></AdminRoute>} />
-                <Route path="eleves/:id" element={<AdminRoute><EleveDetail /></AdminRoute>} />
-                <Route path="eleves/:id/modifier" element={<AdminRoute><EleveForm /></AdminRoute>} />
-                <Route path="classes" element={<AdminRoute><Classes /></AdminRoute>} />
-                <Route path="mes-eleves" element={<MesEleves />} />
-                <Route path="presences" element={<PresencesList />} />
-                <Route path="presences/appel" element={<PresenceAppel />} />
-                <Route path="cahier" element={<CahierList />} />
-                <Route path="cahier/nouveau" element={<CahierForm />} />
-                <Route path="cahier/:id/modifier" element={<CahierForm />} />
-                <Route path="paiements" element={<AdminRoute><PaiementsList /></AdminRoute>} />
-                <Route path="paiements/nouveau" element={<AdminRoute><PaiementForm /></AdminRoute>} />
-                <Route path="paiements/:id/modifier" element={<AdminRoute><PaiementForm /></AdminRoute>} />
-                <Route path="stats" element={<AdminRoute><Stats /></AdminRoute>} />
-                <Route path="utilisateurs" element={<AdminRoute><Users /></AdminRoute>} />
-                <Route path="messages" element={<Messages />} />
-                <Route path="profil" element={<Profil />} />
-                <Route path="corbeille" element={<AdminRoute><Corbeille /></AdminRoute>} />
-              </Route>
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+                      <Route index element={<ProfRedirect />} />
+                      <Route path="eleves" element={<AdminRoute><ElevesList /></AdminRoute>} />
+                      <Route path="eleves/nouveau" element={<AdminRoute><EleveForm /></AdminRoute>} />
+                      <Route path="eleves/:id" element={<AdminRoute><EleveDetail /></AdminRoute>} />
+                      <Route path="eleves/:id/modifier" element={<AdminRoute><EleveForm /></AdminRoute>} />
+                      <Route path="classes" element={<AdminRoute><Classes /></AdminRoute>} />
+                      <Route path="mes-eleves" element={<MesEleves />} />
+                      <Route path="presences" element={<PresencesList />} />
+                      <Route path="presences/appel" element={<PresenceAppel />} />
+                      <Route path="cahier" element={<CahierList />} />
+                      <Route path="cahier/nouveau" element={<CahierForm />} />
+                      <Route path="cahier/:id/modifier" element={<CahierForm />} />
+                      <Route path="paiements" element={<AdminRoute><PaiementsList /></AdminRoute>} />
+                      <Route path="paiements/nouveau" element={<AdminRoute><PaiementForm /></AdminRoute>} />
+                      <Route path="paiements/:id/modifier" element={<AdminRoute><PaiementForm /></AdminRoute>} />
+                      <Route path="stats" element={<AdminRoute><Stats /></AdminRoute>} />
+                      <Route path="utilisateurs" element={<AdminRoute><Users /></AdminRoute>} />
+                      <Route path="messages" element={<Messages />} />
+                      <Route path="profil" element={<Profil />} />
+                      <Route path="comptabilite" element={<AdminRoute><Compta /></AdminRoute>} />
+                      <Route path="corbeille" element={<AdminRoute><Corbeille /></AdminRoute>} />
+                    </Route>
+                    <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </Suspense>
               </BrowserRouter>
