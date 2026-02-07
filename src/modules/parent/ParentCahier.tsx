@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { getAllCahiers } from "../cahier/cahier.service";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../services/firebase";
 
 interface CahierEntry {
   id: string;
@@ -13,6 +16,7 @@ interface CahierEntry {
 }
 
 export default function ParentCahier() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const [entries, setEntries] = useState<CahierEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,20 +27,36 @@ export default function ParentCahier() {
       return;
     }
 
-    getAllCahiers().then((d) => {
-      const mapped: CahierEntry[] = d.map((item) => ({
-        id: item.id,
-        date: item.date,
-        classe: item.classe,
-        coursId: item.coursId,
-        coursNom: item.profNom,
-        contenu: item.contenu,
-        devoirs: item.devoirs,
-      }));
+    const loadCahiers = async () => {
+      // Récupérer les classes des enfants du parent
+      const enfantsIds: string[] = (user as Record<string, unknown>).enfantsIds as string[] || [];
+      const classesEnfants = new Set<string>();
+
+      for (const eleveId of enfantsIds) {
+        const eleveDoc = await getDoc(doc(db, "eleves", eleveId));
+        if (eleveDoc.exists()) {
+          const classe = eleveDoc.data().classe;
+          if (classe) classesEnfants.add(classe);
+        }
+      }
+
+      const d = await getAllCahiers();
+      const mapped: CahierEntry[] = d
+        .filter((item) => classesEnfants.size === 0 || classesEnfants.has(item.classe))
+        .map((item) => ({
+          id: item.id,
+          date: item.date,
+          classe: item.classe,
+          coursId: item.coursId,
+          coursNom: item.profNom,
+          contenu: item.contenu,
+          devoirs: item.devoirs,
+        }));
       const sorted = mapped.sort((a, b) => b.date.localeCompare(a.date));
       setEntries(sorted);
       setLoading(false);
-    });
+    };
+    loadCahiers();
   }, [user]);
 
   if (loading) {
@@ -44,10 +64,10 @@ export default function ParentCahier() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{
-            width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#10b981",
+            width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.success,
             borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px"
           }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement du cahier de texte...</p>
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement du cahier de texte...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -58,21 +78,21 @@ export default function ParentCahier() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: "0 0 8px" }}>Cahier de texte</h1>
-        <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Contenu des cours et devoirs a faire</p>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>Cahier de texte</h1>
+        <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Contenu des cours et devoirs a faire</p>
       </div>
 
       {/* List */}
       {entries.length === 0 ? (
         <div style={{
-          background: "#fff",
+          background: colors.bgCard,
           borderRadius: 16,
-          border: "1px solid #e2e8f0",
+          border: `1px solid ${colors.border}`,
           padding: 60,
           textAlign: "center"
         }}>
           <div style={{
-            width: 64, height: 64, background: "#f1f5f9", borderRadius: "50%",
+            width: 64, height: 64, background: colors.bgSecondary, borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
             margin: "0 auto 16px"
           }}>
@@ -81,7 +101,7 @@ export default function ParentCahier() {
               <path d="M10.5 10.5H17.5M10.5 14H17.5M10.5 17.5H14" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </div>
-          <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Aucun cours publie pour le moment</p>
+          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Aucun cours publie pour le moment</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -89,35 +109,35 @@ export default function ParentCahier() {
             <div
               key={entry.id}
               style={{
-                background: "#fff",
+                background: colors.bgCard,
                 borderRadius: 16,
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.border}`,
                 overflow: "hidden"
               }}
             >
               {/* Header */}
               <div style={{
                 padding: "16px 20px",
-                borderBottom: "1px solid #f1f5f9",
+                borderBottom: `1px solid ${colors.bgSecondary}`,
                 display: "flex",
                 alignItems: "center",
                 gap: 16,
-                background: "#f8fafc"
+                background: colors.bg
               }}>
                 <div style={{
                   padding: "8px 14px",
-                  background: "#fff",
+                  background: colors.bgCard,
                   borderRadius: 8,
-                  border: "1px solid #e2e8f0",
+                  border: `1px solid ${colors.border}`,
                   textAlign: "center"
                 }}>
-                  <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
+                  <p style={{ fontSize: 12, color: colors.textMuted, margin: 0 }}>
                     {new Date(entry.date).toLocaleDateString("fr-FR", { weekday: "short" })}
                   </p>
-                  <p style={{ fontSize: 20, fontWeight: 700, color: "#1e293b", margin: 0 }}>
+                  <p style={{ fontSize: 20, fontWeight: 700, color: colors.text, margin: 0 }}>
                     {new Date(entry.date).getDate()}
                   </p>
-                  <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
+                  <p style={{ fontSize: 12, color: colors.textMuted, margin: 0 }}>
                     {new Date(entry.date).toLocaleDateString("fr-FR", { month: "short" })}
                   </p>
                 </div>
@@ -125,15 +145,15 @@ export default function ParentCahier() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <span style={{
                       padding: "4px 10px",
-                      background: "#ecfdf5",
-                      color: "#059669",
+                      background: colors.successBg,
+                      color: colors.success,
                       borderRadius: 6,
                       fontSize: 12,
                       fontWeight: 600
                     }}>
                       {entry.classe || "Classe"}
                     </span>
-                    <span style={{ fontSize: 16, fontWeight: 600, color: "#1e293b" }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: colors.text }}>
                       {entry.coursNom || entry.coursId || "Cours"}
                     </span>
                   </div>
@@ -146,7 +166,7 @@ export default function ParentCahier() {
                   <div style={{ marginBottom: entry.devoirs ? 16 : 0 }}>
                     <p style={{
                       fontSize: 12,
-                      color: "#94a3b8",
+                      color: colors.textLight,
                       marginBottom: 8,
                       textTransform: "uppercase",
                       letterSpacing: "0.5px",
@@ -154,7 +174,7 @@ export default function ParentCahier() {
                     }}>
                       Contenu du cours
                     </p>
-                    <p style={{ fontSize: 14, color: "#1e293b", margin: 0, lineHeight: 1.6 }}>
+                    <p style={{ fontSize: 14, color: colors.text, margin: 0, lineHeight: 1.6 }}>
                       {entry.contenu}
                     </p>
                   </div>
@@ -163,13 +183,13 @@ export default function ParentCahier() {
                 {entry.devoirs && (
                   <div style={{
                     padding: 16,
-                    background: "#fffbeb",
+                    background: colors.warningBg,
                     borderRadius: 10,
-                    border: "1px solid #fef3c7"
+                    border: `1px solid ${colors.warning}`
                   }}>
                     <p style={{
                       fontSize: 12,
-                      color: "#92400e",
+                      color: colors.warning,
                       marginBottom: 8,
                       textTransform: "uppercase",
                       letterSpacing: "0.5px",
@@ -184,14 +204,14 @@ export default function ParentCahier() {
                       </svg>
                       Devoirs a faire
                     </p>
-                    <p style={{ fontSize: 14, color: "#78350f", margin: 0, lineHeight: 1.6 }}>
+                    <p style={{ fontSize: 14, color: colors.warning, margin: 0, lineHeight: 1.6 }}>
                       {entry.devoirs}
                     </p>
                   </div>
                 )}
 
                 {!entry.contenu && !entry.devoirs && (
-                  <p style={{ fontSize: 14, color: "#94a3b8", margin: 0 }}>
+                  <p style={{ fontSize: 14, color: colors.textLight, margin: 0 }}>
                     Aucun contenu renseigne
                   </p>
                 )}

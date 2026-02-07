@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getElevesBannis } from "./eleve.service";
 import { unbanEleve } from "../paiements/paiement.service";
+import { useTheme } from "../../context/ThemeContext";
 import type { Eleve } from "./eleve.types";
 
 interface EleveBanni {
@@ -14,6 +15,7 @@ interface EleveBanni {
 }
 
 export default function AdminBansList() {
+  const { colors } = useTheme();
   const [eleves, setEleves] = useState<EleveBanni[]>([]);
   const [loading, setLoading] = useState(true);
   const [unbanning, setUnbanning] = useState<string | null>(null);
@@ -52,10 +54,10 @@ export default function AdminBansList() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{
-            width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#ef4444",
+            width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.danger,
             borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px"
           }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement des eleves bannis...</p>
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement des eleves bannis...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -70,30 +72,30 @@ export default function AdminBansList() {
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{
               width: 48, height: 48, borderRadius: 12,
-              background: "#fef2f2",
+              background: colors.dangerBg,
               display: "flex", alignItems: "center", justifyContent: "center"
             }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="9" stroke="#ef4444" strokeWidth="2"/>
-                <path d="M5.64 5.64L18.36 18.36" stroke="#ef4444" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="9" stroke={colors.danger} strokeWidth="2"/>
+                <path d="M5.64 5.64L18.36 18.36" stroke={colors.danger} strokeWidth="2"/>
               </svg>
             </div>
             <div>
-              <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>Eleves bannis</h1>
-              <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>{eleves.length} eleve{eleves.length > 1 ? "s" : ""} suspendu{eleves.length > 1 ? "s" : ""}</p>
+              <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>Eleves bannis</h1>
+              <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{eleves.length} eleve{eleves.length > 1 ? "s" : ""} suspendu{eleves.length > 1 ? "s" : ""}</p>
             </div>
           </div>
           <Link
             to="/admin/stats"
             style={{
               padding: "10px 20px",
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
+              background: colors.bg,
+              border: `1px solid ${colors.border}`,
               borderRadius: 10,
               textDecoration: "none",
               fontSize: 14,
               fontWeight: 500,
-              color: "#475569"
+              color: colors.textSecondary
             }}
           >
             Voir statistiques
@@ -104,8 +106,8 @@ export default function AdminBansList() {
       {/* Alert */}
       {eleves.length > 0 && (
         <div style={{
-          background: "#fef2f2",
-          border: "1px solid #fecaca",
+          background: colors.dangerBg,
+          border: `1px solid ${colors.danger}`,
           borderRadius: 12,
           padding: 16,
           marginBottom: 24,
@@ -114,9 +116,9 @@ export default function AdminBansList() {
           gap: 12
         }}>
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M10 7V10M10 13H10.01M18 10C18 14.4183 14.4183 18 10 18C5.58172 18 2 14.4183 2 10C2 5.58172 5.58172 2 10 2C14.4183 2 18 5.58172 18 10Z" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M10 7V10M10 13H10.01M18 10C18 14.4183 14.4183 18 10 18C5.58172 18 2 14.4183 2 10C2 5.58172 5.58172 2 10 2C14.4183 2 18 5.58172 18 10Z" stroke={colors.danger} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <p style={{ fontSize: 14, color: "#dc2626", margin: 0 }}>
+          <p style={{ fontSize: 14, color: colors.danger, margin: 0 }}>
             Ces eleves ont ete suspendus pour non-paiement. Ils ne peuvent plus acceder a leur espace.
           </p>
         </div>
@@ -125,23 +127,23 @@ export default function AdminBansList() {
       {/* List */}
       {eleves.length === 0 ? (
         <div style={{
-          background: "#fff",
+          background: colors.bgCard,
           borderRadius: 16,
-          border: "1px solid #e2e8f0",
+          border: `1px solid ${colors.border}`,
           padding: 60,
           textAlign: "center"
         }}>
           <div style={{
-            width: 64, height: 64, background: "#ecfdf5", borderRadius: "50%",
+            width: 64, height: 64, background: colors.successBg, borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
             margin: "0 auto 16px"
           }}>
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <path d="M23.33 7L10.5 19.83L4.67 14" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M23.33 7L10.5 19.83L4.67 14" stroke={colors.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <h3 style={{ fontSize: 18, fontWeight: 600, color: "#1e293b", margin: "0 0 8px" }}>Aucun eleve banni</h3>
-          <p style={{ fontSize: 14, color: "#64748b", margin: 0 }}>Tous les eleves sont actifs</p>
+          <h3 style={{ fontSize: 18, fontWeight: 600, color: colors.text, margin: "0 0 8px" }}>Aucun eleve banni</h3>
+          <p style={{ fontSize: 14, color: colors.textMuted, margin: 0 }}>Tous les eleves sont actifs</p>
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 20 }}>
@@ -149,15 +151,15 @@ export default function AdminBansList() {
             <div
               key={e.id}
               style={{
-                background: "#fff",
+                background: colors.bgCard,
                 borderRadius: 16,
-                border: "1px solid #fecaca",
+                border: `1px solid ${colors.danger}`,
                 overflow: "hidden"
               }}
             >
               <div style={{
                 padding: 20,
-                borderBottom: "1px solid #fef2f2",
+                borderBottom: `1px solid ${colors.dangerBg}`,
                 display: "flex",
                 alignItems: "center",
                 gap: 16
@@ -171,13 +173,13 @@ export default function AdminBansList() {
                   {e.prenom?.[0]}{e.nom?.[0]}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: "0 0 4px" }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 4px" }}>
                     {e.prenom} {e.nom}
                   </h3>
                   <span style={{
                     padding: "4px 10px",
-                    background: "#eef2ff",
-                    color: "#6366f1",
+                    background: colors.primaryBg,
+                    color: colors.primary,
                     borderRadius: 6,
                     fontSize: 12,
                     fontWeight: 500
@@ -191,7 +193,7 @@ export default function AdminBansList() {
                 <div style={{ marginBottom: 16 }}>
                   <p style={{
                     fontSize: 12,
-                    color: "#94a3b8",
+                    color: colors.textLight,
                     marginBottom: 6,
                     textTransform: "uppercase",
                     letterSpacing: "0.5px",
@@ -201,10 +203,10 @@ export default function AdminBansList() {
                   </p>
                   <p style={{
                     fontSize: 14,
-                    color: "#dc2626",
+                    color: colors.danger,
                     margin: 0,
                     padding: "10px 14px",
-                    background: "#fef2f2",
+                    background: colors.dangerBg,
                     borderRadius: 8
                   }}>
                     {e.banReason || "Impayes consecutifs"}
@@ -212,7 +214,7 @@ export default function AdminBansList() {
                 </div>
 
                 {e.banDate?.toDate && (
-                  <p style={{ fontSize: 12, color: "#64748b", margin: "0 0 16px" }}>
+                  <p style={{ fontSize: 12, color: colors.textMuted, margin: "0 0 16px" }}>
                     Banni le {e.banDate.toDate().toLocaleDateString("fr-FR", {
                       day: "numeric",
                       month: "long",
@@ -228,7 +230,7 @@ export default function AdminBansList() {
                     style={{
                       flex: 1,
                       padding: "12px 16px",
-                      background: unbanning === e.id ? "#86efac" : "#10b981",
+                      background: unbanning === e.id ? "#86efac" : colors.success,
                       border: "none",
                       borderRadius: 10,
                       fontSize: 14,
@@ -265,12 +267,12 @@ export default function AdminBansList() {
                     to={`/admin/eleves/${e.id}`}
                     style={{
                       padding: "12px 16px",
-                      background: "#f1f5f9",
+                      background: colors.bgSecondary,
                       border: "none",
                       borderRadius: 10,
                       fontSize: 14,
                       fontWeight: 500,
-                      color: "#475569",
+                      color: colors.textSecondary,
                       textDecoration: "none",
                       display: "flex",
                       alignItems: "center",

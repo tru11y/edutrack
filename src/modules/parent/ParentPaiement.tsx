@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { getPaiementsByEleve } from "../paiements/paiement.service";
 import { exportRecuPaiementPDF } from "../paiements/paiement.pdf";
 import type { Paiement } from "../paiements/paiement.types";
 
 export default function ParentPaiements() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,10 +40,10 @@ export default function ParentPaiements() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{
-            width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#10b981",
+            width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.success,
             borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px"
           }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement des paiements...</p>
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement des paiements...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -52,42 +54,42 @@ export default function ParentPaiements() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: "0 0 8px" }}>Paiements</h1>
-        <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Historique et recus de paiement</p>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>Paiements</h1>
+        <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Historique et recus de paiement</p>
       </div>
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 32 }}>
         <div style={{
-          background: "#fff",
+          background: colors.bgCard,
           borderRadius: 16,
-          border: "1px solid #e2e8f0",
+          border: `1px solid ${colors.border}`,
           padding: 20
         }}>
-          <p style={{ fontSize: 13, color: "#64748b", marginBottom: 4 }}>Total du</p>
-          <p style={{ fontSize: 24, fontWeight: 700, color: "#1e293b", margin: 0 }}>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>Total du</p>
+          <p style={{ fontSize: 24, fontWeight: 700, color: colors.text, margin: 0 }}>
             {stats.total.toLocaleString("fr-FR")} F
           </p>
         </div>
         <div style={{
-          background: "#ecfdf5",
+          background: colors.successBg,
           borderRadius: 16,
           border: "1px solid #a7f3d0",
           padding: 20
         }}>
-          <p style={{ fontSize: 13, color: "#059669", marginBottom: 4 }}>Deja paye</p>
-          <p style={{ fontSize: 24, fontWeight: 700, color: "#059669", margin: 0 }}>
+          <p style={{ fontSize: 13, color: colors.success, marginBottom: 4 }}>Deja paye</p>
+          <p style={{ fontSize: 24, fontWeight: 700, color: colors.success, margin: 0 }}>
             {stats.paye.toLocaleString("fr-FR")} F
           </p>
         </div>
         <div style={{
-          background: stats.reste > 0 ? "#fef2f2" : "#f8fafc",
+          background: stats.reste > 0 ? colors.dangerBg : colors.bg,
           borderRadius: 16,
-          border: `1px solid ${stats.reste > 0 ? "#fecaca" : "#e2e8f0"}`,
+          border: `1px solid ${stats.reste > 0 ? colors.danger : colors.border}`,
           padding: 20
         }}>
-          <p style={{ fontSize: 13, color: stats.reste > 0 ? "#dc2626" : "#64748b", marginBottom: 4 }}>Reste a payer</p>
-          <p style={{ fontSize: 24, fontWeight: 700, color: stats.reste > 0 ? "#dc2626" : "#64748b", margin: 0 }}>
+          <p style={{ fontSize: 13, color: stats.reste > 0 ? colors.danger : colors.textMuted, marginBottom: 4 }}>Reste a payer</p>
+          <p style={{ fontSize: 24, fontWeight: 700, color: stats.reste > 0 ? colors.danger : colors.textMuted, margin: 0 }}>
             {stats.reste.toLocaleString("fr-FR")} F
           </p>
         </div>
@@ -96,14 +98,14 @@ export default function ParentPaiements() {
       {/* List */}
       {paiements.length === 0 ? (
         <div style={{
-          background: "#fff",
+          background: colors.bgCard,
           borderRadius: 16,
-          border: "1px solid #e2e8f0",
+          border: `1px solid ${colors.border}`,
           padding: 60,
           textAlign: "center"
         }}>
           <div style={{
-            width: 64, height: 64, background: "#f1f5f9", borderRadius: "50%",
+            width: 64, height: 64, background: colors.bgSecondary, borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
             margin: "0 auto 16px"
           }}>
@@ -112,7 +114,7 @@ export default function ParentPaiements() {
               <path d="M3.5 11.5H24.5" stroke="#94a3b8" strokeWidth="2"/>
             </svg>
           </div>
-          <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Aucun paiement enregistre</p>
+          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Aucun paiement enregistre</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -120,9 +122,9 @@ export default function ParentPaiements() {
             <div
               key={p.id}
               style={{
-                background: "#fff",
+                background: colors.bgCard,
                 borderRadius: 16,
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.border}`,
                 padding: 20,
                 display: "flex",
                 alignItems: "center",
@@ -132,7 +134,7 @@ export default function ParentPaiements() {
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <div style={{
                   width: 48, height: 48, borderRadius: 12,
-                  background: p.statut === "paye" ? "#ecfdf5" : p.statut === "partiel" ? "#fffbeb" : "#fef2f2",
+                  background: p.statut === "paye" ? colors.successBg : p.statut === "partiel" ? colors.warningBg : colors.dangerBg,
                   display: "flex", alignItems: "center", justifyContent: "center"
                 }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -141,8 +143,8 @@ export default function ParentPaiements() {
                   </svg>
                 </div>
                 <div>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: 0 }}>{p.mois}</p>
-                  <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: 0 }}>{p.mois}</p>
+                  <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>
                     Total: {(p.montantTotal || 0).toLocaleString("fr-FR")} FCFA
                   </p>
                 </div>
@@ -150,11 +152,11 @@ export default function ParentPaiements() {
 
               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 <div style={{ textAlign: "right" }}>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: "#10b981", margin: 0 }}>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: colors.success, margin: 0 }}>
                     {(p.montantPaye || 0).toLocaleString("fr-FR")} F
                   </p>
                   {(p.montantRestant || 0) > 0 && (
-                    <p style={{ fontSize: 12, color: "#ef4444", margin: 0 }}>
+                    <p style={{ fontSize: 12, color: colors.danger, margin: 0 }}>
                       Reste: {p.montantRestant.toLocaleString("fr-FR")} F
                     </p>
                   )}
@@ -172,12 +174,12 @@ export default function ParentPaiements() {
                   }
                   style={{
                     padding: "10px 16px",
-                    background: "#f1f5f9",
+                    background: colors.bgSecondary,
                     border: "none",
                     borderRadius: 8,
                     fontSize: 13,
                     fontWeight: 500,
-                    color: "#475569",
+                    color: colors.textSecondary,
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",

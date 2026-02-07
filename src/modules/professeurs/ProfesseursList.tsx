@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAllProfesseurs } from "./professeur.service";
+import { useTheme } from "../../context/ThemeContext";
 import type { Professeur } from "./professeur.types";
 
 export default function ProfesseursList() {
+  const { colors } = useTheme();
   const [profs, setProfs] = useState<Professeur[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -27,10 +29,10 @@ export default function ProfesseursList() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{
-            width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#8b5cf6",
+            width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: "#8b5cf6",
             borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px"
           }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement des professeurs...</p>
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement des professeurs...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -42,7 +44,7 @@ export default function ProfesseursList() {
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>Professeurs</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>Professeurs</h1>
           <Link
             to="/admin/professeurs/create"
             style={{
@@ -65,16 +67,16 @@ export default function ProfesseursList() {
             Ajouter un professeur
           </Link>
         </div>
-        <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>
+        <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>
           {profs.length} professeur{profs.length > 1 ? "s" : ""} enregistre{profs.length > 1 ? "s" : ""}
         </p>
       </div>
 
       {/* Search */}
       <div style={{
-        background: "#fff",
+        background: colors.bgCard,
         borderRadius: 16,
-        border: "1px solid #e2e8f0",
+        border: `1px solid ${colors.border}`,
         padding: 20,
         marginBottom: 24
       }}>
@@ -91,11 +93,13 @@ export default function ProfesseursList() {
             style={{
               width: "100%",
               padding: "12px 12px 12px 44px",
-              border: "1px solid #e2e8f0",
+              border: `1px solid ${colors.border}`,
               borderRadius: 10,
               fontSize: 14,
               outline: "none",
-              boxSizing: "border-box"
+              boxSizing: "border-box",
+              background: colors.bgCard,
+              color: colors.text
             }}
           />
         </div>
@@ -104,14 +108,14 @@ export default function ProfesseursList() {
       {/* Grid */}
       {filteredProfs.length === 0 ? (
         <div style={{
-          background: "#fff",
+          background: colors.bgCard,
           borderRadius: 16,
-          border: "1px solid #e2e8f0",
+          border: `1px solid ${colors.border}`,
           padding: 60,
           textAlign: "center"
         }}>
           <div style={{
-            width: 64, height: 64, background: "#f1f5f9", borderRadius: "50%",
+            width: 64, height: 64, background: colors.bgSecondary, borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
             margin: "0 auto 16px"
           }}>
@@ -120,7 +124,7 @@ export default function ProfesseursList() {
               <path d="M4.67 11.67V18.67L14 24.5L23.33 18.67V11.67" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>
+          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>
             {search ? "Aucun professeur trouve" : "Aucun professeur enregistre"}
           </p>
         </div>
@@ -130,9 +134,9 @@ export default function ProfesseursList() {
             <div
               key={prof.id}
               style={{
-                background: "#fff",
+                background: colors.bgCard,
                 borderRadius: 16,
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.border}`,
                 padding: 24,
                 transition: "all 0.2s"
               }}
@@ -141,7 +145,7 @@ export default function ProfesseursList() {
                 e.currentTarget.style.boxShadow = "0 10px 40px -10px rgba(139, 92, 246, 0.2)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.borderColor = colors.border;
                 e.currentTarget.style.boxShadow = "none";
               }}
             >
@@ -156,10 +160,10 @@ export default function ProfesseursList() {
                   {prof.prenom?.[0]}{prof.nom?.[0]}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "#1e293b", margin: "0 0 4px" }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 4px" }}>
                     {prof.prenom} {prof.nom}
                   </h3>
-                  <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
+                  <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>
                     {prof.telephone || "Tel. non renseigne"}
                   </p>
                 </div>
@@ -167,7 +171,7 @@ export default function ProfesseursList() {
               </div>
 
               <div style={{ marginTop: 20 }}>
-                <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                <p style={{ fontSize: 12, color: colors.textLight, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
                   Matieres
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -185,7 +189,7 @@ export default function ProfesseursList() {
                       </span>
                     ))
                   ) : (
-                    <span style={{ color: "#94a3b8", fontSize: 13 }}>Non renseigne</span>
+                    <span style={{ color: colors.textLight, fontSize: 13 }}>Non renseigne</span>
                   )}
                 </div>
               </div>
@@ -193,20 +197,20 @@ export default function ProfesseursList() {
               {prof.telephone && (
                 <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M14.67 11.27V13.27C14.67 13.74 14.29 14.13 13.81 14.13H13.67C7.23 13.67 2.33 8.77 1.87 2.33V2.19C1.87 1.71 2.26 1.33 2.73 1.33H4.73C5.13 1.33 5.48 1.61 5.56 2L6.18 5.13C6.24 5.43 6.13 5.73 5.91 5.92L4.64 7.03C5.68 9.03 7.3 10.65 9.3 11.69L10.41 10.42C10.6 10.2 10.9 10.09 11.2 10.15L14.33 10.77C14.72 10.85 15 11.2 15 11.6V11.27H14.67Z" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14.67 11.27V13.27C14.67 13.74 14.29 14.13 13.81 14.13H13.67C7.23 13.67 2.33 8.77 1.87 2.33V2.19C1.87 1.71 2.26 1.33 2.73 1.33H4.73C5.13 1.33 5.48 1.61 5.56 2L6.18 5.13C6.24 5.43 6.13 5.73 5.91 5.92L4.64 7.03C5.68 9.03 7.3 10.65 9.3 11.69L10.41 10.42C10.6 10.2 10.9 10.09 11.2 10.15L14.33 10.77C14.72 10.85 15 11.2 15 11.6V11.27H14.67Z" stroke={colors.textMuted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <span style={{ fontSize: 13, color: "#64748b" }}>{prof.telephone}</span>
+                  <span style={{ fontSize: 13, color: colors.textMuted }}>{prof.telephone}</span>
                 </div>
               )}
 
-              <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #f1f5f9", display: "flex", gap: 8 }}>
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${colors.bgSecondary}`, display: "flex", gap: 8 }}>
                 <Link
                   to={`/admin/professeurs/${prof.id}`}
                   style={{
                     flex: 1,
                     padding: "10px 16px",
-                    background: "#f8fafc",
-                    color: "#475569",
+                    background: colors.bg,
+                    color: colors.textSecondary,
                     borderRadius: 8,
                     textDecoration: "none",
                     fontSize: 13,
@@ -227,12 +231,13 @@ export default function ProfesseursList() {
 }
 
 function StatusBadge({ statut }: { statut?: string }) {
+  const { colors } = useTheme();
   const isActive = statut === "actif" || !statut;
   return (
     <span style={{
       padding: "4px 10px",
-      background: isActive ? "#ecfdf5" : "#fef2f2",
-      color: isActive ? "#059669" : "#dc2626",
+      background: isActive ? colors.successBg : colors.dangerBg,
+      color: isActive ? colors.success : colors.danger,
       borderRadius: 20,
       fontSize: 11,
       fontWeight: 600,

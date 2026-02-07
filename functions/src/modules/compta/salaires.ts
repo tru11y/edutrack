@@ -82,12 +82,10 @@ export const getSalaires = functions
     requirePermission(isAdmin, "Seuls les administrateurs peuvent voir les salaires.");
 
     try {
-      let query: FirebaseFirestore.Query = db.collection("salaires").orderBy("mois", "desc");
+      let query: FirebaseFirestore.Query = db.collection("salaires");
 
       if (data?.mois) {
-        query = db.collection("salaires")
-          .where("mois", "==", data.mois)
-          .orderBy("profNom", "asc");
+        query = query.where("mois", "==", data.mois);
       }
 
       const snap = await query.get();
@@ -105,6 +103,11 @@ export const getSalaires = functions
           createdAt: d.createdAt?.toDate?.()?.toISOString() || null,
         };
       });
+
+      salaires.sort((a, b) => data?.mois
+        ? a.profNom.localeCompare(b.profNom)
+        : b.mois.localeCompare(a.mois)
+      );
 
       return { success: true, salaires };
     } catch (error) {
@@ -135,6 +138,17 @@ export const updateSalaireStatut = functions
       }
 
       await db.collection("salaires").doc(data.salaireId).update(updateData);
+
+      const prevData = docSnap.data();
+      await db.collection("audit_logs").add({
+        action: "SALAIRE_STATUT_UPDATED",
+        salaireId: data.salaireId,
+        profId: prevData?.profId || null,
+        oldStatut: prevData?.statut || null,
+        newStatut: data.statut,
+        performedBy: context.auth!.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
       return { success: true, message: "Statut du salaire mis a jour." };
     } catch (error) {

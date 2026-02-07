@@ -175,6 +175,34 @@ export function getDetailedStatsSecure(params: { classe?: string } = {}): Promis
   return callFunction("getDetailedStats", params);
 }
 
+// Presences batch
+export interface MarquerPresenceBatchParams {
+  coursId: string;
+  date: string;
+  classe: string;
+  presences: Array<{
+    eleveId: string;
+    statut: "present" | "absent" | "retard" | "excuse";
+    minutesRetard?: number;
+  }>;
+}
+
+export function marquerPresenceBatchSecure(params: MarquerPresenceBatchParams): Promise<{ success: boolean }> {
+  return callFunction("marquerPresenceBatch", params);
+}
+
+// Versements
+export interface AjouterVersementParams {
+  paiementId: string;
+  montant: number;
+  methode: "especes" | "mobile_money" | "virement" | "cheque";
+  datePaiement: string;
+}
+
+export function ajouterVersementSecure(params: AjouterVersementParams): Promise<{ success: boolean; message: string }> {
+  return callFunction("ajouterVersement", params);
+}
+
 export function getCloudFunctionErrorMessage(error: unknown): string {
   if (error && typeof error === "object" && "message" in error) {
     const msg = (error as { message: string }).message;

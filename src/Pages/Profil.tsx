@@ -3,10 +3,12 @@ import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { db, auth } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 interface UserProfile { nom?: string; prenom?: string; email?: string; telephone?: string; role?: string; }
 
 export default function Profil() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile>({});
   const [loading, setLoading] = useState(true);
@@ -49,60 +51,60 @@ export default function Profil() {
   };
 
   if (loading) {
-    return (<div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}><div style={{ textAlign: "center" }}><div style={{ width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} /><p style={{ color: "#64748b", fontSize: 14 }}>Chargement...</p></div><style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style></div>);
+    return (<div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}><div style={{ textAlign: "center" }}><div style={{ width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.primary, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} /><p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement...</p></div><style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style></div>);
   }
 
   return (
     <div>
-      <div style={{ marginBottom: 32 }}><h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: "0 0 8px" }}>Mon profil</h1><p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Gerez vos informations</p></div>
+      <div style={{ marginBottom: 32 }}><h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>Mon profil</h1><p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Gerez vos informations</p></div>
 
-      {message.text && <div style={{ padding: "12px 16px", background: message.type === "success" ? "#ecfdf5" : "#fef2f2", border: `1px solid ${message.type === "success" ? "#a7f3d0" : "#fecaca"}`, borderRadius: 10, marginBottom: 24 }}><p style={{ fontSize: 14, color: message.type === "success" ? "#10b981" : "#dc2626", margin: 0 }}>{message.text}</p></div>}
+      {message.text && <div style={{ padding: "12px 16px", background: message.type === "success" ? colors.successBg : colors.dangerBg, border: `1px solid ${message.type === "success" ? "#a7f3d0" : colors.danger}`, borderRadius: 10, marginBottom: 24 }}><p style={{ fontSize: 14, color: message.type === "success" ? colors.success : colors.danger, margin: 0 }}>{message.text}</p></div>}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-          <div style={{ padding: 24, background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", display: "flex", alignItems: "center", gap: 20 }}>
-            <div style={{ width: 80, height: 80, borderRadius: 20, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 28, fontWeight: 700 }}>{(profile.prenom?.[0] || user?.email?.[0] || "A").toUpperCase()}{(profile.nom?.[0] || "").toUpperCase()}</div>
-            <div><h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>{profile.prenom && profile.nom ? `${profile.prenom} ${profile.nom}` : user?.email?.split("@")[0] || "Admin"}</h2><p style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", margin: 0 }}>{profile.role === "admin" ? "Administrateur" : profile.role || "Utilisateur"}</p></div>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, overflow: "hidden" }}>
+          <div style={{ padding: 24, background: colors.gradientPrimary, display: "flex", alignItems: "center", gap: 20 }}>
+            <div style={{ width: 80, height: 80, borderRadius: 20, background: colors.onGradientOverlay, display: "flex", alignItems: "center", justifyContent: "center", color: colors.onGradient, fontSize: 28, fontWeight: 700 }}>{(profile.prenom?.[0] || user?.email?.[0] || "A").toUpperCase()}{(profile.nom?.[0] || "").toUpperCase()}</div>
+            <div><h2 style={{ fontSize: 22, fontWeight: 700, color: colors.onGradient, margin: "0 0 4px" }}>{profile.prenom && profile.nom ? `${profile.prenom} ${profile.nom}` : user?.email?.split("@")[0] || "Admin"}</h2><p style={{ fontSize: 14, color: colors.onGradientMuted, margin: 0 }}>{profile.role === "admin" ? "Administrateur" : profile.role || "Utilisateur"}</p></div>
           </div>
           <div style={{ padding: 24 }}>
             {editing ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                <div><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Prenom</label><input type="text" name="prenom" value={form.prenom} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} /></div>
-                <div><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Nom</label><input type="text" name="nom" value={form.nom} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} /></div>
-                <div><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Telephone</label><input type="tel" name="telephone" value={form.telephone} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} /></div>
+                <div><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Prenom</label><input type="text" name="prenom" value={form.prenom} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} /></div>
+                <div><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Nom</label><input type="text" name="nom" value={form.nom} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} /></div>
+                <div><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Telephone</label><input type="tel" name="telephone" value={form.telephone} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} /></div>
                 <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-                  <button onClick={handleSave} disabled={saving} style={{ padding: "12px 24px", background: "#10b981", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>{saving ? "..." : "Enregistrer"}</button>
-                  <button onClick={() => setEditing(false)} style={{ padding: "12px 24px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Annuler</button>
+                  <button onClick={handleSave} disabled={saving} style={{ padding: "12px 24px", background: colors.success, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>{saving ? "..." : "Enregistrer"}</button>
+                  <button onClick={() => setEditing(false)} style={{ padding: "12px 24px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Annuler</button>
                 </div>
               </div>
             ) : (
               <div>
                 <div style={{ display: "grid", gap: 16 }}>
-                  <div><p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase", fontWeight: 600 }}>Email</p><p style={{ fontSize: 15, color: "#1e293b", margin: 0, fontWeight: 500 }}>{user?.email || "Non renseigne"}</p></div>
-                  <div><p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase", fontWeight: 600 }}>Prenom</p><p style={{ fontSize: 15, color: "#1e293b", margin: 0, fontWeight: 500 }}>{profile.prenom || "Non renseigne"}</p></div>
-                  <div><p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase", fontWeight: 600 }}>Nom</p><p style={{ fontSize: 15, color: "#1e293b", margin: 0, fontWeight: 500 }}>{profile.nom || "Non renseigne"}</p></div>
-                  <div><p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase", fontWeight: 600 }}>Telephone</p><p style={{ fontSize: 15, color: "#1e293b", margin: 0, fontWeight: 500 }}>{profile.telephone || "Non renseigne"}</p></div>
+                  <div><p style={{ fontSize: 12, color: colors.textLight, marginBottom: 4, textTransform: "uppercase", fontWeight: 600 }}>Email</p><p style={{ fontSize: 15, color: colors.text, margin: 0, fontWeight: 500 }}>{user?.email || "Non renseigne"}</p></div>
+                  <div><p style={{ fontSize: 12, color: colors.textLight, marginBottom: 4, textTransform: "uppercase", fontWeight: 600 }}>Prenom</p><p style={{ fontSize: 15, color: colors.text, margin: 0, fontWeight: 500 }}>{profile.prenom || "Non renseigne"}</p></div>
+                  <div><p style={{ fontSize: 12, color: colors.textLight, marginBottom: 4, textTransform: "uppercase", fontWeight: 600 }}>Nom</p><p style={{ fontSize: 15, color: colors.text, margin: 0, fontWeight: 500 }}>{profile.nom || "Non renseigne"}</p></div>
+                  <div><p style={{ fontSize: 12, color: colors.textLight, marginBottom: 4, textTransform: "uppercase", fontWeight: 600 }}>Telephone</p><p style={{ fontSize: 15, color: colors.text, margin: 0, fontWeight: 500 }}>{profile.telephone || "Non renseigne"}</p></div>
                 </div>
-                <button onClick={() => setEditing(true)} style={{ marginTop: 24, padding: "12px 24px", background: "#6366f1", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Modifier</button>
+                <button onClick={() => setEditing(true)} style={{ marginTop: 24, padding: "12px 24px", background: colors.primary, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Modifier</button>
               </div>
             )}
           </div>
         </div>
 
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: "#1e293b", margin: "0 0 20px" }}>Securite</h2>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>Securite</h2>
           {showPasswordForm ? (
             <form onSubmit={handlePasswordChange}>
-              <div style={{ marginBottom: 20 }}><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Mot de passe actuel</label><input type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} /></div>
-              <div style={{ marginBottom: 20 }}><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Nouveau mot de passe</label><input type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} /></div>
-              <div style={{ marginBottom: 24 }}><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Confirmer</label><input type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} /></div>
+              <div style={{ marginBottom: 20 }}><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Mot de passe actuel</label><input type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} /></div>
+              <div style={{ marginBottom: 20 }}><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Nouveau mot de passe</label><input type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} /></div>
+              <div style={{ marginBottom: 24 }}><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Confirmer</label><input type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} /></div>
               <div style={{ display: "flex", gap: 12 }}>
-                <button type="submit" disabled={changingPassword} style={{ padding: "12px 24px", background: "#10b981", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: changingPassword ? "not-allowed" : "pointer", opacity: changingPassword ? 0.7 : 1 }}>{changingPassword ? "..." : "Modifier"}</button>
-                <button type="button" onClick={() => { setShowPasswordForm(false); setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); }} style={{ padding: "12px 24px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Annuler</button>
+                <button type="submit" disabled={changingPassword} style={{ padding: "12px 24px", background: colors.success, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: changingPassword ? "not-allowed" : "pointer", opacity: changingPassword ? 0.7 : 1 }}>{changingPassword ? "..." : "Modifier"}</button>
+                <button type="button" onClick={() => { setShowPasswordForm(false); setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); }} style={{ padding: "12px 24px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Annuler</button>
               </div>
             </form>
           ) : (
-            <div><p style={{ fontSize: 14, color: "#64748b", marginBottom: 20 }}>Modifiez votre mot de passe pour renforcer la securite.</p><button onClick={() => setShowPasswordForm(true)} style={{ padding: "12px 24px", background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Changer le mot de passe</button></div>
+            <div><p style={{ fontSize: 14, color: colors.textMuted, marginBottom: 20 }}>Modifiez votre mot de passe pour renforcer la securite.</p><button onClick={() => setShowPasswordForm(true)} style={{ padding: "12px 24px", background: colors.bgSecondary, color: colors.textSecondary, border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Changer le mot de passe</button></div>
           )}
         </div>
       </div>

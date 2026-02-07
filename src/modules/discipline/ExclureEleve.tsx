@@ -22,7 +22,7 @@ export default function ExclureEleve() {
     if (!selected || !motif || !user?.professeurId) return;
 
     const eleve = eleves.find((e) => e.id === selected);
-    if (!eleve) return;
+    if (!eleve?.id) return;
 
     try {
       setLoading(true);

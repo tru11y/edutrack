@@ -3,10 +3,12 @@ import { useNavigate, useSearchParams, useParams, Link } from "react-router-dom"
 import { getAllEleves } from "../modules/eleves/eleve.service";
 import { getPaiementsByEleve, enregistrerVersement, getPaiementById, updatePaiement } from "../modules/paiements/paiement.service";
 import { createPaiementSecure, getCloudFunctionErrorMessage } from "../services/cloudFunctions";
+import { useTheme } from "../context/ThemeContext";
 import type { Eleve } from "../modules/eleves/eleve.types";
 import type { Paiement, MethodePaiement } from "../modules/paiements/paiement.types";
 
 export default function PaiementForm() {
+  const { colors } = useTheme();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
@@ -128,8 +130,8 @@ export default function PaiementForm() {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement...</p>
+          <div style={{ width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.warning, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -139,25 +141,25 @@ export default function PaiementForm() {
   return (
     <div>
       <div style={{ marginBottom: 32 }}>
-        <Link to="/paiements" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#64748b", textDecoration: "none", fontSize: 14, marginBottom: 16 }}>
+        <Link to="/paiements" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: colors.textMuted, textDecoration: "none", fontSize: 14, marginBottom: 16 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Retour
         </Link>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>
           {isEditing ? "Modifier le paiement" : "Nouveau paiement"}
         </h1>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 32, maxWidth: 600 }}>
+      <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 32, maxWidth: 600 }}>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 24 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Eleve *</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Eleve *</label>
             <select
               name="eleveId"
               value={form.eleveId}
               onChange={handleChange}
               disabled={isEditing}
-              style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: isEditing ? "#f8fafc" : "#fff", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, background: isEditing ? colors.bg : colors.bgCard, boxSizing: "border-box", color: colors.text }}
             >
               <option value="">Selectionner</option>
               {eleves.map((e) => <option key={e.id} value={e.id}>{e.prenom} {e.nom} - {e.classe}</option>)}
@@ -166,23 +168,23 @@ export default function PaiementForm() {
 
           {!isEditing && form.eleveId && paiementsExistants.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Type</label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Type</label>
               <div style={{ display: "flex", gap: 12 }}>
-                <button type="button" onClick={() => { setMode("nouveau"); setSelectedPaiement(null); }} style={{ flex: 1, padding: "12px 16px", background: mode === "nouveau" ? "#f59e0b" : "#f1f5f9", color: mode === "nouveau" ? "#fff" : "#64748b", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Nouveau mois</button>
-                <button type="button" onClick={() => setMode("versement")} style={{ flex: 1, padding: "12px 16px", background: mode === "versement" ? "#f59e0b" : "#f1f5f9", color: mode === "versement" ? "#fff" : "#64748b", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Versement</button>
+                <button type="button" onClick={() => { setMode("nouveau"); setSelectedPaiement(null); }} style={{ flex: 1, padding: "12px 16px", background: mode === "nouveau" ? colors.warning : colors.bgSecondary, color: mode === "nouveau" ? "#fff" : colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Nouveau mois</button>
+                <button type="button" onClick={() => setMode("versement")} style={{ flex: 1, padding: "12px 16px", background: mode === "versement" ? colors.warning : colors.bgSecondary, color: mode === "versement" ? "#fff" : colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Versement</button>
               </div>
             </div>
           )}
 
           {!isEditing && mode === "versement" && paiementsExistants.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Paiement en attente</label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Paiement en attente</label>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {paiementsExistants.map((p) => (
-                  <button key={p.id} type="button" onClick={() => setSelectedPaiement(p)} style={{ padding: 16, background: selectedPaiement?.id === p.id ? "#fffbeb" : "#f8fafc", border: selectedPaiement?.id === p.id ? "2px solid #f59e0b" : "1px solid #e2e8f0", borderRadius: 10, textAlign: "left", cursor: "pointer" }}>
+                  <button key={p.id} type="button" onClick={() => setSelectedPaiement(p)} style={{ padding: 16, background: selectedPaiement?.id === p.id ? colors.warningBg : colors.bg, border: selectedPaiement?.id === p.id ? `2px solid ${colors.warning}` : `1px solid ${colors.border}`, borderRadius: 10, textAlign: "left", cursor: "pointer" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div><p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>{new Date(p.mois + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</p><p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Reste: {p.montantRestant.toLocaleString()} FCFA</p></div>
-                      <span style={{ padding: "4px 10px", background: p.statut === "partiel" ? "#fffbeb" : "#fef2f2", color: p.statut === "partiel" ? "#f59e0b" : "#ef4444", borderRadius: 6, fontSize: 12, fontWeight: 500 }}>{p.statut === "partiel" ? "Partiel" : "Impaye"}</span>
+                      <div><p style={{ margin: 0, fontWeight: 500, color: colors.text }}>{new Date(p.mois + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</p><p style={{ margin: "4px 0 0", fontSize: 13, color: colors.textMuted }}>Reste: {p.montantRestant.toLocaleString()} FCFA</p></div>
+                      <span style={{ padding: "4px 10px", background: p.statut === "partiel" ? colors.warningBg : colors.dangerBg, color: p.statut === "partiel" ? colors.warning : colors.danger, borderRadius: 6, fontSize: 12, fontWeight: 500 }}>{p.statut === "partiel" ? "Partiel" : "Impaye"}</span>
                     </div>
                   </button>
                 ))}
@@ -195,24 +197,24 @@ export default function PaiementForm() {
               {!isEditing && (
                 <>
                   <div style={{ marginBottom: 24 }}>
-                    <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Mois *</label>
-                    <input type="month" name="mois" value={form.mois} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Mois *</label>
+                    <input type="month" name="mois" value={form.mois} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} />
                   </div>
                   <div style={{ marginBottom: 24 }}>
-                    <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Date de paiement *</label>
-                    <input type="date" name="datePaiement" value={form.datePaiement} onChange={handleChange} required style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Date de paiement *</label>
+                    <input type="date" name="datePaiement" value={form.datePaiement} onChange={handleChange} required style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} />
                   </div>
                 </>
               )}
               <div style={{ marginBottom: 24 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Montant total (FCFA)</label>
-                <input type="number" name="montantTotal" value={form.montantTotal} onChange={handleChange} min="0" style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }} />
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Montant total (FCFA)</label>
+                <input type="number" name="montantTotal" value={form.montantTotal} onChange={handleChange} min="0" style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} />
               </div>
             </>
           )}
 
           <div style={{ marginBottom: 24 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
               {isEditing ? "Montant paye (FCFA)" : mode === "nouveau" ? "Montant paye (FCFA)" : "Montant du versement (FCFA)"}
             </label>
             <input
@@ -222,14 +224,14 @@ export default function PaiementForm() {
               onChange={handleChange}
               min="0"
               max={mode === "versement" && selectedPaiement ? selectedPaiement.montantRestant : undefined}
-              style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }}
             />
           </div>
 
           {!isEditing && (
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>Methode</label>
-              <select name="methode" value={form.methode} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 14, background: "#fff", boxSizing: "border-box" }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Methode</label>
+              <select name="methode" value={form.methode} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, background: colors.bgCard, boxSizing: "border-box", color: colors.text }}>
                 <option value="especes">Especes</option>
                 <option value="mobile_money">Mobile Money</option>
                 <option value="virement">Virement</option>
@@ -239,8 +241,8 @@ export default function PaiementForm() {
           )}
 
           {error && (
-            <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, marginBottom: 20 }}>
-              <p style={{ fontSize: 14, color: "#dc2626", margin: 0 }}>{error}</p>
+            <div style={{ padding: "12px 16px", background: colors.dangerBg, border: `1px solid ${colors.danger}`, borderRadius: 10, marginBottom: 20 }}>
+              <p style={{ fontSize: 14, color: colors.danger, margin: 0 }}>{error}</p>
             </div>
           )}
 
@@ -252,7 +254,7 @@ export default function PaiementForm() {
             >
               {saving ? "Enregistrement..." : (isEditing ? "Mettre a jour" : "Enregistrer")}
             </button>
-            <button type="button" onClick={() => navigate(-1)} style={{ padding: "14px 28px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+            <button type="button" onClick={() => navigate(-1)} style={{ padding: "14px 28px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
               Annuler
             </button>
           </div>

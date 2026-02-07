@@ -13,7 +13,7 @@ import {
 
 import { db } from "../../services/firebase";
 import { calculerPaiement } from "./paiement.logic";
-import type { Paiement, MethodePaiement } from "./paiement.types";
+import type { Paiement } from "./paiement.types";
 import { updateEleveSystem } from "../eleves/eleve.service";
 
 const paiementsRef = collection(db, "paiements");
@@ -89,47 +89,6 @@ export const createPaiementMensuel = async (
     versements: [],
     createdAt: serverTimestamp(),
   });
-};
-
-/* =========================
-   ENREGISTRER UN VERSEMENT
-========================= */
-
-export const enregistrerVersement = async (
-  paiement: Paiement,
-  montant: number,
-  methode: MethodePaiement,
-  datePaiement?: Date
-) => {
-  const nouveauPaye = paiement.montantPaye + montant;
-  const dateVersement = datePaiement || new Date();
-
-  const { statut, montantRestant } = calculerPaiement(
-    paiement.montantTotal,
-    nouveauPaye
-  );
-
-  const ref = doc(db, "paiements", paiement.id!);
-
-  await updateDoc(ref, {
-    montantPaye: nouveauPaye,
-    montantRestant,
-    statut,
-    datePaiement: dateVersement,
-    versements: [
-      ...(paiement.versements || []),
-      {
-        montant,
-        methode,
-        date: dateVersement,
-      },
-    ],
-  });
-
-  await unbanEleveIfFullyPaid(
-    paiement.eleveId,
-    montantRestant
-  );
 };
 
 /* =========================

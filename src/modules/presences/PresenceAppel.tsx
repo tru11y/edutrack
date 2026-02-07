@@ -5,7 +5,8 @@ import { useTheme } from "../../context/ThemeContext";
 import { getAllEleves } from "../eleves/eleve.service";
 import { getElevesEligibles } from "../eleves/eleve.select.service";
 
-import { savePresencesForCours, getPresencesByCours } from "./presence.service";
+import { getPresencesByCours } from "./presence.service";
+import { marquerPresenceBatchSecure } from "../../services/cloudFunctions";
 import { createCahierEntry } from "../cahier/cahier.service";
 import { banEleveByProf } from "../eleves/eleve.ban.service";
 
@@ -211,12 +212,16 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
       .filter((p) => p.statut === "present" || p.statut === "retard")
       .map((p) => p.eleveId);
 
-    // 1) sauvegarde des présences
-    await savePresencesForCours({
+    // 1) sauvegarde des présences via Cloud Function (Pattern B)
+    await marquerPresenceBatchSecure({
       coursId,
-      classe,
       date,
-      presences,
+      classe,
+      presences: presences.map((p) => ({
+        eleveId: p.eleveId,
+        statut: p.statut,
+        minutesRetard: p.minutesRetard,
+      })),
     });
 
     // 2) écriture auto dans le cahier de texte
@@ -225,7 +230,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
       date,
       classe,
       profId: user!.uid,
-      profNom: user!.uid,
+      profNom: user?.email?.split("@")[0] || "Professeur",
       eleves: presents,
       contenu: contenu.trim(),
       devoirs: devoirs.trim() || undefined,
