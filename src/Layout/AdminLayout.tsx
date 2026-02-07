@@ -134,7 +134,7 @@ export default function AdminLayout() {
               {icons.menu}
             </button>
             <div style={{ width: 32, height: 32, background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>E</span>
+              <span style={{ color: themeColors.onGradient, fontWeight: 700, fontSize: 14 }}>E</span>
             </div>
             <span style={{ fontWeight: 600, color: colors.text, fontSize: 16 }}>EDUTRACK</span>
           </div>
@@ -163,7 +163,7 @@ export default function AdminLayout() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ width: 42, height: 42, background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>E</span>
+                <span style={{ color: themeColors.onGradient, fontWeight: 700, fontSize: 18 }}>E</span>
               </div>
               <div>
                 <h1 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>EDUTRACK</h1>
@@ -190,7 +190,7 @@ export default function AdminLayout() {
           </div>
 
           {canSwitchMode && (
-            <button onClick={() => setProfMode(!profMode)} style={{ marginTop: 12, width: "100%", padding: "10px 14px", background: `linear-gradient(135deg, ${profMode ? themeColors.primary : themeColors.success} 0%, ${profMode ? themeColors.primaryHover : themeColors.success} 100%)`, color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <button onClick={() => setProfMode(!profMode)} style={{ marginTop: 12, width: "100%", padding: "10px 14px", background: `linear-gradient(135deg, ${profMode ? themeColors.primary : themeColors.success} 0%, ${profMode ? themeColors.primaryHover : themeColors.success} 100%)`, color: themeColors.onGradient, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M2 8l3-3M2 8l3 3M14 8l-3-3M14 8l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {profMode ? t("adminMode") : t("profMode")}
             </button>
@@ -203,7 +203,7 @@ export default function AdminLayout() {
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: themeColors.success }} />
                 {t("connectedUsers")}
               </span>
-              <span style={{ background: themeColors.success, color: "#fff", padding: "2px 8px", borderRadius: 10, fontSize: 11 }}>{onlineCount}</span>
+              <span style={{ background: themeColors.success, color: themeColors.onGradient, padding: "2px 8px", borderRadius: 10, fontSize: 11 }}>{onlineCount}</span>
             </button>
           )}
 
@@ -226,7 +226,7 @@ export default function AdminLayout() {
         <nav style={{ flex: 1, padding: "20px 12px", overflowY: "auto" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {filteredNavItems.map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.end} style={({ isActive }) => ({
+              <NavLink key={item.to} to={item.to} end={item.end} data-tour={item.labelKey} style={({ isActive }) => ({
                 display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10,
                 fontSize: 14, fontWeight: 500, color: isActive ? colors.accent : colors.textMuted,
                 background: isActive ? colors.accentBg : "transparent", textDecoration: "none", transition: "all 0.15s"
@@ -242,7 +242,7 @@ export default function AdminLayout() {
         <div style={{ padding: 16, borderTop: `1px solid ${colors.border}` }}>
           <div style={{ padding: 16, background: colors.bgHover, borderRadius: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", color: themeColors.onGradient, fontWeight: 600, fontSize: 14 }}>
                 {user?.email?.[0]?.toUpperCase() || "A"}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -253,7 +253,7 @@ export default function AdminLayout() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <NavLink to="/profil" style={{ flex: 1, padding: "10px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 12, fontWeight: 500, color: colors.textMuted, textDecoration: "none", textAlign: "center" }}>
+              <NavLink to="/profil" data-tour="profile-btn" style={{ flex: 1, padding: "10px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 12, fontWeight: 500, color: colors.textMuted, textDecoration: "none", textAlign: "center" }}>
                 {t("profile")}
               </NavLink>
               <button onClick={handleLogout} style={{ flex: 1, padding: "10px", background: themeColors.dangerBg, border: `1px solid ${themeColors.danger}40`, borderRadius: 8, fontSize: 12, fontWeight: 500, color: themeColors.danger, cursor: "pointer" }}>
