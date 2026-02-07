@@ -4,12 +4,16 @@ import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 
 import { db, auth } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
+import { useOnboarding } from "../components/onboarding/OnboardingProvider";
 
 interface UserProfile { nom?: string; prenom?: string; email?: string; telephone?: string; role?: string; }
 
 export default function Profil() {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const { t, language } = useLanguage();
+  const { restartOnboarding } = useOnboarding();
   const [profile, setProfile] = useState<UserProfile>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,7 +62,7 @@ export default function Profil() {
     <div>
       <div style={{ marginBottom: 32 }}><h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>Mon profil</h1><p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Gerez vos informations</p></div>
 
-      {message.text && <div style={{ padding: "12px 16px", background: message.type === "success" ? colors.successBg : colors.dangerBg, border: `1px solid ${message.type === "success" ? "#a7f3d0" : colors.danger}`, borderRadius: 10, marginBottom: 24 }}><p style={{ fontSize: 14, color: message.type === "success" ? colors.success : colors.danger, margin: 0 }}>{message.text}</p></div>}
+      {message.text && <div style={{ padding: "12px 16px", background: message.type === "success" ? colors.successBg : colors.dangerBg, border: `1px solid ${message.type === "success" ? `${colors.success}40` : colors.danger}`, borderRadius: 10, marginBottom: 24 }}><p style={{ fontSize: 14, color: message.type === "success" ? colors.success : colors.danger, margin: 0 }}>{message.text}</p></div>}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, overflow: "hidden" }}>
@@ -73,7 +77,7 @@ export default function Profil() {
                 <div><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Nom</label><input type="text" name="nom" value={form.nom} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} /></div>
                 <div><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Telephone</label><input type="tel" name="telephone" value={form.telephone} onChange={handleChange} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} /></div>
                 <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-                  <button onClick={handleSave} disabled={saving} style={{ padding: "12px 24px", background: colors.success, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>{saving ? "..." : "Enregistrer"}</button>
+                  <button onClick={handleSave} disabled={saving} style={{ padding: "12px 24px", background: colors.success, color: colors.onGradient, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>{saving ? "..." : "Enregistrer"}</button>
                   <button onClick={() => setEditing(false)} style={{ padding: "12px 24px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Annuler</button>
                 </div>
               </div>
@@ -85,12 +89,13 @@ export default function Profil() {
                   <div><p style={{ fontSize: 12, color: colors.textLight, marginBottom: 4, textTransform: "uppercase", fontWeight: 600 }}>Nom</p><p style={{ fontSize: 15, color: colors.text, margin: 0, fontWeight: 500 }}>{profile.nom || "Non renseigne"}</p></div>
                   <div><p style={{ fontSize: 12, color: colors.textLight, marginBottom: 4, textTransform: "uppercase", fontWeight: 600 }}>Telephone</p><p style={{ fontSize: 15, color: colors.text, margin: 0, fontWeight: 500 }}>{profile.telephone || "Non renseigne"}</p></div>
                 </div>
-                <button onClick={() => setEditing(true)} style={{ marginTop: 24, padding: "12px 24px", background: colors.primary, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Modifier</button>
+                <button onClick={() => setEditing(true)} style={{ marginTop: 24, padding: "12px 24px", background: colors.primary, color: colors.onGradient, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Modifier</button>
               </div>
             )}
           </div>
         </div>
 
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
           <h2 style={{ fontSize: 18, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>Securite</h2>
           {showPasswordForm ? (
@@ -99,13 +104,25 @@ export default function Profil() {
               <div style={{ marginBottom: 20 }}><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Nouveau mot de passe</label><input type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} /></div>
               <div style={{ marginBottom: 24 }}><label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Confirmer</label><input type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgCard, color: colors.text }} /></div>
               <div style={{ display: "flex", gap: 12 }}>
-                <button type="submit" disabled={changingPassword} style={{ padding: "12px 24px", background: colors.success, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: changingPassword ? "not-allowed" : "pointer", opacity: changingPassword ? 0.7 : 1 }}>{changingPassword ? "..." : "Modifier"}</button>
+                <button type="submit" disabled={changingPassword} style={{ padding: "12px 24px", background: colors.success, color: colors.onGradient, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: changingPassword ? "not-allowed" : "pointer", opacity: changingPassword ? 0.7 : 1 }}>{changingPassword ? "..." : "Modifier"}</button>
                 <button type="button" onClick={() => { setShowPasswordForm(false); setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); }} style={{ padding: "12px 24px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Annuler</button>
               </div>
             </form>
           ) : (
             <div><p style={{ fontSize: 14, color: colors.textMuted, marginBottom: 20 }}>Modifiez votre mot de passe pour renforcer la securite.</p><button onClick={() => setShowPasswordForm(true)} style={{ padding: "12px 24px", background: colors.bgSecondary, color: colors.textSecondary, border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Changer le mot de passe</button></div>
           )}
+        </div>
+
+        {/* Onboarding tour restart */}
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: colors.text, margin: "0 0 12px" }}>Guide</h2>
+          <p style={{ fontSize: 14, color: colors.textMuted, marginBottom: 16 }}>
+            {language === "en" ? "Review the guided tour of the application." : "Revoyez la visite guidee de l'application."}
+          </p>
+          <button onClick={restartOnboarding} style={{ padding: "12px 24px", background: colors.primary, color: colors.onGradient, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+            {t("restartTour")}
+          </button>
+        </div>
         </div>
       </div>
     </div>

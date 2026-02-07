@@ -90,6 +90,22 @@ const translations = {
 
     // Accounting
     accounting: "Comptabilite",
+
+    // Notifications
+    newMessage: "Nouveau message",
+    newMessageFrom: "Nouveau message de",
+
+    // Onboarding
+    restartTour: "Revoir le guide",
+    tourWelcome: "Bienvenue sur EduTrack !",
+    next: "Suivant",
+    skip: "Passer",
+    done: "Terminer",
+    back: "Retour",
+
+    // Schedule
+    schedule: "Emploi du temps",
+    classes: "Classes",
   },
   en: {
     // Navigation
@@ -177,6 +193,22 @@ const translations = {
 
     // Accounting
     accounting: "Accounting",
+
+    // Notifications
+    newMessage: "New message",
+    newMessageFrom: "New message from",
+
+    // Onboarding
+    restartTour: "Restart tour",
+    tourWelcome: "Welcome to EduTrack!",
+    next: "Next",
+    skip: "Skip",
+    done: "Done",
+    back: "Back",
+
+    // Schedule
+    schedule: "Schedule",
+    classes: "Classes",
   },
 };
 

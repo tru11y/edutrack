@@ -6,6 +6,8 @@ import { LanguageProvider } from "./context/LanguageContext";
 import { ToastProvider } from "./components/ui/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PageLoader from "./components/PageLoader";
+import MessageNotificationContainer from "./components/MessageNotification";
+import { OnboardingProvider } from "./components/onboarding/OnboardingProvider";
 
 const AdminLayout = lazy(() => import("./Layout/AdminLayout"));
 const LoginPage = lazy(() => import("./modules/auth/LoginPage"));
@@ -27,6 +29,7 @@ const Users = lazy(() => import("./pages/Users"));
 const Classes = lazy(() => import("./pages/Classes"));
 const Corbeille = lazy(() => import("./pages/Corbeille"));
 const Compta = lazy(() => import("./pages/Compta"));
+const EmploiDuTemps = lazy(() => import("./pages/EmploiDuTemps"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -59,6 +62,8 @@ export default function App() {
           <AuthProvider>
             <ToastProvider>
               <BrowserRouter>
+                <OnboardingProvider>
+                <MessageNotificationContainer />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/login" element={<LoginPage />} />
@@ -83,11 +88,13 @@ export default function App() {
                       <Route path="messages" element={<Messages />} />
                       <Route path="profil" element={<Profil />} />
                       <Route path="comptabilite" element={<AdminRoute><Compta /></AdminRoute>} />
+                      <Route path="emploi-du-temps" element={<AdminRoute><EmploiDuTemps /></AdminRoute>} />
                       <Route path="corbeille" element={<AdminRoute><Corbeille /></AdminRoute>} />
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </Suspense>
+                </OnboardingProvider>
               </BrowserRouter>
             </ToastProvider>
           </AuthProvider>
