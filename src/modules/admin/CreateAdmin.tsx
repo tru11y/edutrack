@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { db, auth } from "../../services/firebase";
+import { useTheme } from "../../context/ThemeContext";
+import { createUserSecure, getCloudFunctionErrorMessage } from "../../services/cloudFunctions";
 
 export default function CreateAdmin() {
+  const { colors } = useTheme();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -42,37 +42,18 @@ export default function CreateAdmin() {
       setLoading(true);
       setError("");
 
-      // 1) Créer le compte Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        form.email,
-        form.password
-      );
-
-      // 2) Créer le document utilisateur dans Firestore avec l'UID comme ID
-      await setDoc(doc(db, "users", userCredential.user.uid), {
+      await createUserSecure({
+        email: form.email,
+        password: form.password,
+        role: "admin",
         nom: form.nom,
         prenom: form.prenom,
-        email: form.email,
-        telephone: form.telephone || null,
-        role: "admin",
-        isActive: true,
-        createdAt: serverTimestamp(),
       });
 
       navigate("/admin/admins");
     } catch (e: unknown) {
       console.error(e);
-      const firebaseError = e as { code?: string; message?: string };
-      if (firebaseError.code === "auth/email-already-in-use") {
-        setError("Cet email est deja utilise");
-      } else if (firebaseError.code === "auth/invalid-email") {
-        setError("Email invalide");
-      } else if (firebaseError.code === "auth/weak-password") {
-        setError("Mot de passe trop faible");
-      } else {
-        setError("Erreur lors de la creation de l'administrateur");
-      }
+      setError(getCloudFunctionErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -88,7 +69,7 @@ export default function CreateAdmin() {
             display: "inline-flex",
             alignItems: "center",
             gap: 8,
-            color: "#64748b",
+            color: colors.textMuted,
             textDecoration: "none",
             fontSize: 14,
             marginBottom: 16
@@ -99,26 +80,26 @@ export default function CreateAdmin() {
           </svg>
           Retour aux administrateurs
         </Link>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>
           Nouvel administrateur
         </h1>
-        <p style={{ fontSize: 15, color: "#64748b", marginTop: 8 }}>
+        <p style={{ fontSize: 15, color: colors.textMuted, marginTop: 8 }}>
           Creer un compte administrateur avec acces complet
         </p>
       </div>
 
       {/* Form */}
       <div style={{
-        background: "#fff",
+        background: colors.bgCard,
         borderRadius: 16,
-        border: "1px solid #e2e8f0",
+        border: `1px solid ${colors.border}`,
         padding: 32,
         maxWidth: 600
       }}>
         <form onSubmit={handleSubmit}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
             <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
                 Nom *
               </label>
               <input
@@ -129,15 +110,17 @@ export default function CreateAdmin() {
                 style={{
                   width: "100%",
                   padding: "12px 14px",
-                  border: "1px solid #e2e8f0",
+                  border: `1px solid ${colors.border}`,
                   borderRadius: 10,
                   fontSize: 14,
-                  boxSizing: "border-box"
+                  boxSizing: "border-box",
+                  background: colors.bgCard,
+                  color: colors.text
                 }}
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
                 Prenom *
               </label>
               <input
@@ -148,17 +131,19 @@ export default function CreateAdmin() {
                 style={{
                   width: "100%",
                   padding: "12px 14px",
-                  border: "1px solid #e2e8f0",
+                  border: `1px solid ${colors.border}`,
                   borderRadius: 10,
                   fontSize: 14,
-                  boxSizing: "border-box"
+                  boxSizing: "border-box",
+                  background: colors.bgCard,
+                  color: colors.text
                 }}
               />
             </div>
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
               Email *
             </label>
             <input
@@ -169,16 +154,18 @@ export default function CreateAdmin() {
               style={{
                 width: "100%",
                 padding: "12px 14px",
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.border}`,
                 borderRadius: 10,
                 fontSize: 14,
-                boxSizing: "border-box"
+                boxSizing: "border-box",
+                background: colors.bgCard,
+                color: colors.text
               }}
             />
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
               Mot de passe * (min. 6 caracteres)
             </label>
             <input
@@ -189,16 +176,18 @@ export default function CreateAdmin() {
               style={{
                 width: "100%",
                 padding: "12px 14px",
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.border}`,
                 borderRadius: 10,
                 fontSize: 14,
-                boxSizing: "border-box"
+                boxSizing: "border-box",
+                background: colors.bgCard,
+                color: colors.text
               }}
             />
           </div>
 
           <div style={{ marginBottom: 24 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#64748b", marginBottom: 8 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
               Telephone
             </label>
             <input
@@ -209,10 +198,12 @@ export default function CreateAdmin() {
               style={{
                 width: "100%",
                 padding: "12px 14px",
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.border}`,
                 borderRadius: 10,
                 fontSize: 14,
-                boxSizing: "border-box"
+                boxSizing: "border-box",
+                background: colors.bgCard,
+                color: colors.text
               }}
             />
           </div>
@@ -220,12 +211,12 @@ export default function CreateAdmin() {
           {error && (
             <div style={{
               padding: "12px 16px",
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
+              background: colors.dangerBg,
+              border: `1px solid ${colors.danger}`,
               borderRadius: 10,
               marginBottom: 20
             }}>
-              <p style={{ fontSize: 14, color: "#dc2626", margin: 0 }}>{error}</p>
+              <p style={{ fontSize: 14, color: colors.danger, margin: 0 }}>{error}</p>
             </div>
           )}
 
@@ -235,8 +226,8 @@ export default function CreateAdmin() {
               disabled={loading}
               style={{
                 padding: "12px 24px",
-                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                color: "#fff",
+                background: colors.gradientPrimary,
+                color: colors.onGradient,
                 border: "none",
                 borderRadius: 10,
                 fontSize: 14,
@@ -252,8 +243,8 @@ export default function CreateAdmin() {
               onClick={() => navigate(-1)}
               style={{
                 padding: "12px 24px",
-                background: "#f1f5f9",
-                color: "#64748b",
+                background: colors.bgSecondary,
+                color: colors.textMuted,
                 border: "none",
                 borderRadius: 10,
                 fontSize: 14,

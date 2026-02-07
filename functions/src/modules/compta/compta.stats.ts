@@ -33,7 +33,9 @@ export const getComptaStats = functions
           totalDepenses += doc.data().montant || 0;
         });
         salairesSnap.docs.forEach((doc) => {
-          totalSalaires += doc.data().montant || 0;
+          if (doc.data().statut === "paye") {
+            totalSalaires += doc.data().montant || 0;
+          }
         });
       } else {
         const [paiementsSnap, depensesSnap, salairesSnap] = await Promise.all([
@@ -49,7 +51,9 @@ export const getComptaStats = functions
           totalDepenses += doc.data().montant || 0;
         });
         salairesSnap.docs.forEach((doc) => {
-          totalSalaires += doc.data().montant || 0;
+          if (doc.data().statut === "paye") {
+            totalSalaires += doc.data().montant || 0;
+          }
         });
       }
 

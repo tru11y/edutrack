@@ -1,29 +1,12 @@
 import { useState } from "react";
-import { updateDoc, doc, Timestamp } from "firebase/firestore";
-import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
-import { calculerPaiement } from "./paiement.logic";
-import type { Paiement, Versement } from "./paiement.types";
-
-async function ajouterVersement(paiementId: string, versement: Versement, paiement: Paiement) {
-  const ref = doc(db, "paiements", paiementId);
-  const versements = paiement.versements ?? [];
-  const nouveauPaye = (paiement.montantPaye || 0) + versement.montant;
-  const { statut, montantRestant } = calculerPaiement(paiement.montantTotal, nouveauPaye);
-
-  await updateDoc(ref, {
-    versements: [...versements, versement],
-    montantPaye: nouveauPaye,
-    montantRestant,
-    statut,
-    datePaiement: Timestamp.fromDate(versement.date),
-  });
-}
+import { ajouterVersementSecure, getCloudFunctionErrorMessage } from "../../services/cloudFunctions";
+import type { Paiement, MethodePaiement } from "./paiement.types";
 
 export default function CreatePaiement({ paiement, onSuccess }: { paiement: Paiement & { id: string }; onSuccess?: () => void }) {
   const { colors } = useTheme();
   const [montant, setMontant] = useState(0);
-  const [methode, setMethode] = useState("especes");
+  const [methode, setMethode] = useState<MethodePaiement>("especes");
   const [datePaiement, setDatePaiement] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -38,21 +21,18 @@ export default function CreatePaiement({ paiement, onSuccess }: { paiement: Paie
 
     setLoading(true);
     try {
-      await ajouterVersement(
-        paiement.id,
-        {
-          date: new Date(datePaiement),
-          montant,
-          methode,
-        },
-        paiement
-      );
+      await ajouterVersementSecure({
+        paiementId: paiement.id,
+        montant,
+        methode,
+        datePaiement,
+      });
 
       alert("Paiement enregistré");
       setMontant(0);
       onSuccess?.();
     } catch (error) {
-      alert("Erreur lors de l'enregistrement");
+      alert(getCloudFunctionErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -121,7 +101,7 @@ export default function CreatePaiement({ paiement, onSuccess }: { paiement: Paie
         </label>
         <select
           value={methode}
-          onChange={(e) => setMethode(e.target.value)}
+          onChange={(e) => setMethode(e.target.value as MethodePaiement)}
           style={{
             width: "100%",
             padding: "10px 12px",

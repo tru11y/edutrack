@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { getAllCahierEntriesSecure, type CahierEntryAdmin } from "../../services/cloudFunctions";
 import { exportCahierToPDF } from "./cahier.export";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function AdminCahierList() {
+  const { colors } = useTheme();
   const [entries, setEntries] = useState<CahierEntryAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,10 +62,10 @@ export default function AdminCahierList() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{
-            width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#6366f1",
+            width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.primary,
             borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px"
           }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement du cahier de texte...</p>
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement du cahier de texte...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -73,13 +75,13 @@ export default function AdminCahierList() {
   if (error) {
     return (
       <div style={{
-        background: "#fef2f2",
-        border: "1px solid #fecaca",
+        background: colors.dangerBg,
+        border: `1px solid ${colors.danger}40`,
         borderRadius: 12,
         padding: 24,
         textAlign: "center"
       }}>
-        <p style={{ color: "#dc2626", margin: 0 }}>{error}</p>
+        <p style={{ color: colors.danger, margin: 0 }}>{error}</p>
       </div>
     );
   }
@@ -88,7 +90,7 @@ export default function AdminCahierList() {
     <div>
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>Cahier de texte</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>Cahier de texte</h1>
           <button
             onClick={() => exportCahierToPDF(filteredEntries, {
               titre: "Cahier de texte - EDUTRACK",
@@ -96,12 +98,12 @@ export default function AdminCahierList() {
             })}
             style={{
               padding: "10px 20px",
-              background: "#fff",
-              border: "1px solid #e2e8f0",
+              background: colors.bgCard,
+              border: `1px solid ${colors.border}`,
               borderRadius: 10,
               fontSize: 14,
               fontWeight: 500,
-              color: "#475569",
+              color: colors.text,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -114,19 +116,19 @@ export default function AdminCahierList() {
             Exporter PDF
           </button>
         </div>
-        <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Consultez les cahiers de texte de toutes les classes</p>
+        <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Consultez les cahiers de texte de toutes les classes</p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 32 }}>
-        <StatCard label="Total entrees" value={stats.total} color="#6366f1" />
-        <StatCard label="Signes" value={stats.signed} color="#10b981" />
-        <StatCard label="Non signes" value={stats.unsigned} color="#f59e0b" />
+        <StatCard label="Total entrees" value={stats.total} color={colors.primary} colors={colors} />
+        <StatCard label="Signes" value={stats.signed} color={colors.success} colors={colors} />
+        <StatCard label="Non signes" value={stats.unsigned} color={colors.warning} colors={colors} />
       </div>
 
       <div style={{
-        background: "#fff",
+        background: colors.bgCard,
         borderRadius: 16,
-        border: "1px solid #e2e8f0",
+        border: `1px solid ${colors.border}`,
         padding: 20,
         marginBottom: 24
       }}>
@@ -138,15 +140,13 @@ export default function AdminCahierList() {
               aria-label="Filtrer par classe"
               style={{
                 padding: "10px 36px 10px 14px",
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.border}`,
                 borderRadius: 8,
                 fontSize: 14,
-                background: "#fff",
+                background: colors.bgInput,
+                color: colors.text,
                 cursor: "pointer",
                 appearance: "none",
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "right 12px center"
               }}
             >
               <option value="">Toutes les classes</option>
@@ -158,9 +158,9 @@ export default function AdminCahierList() {
 
           <div style={{ display: "flex", gap: 8 }}>
             {[
-              { value: "all", label: "Tous", count: stats.total },
-              { value: "signed", label: "Signes", count: stats.signed, color: "#10b981" },
-              { value: "unsigned", label: "Non signes", count: stats.unsigned, color: "#f59e0b" },
+              { value: "all", label: "Tous", count: stats.total, color: colors.primary },
+              { value: "signed", label: "Signes", count: stats.signed, color: colors.success },
+              { value: "unsigned", label: "Non signes", count: stats.unsigned, color: colors.warning },
             ].map((f) => (
               <button
                 key={f.value}
@@ -168,12 +168,12 @@ export default function AdminCahierList() {
                 style={{
                   padding: "8px 14px",
                   border: "1px solid",
-                  borderColor: filter === f.value ? (f.color || "#6366f1") : "#e2e8f0",
-                  background: filter === f.value ? (f.color || "#6366f1") + "10" : "#fff",
+                  borderColor: filter === f.value ? f.color : colors.border,
+                  background: filter === f.value ? f.color + "10" : colors.bgCard,
                   borderRadius: 8,
                   fontSize: 13,
                   fontWeight: 500,
-                  color: filter === f.value ? (f.color || "#6366f1") : "#64748b",
+                  color: filter === f.value ? f.color : colors.textMuted,
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
@@ -182,8 +182,8 @@ export default function AdminCahierList() {
               >
                 {f.label}
                 <span style={{
-                  background: filter === f.value ? (f.color || "#6366f1") : "#e2e8f0",
-                  color: filter === f.value ? "#fff" : "#64748b",
+                  background: filter === f.value ? f.color : colors.bgSecondary,
+                  color: filter === f.value ? "#fff" : colors.textMuted,
                   padding: "2px 8px",
                   borderRadius: 20,
                   fontSize: 11,
@@ -199,23 +199,23 @@ export default function AdminCahierList() {
 
       {filteredEntries.length === 0 ? (
         <div style={{
-          background: "#fff",
+          background: colors.bgCard,
           borderRadius: 16,
-          border: "1px solid #e2e8f0",
+          border: `1px solid ${colors.border}`,
           padding: 60,
           textAlign: "center"
         }}>
           <div style={{
-            width: 64, height: 64, background: "#f1f5f9", borderRadius: "50%",
+            width: 64, height: 64, background: colors.bgSecondary, borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
             margin: "0 auto 16px"
           }}>
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <path d="M19.25 3.5H8.75C7.09315 3.5 5.75 4.84315 5.75 6.5V21.5C5.75 23.1569 7.09315 24.5 8.75 24.5H19.25C20.9069 24.5 22.25 23.1569 22.25 21.5V6.5C22.25 4.84315 20.9069 3.5 19.25 3.5Z" stroke="#94a3b8" strokeWidth="2"/>
-              <path d="M10.5 10.5H17.5M10.5 14H17.5M10.5 17.5H14" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M19.25 3.5H8.75C7.09315 3.5 5.75 4.84315 5.75 6.5V21.5C5.75 23.1569 7.09315 24.5 8.75 24.5H19.25C20.9069 24.5 22.25 23.1569 22.25 21.5V6.5C22.25 4.84315 20.9069 3.5 19.25 3.5Z" stroke={colors.textMuted} strokeWidth="2"/>
+              <path d="M10.5 10.5H17.5M10.5 14H17.5M10.5 17.5H14" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </div>
-          <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>Aucune entree trouvee</p>
+          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Aucune entree trouvee</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -223,34 +223,34 @@ export default function AdminCahierList() {
             <div
               key={entry.id}
               style={{
-                background: "#fff",
+                background: colors.bgCard,
                 borderRadius: 16,
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.border}`,
                 overflow: "hidden"
               }}
             >
               <div style={{
                 padding: "16px 20px",
-                borderBottom: "1px solid #f1f5f9",
+                borderBottom: `1px solid ${colors.border}`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                background: "#f8fafc"
+                background: colors.bgSecondary
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                   <div style={{
                     padding: "8px 14px",
-                    background: "#fff",
+                    background: colors.bgCard,
                     borderRadius: 8,
-                    border: "1px solid #e2e8f0"
+                    border: `1px solid ${colors.border}`
                   }}>
-                    <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
+                    <p style={{ fontSize: 12, color: colors.textMuted, margin: 0 }}>
                       {new Date(entry.date).toLocaleDateString("fr-FR", { weekday: "short" })}
                     </p>
-                    <p style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", margin: 0 }}>
+                    <p style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>
                       {new Date(entry.date).getDate()}
                     </p>
-                    <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
+                    <p style={{ fontSize: 12, color: colors.textMuted, margin: 0 }}>
                       {new Date(entry.date).toLocaleDateString("fr-FR", { month: "short" })}
                     </p>
                   </div>
@@ -258,27 +258,27 @@ export default function AdminCahierList() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                       <span style={{
                         padding: "4px 10px",
-                        background: "#eef2ff",
-                        color: "#6366f1",
+                        background: colors.primaryBg,
+                        color: colors.primary,
                         borderRadius: 6,
                         fontSize: 12,
                         fontWeight: 600
                       }}>
                         {entry.classe}
                       </span>
-                      <span style={{ fontSize: 14, color: "#1e293b", fontWeight: 500 }}>
+                      <span style={{ fontSize: 14, color: colors.text, fontWeight: 500 }}>
                         {entry.coursId}
                       </span>
                     </div>
-                    <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
+                    <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>
                       Prof: {entry.profNom || entry.profId} | {entry.elevesDetails.length} eleves presents
                     </p>
                   </div>
                 </div>
                 <div style={{
                   padding: "6px 12px",
-                  background: entry.isSigned ? "#ecfdf5" : "#fffbeb",
-                  color: entry.isSigned ? "#059669" : "#d97706",
+                  background: entry.isSigned ? colors.successBg : colors.warningBg,
+                  color: entry.isSigned ? colors.success : colors.warning,
                   borderRadius: 20,
                   fontSize: 12,
                   fontWeight: 600,
@@ -307,10 +307,10 @@ export default function AdminCahierList() {
 
               <div style={{ padding: 20 }}>
                 <div style={{ marginBottom: 16 }}>
-                  <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                  <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
                     Contenu du cours
                   </p>
-                  <p style={{ fontSize: 14, color: "#1e293b", margin: 0, lineHeight: 1.6 }}>
+                  <p style={{ fontSize: 14, color: colors.text, margin: 0, lineHeight: 1.6 }}>
                     {entry.contenu || "Aucun contenu renseigne"}
                   </p>
                 </div>
@@ -318,19 +318,19 @@ export default function AdminCahierList() {
                 {entry.devoirs && (
                   <div style={{
                     padding: 16,
-                    background: "#fffbeb",
+                    background: colors.warningBg,
                     borderRadius: 10,
-                    border: "1px solid #fef3c7",
+                    border: `1px solid ${colors.warning}40`,
                     marginBottom: 16
                   }}>
-                    <p style={{ fontSize: 12, color: "#92400e", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                    <p style={{ fontSize: 12, color: colors.warning, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                         <path d="M10.5 2.33H3.5C2.85 2.33 2.33 2.85 2.33 3.5V10.5C2.33 11.15 2.85 11.67 3.5 11.67H10.5C11.15 11.67 11.67 11.15 11.67 10.5V3.5C11.67 2.85 11.15 2.33 10.5 2.33Z" stroke="currentColor" strokeWidth="1.5"/>
                         <path d="M4.67 7H9.33M4.67 9.33H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
                       Devoirs
                     </p>
-                    <p style={{ fontSize: 14, color: "#78350f", margin: 0, lineHeight: 1.6 }}>
+                    <p style={{ fontSize: 14, color: colors.text, margin: 0, lineHeight: 1.6 }}>
                       {entry.devoirs}
                     </p>
                   </div>
@@ -344,12 +344,12 @@ export default function AdminCahierList() {
                       alignItems: "center",
                       gap: 8,
                       padding: "10px 14px",
-                      background: "#f8fafc",
-                      border: "1px solid #e2e8f0",
+                      background: colors.bgSecondary,
+                      border: `1px solid ${colors.border}`,
                       borderRadius: 8,
                       fontSize: 13,
                       fontWeight: 500,
-                      color: "#475569",
+                      color: colors.text,
                       cursor: "pointer",
                       width: "100%",
                       justifyContent: "space-between"
@@ -379,12 +379,12 @@ export default function AdminCahierList() {
                     <div style={{
                       marginTop: 12,
                       padding: 16,
-                      background: "#f8fafc",
+                      background: colors.bgSecondary,
                       borderRadius: 10,
-                      border: "1px solid #e2e8f0"
+                      border: `1px solid ${colors.border}`
                     }}>
                       {entry.elevesDetails.length === 0 ? (
-                        <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>Aucun eleve enregistre</p>
+                        <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>Aucun eleve enregistre</p>
                       ) : (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                           {entry.elevesDetails.map((eleve) => (
@@ -392,11 +392,11 @@ export default function AdminCahierList() {
                               key={eleve.id}
                               style={{
                                 padding: "6px 12px",
-                                background: "#fff",
-                                border: "1px solid #e2e8f0",
+                                background: colors.bgCard,
+                                border: `1px solid ${colors.border}`,
                                 borderRadius: 6,
                                 fontSize: 13,
-                                color: "#1e293b"
+                                color: colors.text
                               }}
                             >
                               {eleve.nomComplet}
@@ -416,15 +416,15 @@ export default function AdminCahierList() {
   );
 }
 
-function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
+function StatCard({ label, value, color, colors }: { label: string; value: number; color: string; colors: ReturnType<typeof import("../../context/ThemeContext").useTheme>["colors"] }) {
   return (
     <div style={{
-      background: "#fff",
+      background: colors.bgCard,
       borderRadius: 16,
-      border: "1px solid #e2e8f0",
+      border: `1px solid ${colors.border}`,
       padding: 20
     }}>
-      <p style={{ fontSize: 13, color: "#64748b", marginBottom: 4 }}>{label}</p>
+      <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>{label}</p>
       <p style={{ fontSize: 32, fontWeight: 700, color, margin: 0 }}>{value}</p>
     </div>
   );

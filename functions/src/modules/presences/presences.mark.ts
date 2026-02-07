@@ -37,18 +37,47 @@ export const marquerPresence = functions
 
     requirePermission(estAutorise, "Vous n'etes pas autorise a modifier ce cours.");
 
-    if (
-      !(coursData.heureDebut instanceof admin.firestore.Timestamp) ||
-      !(coursData.heureFin instanceof admin.firestore.Timestamp)
-    ) {
+    // Support Firestore Timestamps et strings "HH:mm"
+    let debutMillis: number;
+    let finMillis: number;
+
+    const parseDateStr = (): string => {
+      if (coursData.date instanceof admin.firestore.Timestamp) {
+        return coursData.date.toDate().toISOString().split("T")[0];
+      }
+      return String(coursData.date || "");
+    };
+
+    if (coursData.heureDebut instanceof admin.firestore.Timestamp) {
+      debutMillis = coursData.heureDebut.toMillis();
+    } else if (typeof coursData.heureDebut === "string") {
+      const [hh, mm] = coursData.heureDebut.split(":").map(Number);
+      const d = new Date(`${parseDateStr()}T00:00:00`);
+      d.setHours(hh, mm, 0, 0);
+      debutMillis = d.getTime();
+    } else {
       throw new functions.https.HttpsError(
         "failed-precondition",
-        "heureDebut et heureFin doivent etre des Firestore Timestamp."
+        "heureDebut doit etre un Timestamp ou une chaine HH:mm."
+      );
+    }
+
+    if (coursData.heureFin instanceof admin.firestore.Timestamp) {
+      finMillis = coursData.heureFin.toMillis();
+    } else if (typeof coursData.heureFin === "string") {
+      const [hh, mm] = coursData.heureFin.split(":").map(Number);
+      const d = new Date(`${parseDateStr()}T00:00:00`);
+      d.setHours(hh, mm, 0, 0);
+      finMillis = d.getTime();
+    } else {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "heureFin doit etre un Timestamp ou une chaine HH:mm."
       );
     }
 
     const now = admin.firestore.Timestamp.now();
-    if (now.toMillis() < coursData.heureDebut.toMillis() || now.toMillis() > coursData.heureFin.toMillis()) {
+    if (now.toMillis() < debutMillis || now.toMillis() > finMillis) {
       throw new functions.https.HttpsError(
         "failed-precondition",
         "La presence ne peut etre marquee que pendant le cours."

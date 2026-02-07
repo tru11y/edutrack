@@ -37,7 +37,7 @@ function countMoisImpayes(
 
     const paiement = elevePaiements.find((p) => p.mois === moisKey);
 
-    if (!paiement || paiement.statut === "impaye" || paiement.statut === "partiel") {
+    if (!paiement || paiement.statut === "impaye") {
       moisImpayes++;
     } else {
       // Si un mois est payé, on arrête le compte consécutif

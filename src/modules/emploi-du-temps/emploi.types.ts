@@ -15,5 +15,5 @@ export interface Creneau {
   matiere: string;
   professeurId: string;
   type: "renforcement" | "soir";
-  createdAt: Date;
+  createdAt?: Date;
 }

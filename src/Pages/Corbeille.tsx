@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { useTheme } from "../context/ThemeContext";
 import type { Timestamp } from "firebase/firestore";
 
 interface TrashItem {
@@ -13,6 +14,7 @@ interface TrashItem {
 }
 
 export default function Corbeille() {
+  const { colors } = useTheme();
   const [items, setItems] = useState<TrashItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState<string | null>(null);
@@ -105,11 +107,11 @@ export default function Corbeille() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case "cahier": return { bg: "#f5f3ff", color: "#8b5cf6" };
-      case "eleves": return { bg: "#eef2ff", color: "#6366f1" };
-      case "paiements": return { bg: "#fffbeb", color: "#f59e0b" };
-      case "presences": return { bg: "#ecfdf5", color: "#10b981" };
-      case "messages": return { bg: "#fef2f2", color: "#ef4444" };
-      default: return { bg: "#f1f5f9", color: "#64748b" };
+      case "eleves": return { bg: colors.primaryBg, color: colors.primary };
+      case "paiements": return { bg: colors.warningBg, color: colors.warning };
+      case "presences": return { bg: colors.successBg, color: colors.success };
+      case "messages": return { bg: colors.dangerBg, color: colors.danger };
+      default: return { bg: colors.bgSecondary, color: colors.textMuted };
     }
   };
 
@@ -145,8 +147,8 @@ export default function Corbeille() {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ width: 40, height: 40, border: "3px solid #e2e8f0", borderTopColor: "#64748b", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-          <p style={{ color: "#64748b", fontSize: 14 }}>Chargement...</p>
+          <div style={{ width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.textMuted, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -156,20 +158,20 @@ export default function Corbeille() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#64748b", textDecoration: "none", fontSize: 14, marginBottom: 16 }}>
+        <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: colors.textMuted, textDecoration: "none", fontSize: 14, marginBottom: 16 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Retour
         </Link>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444" }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.dangerBg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.danger }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M3 6H21M5 6V20C5 21.1 5.9 22 7 22H17C18.1 22 19 21.1 19 20V6M8 6V4C8 2.9 8.9 2 10 2H14C15.1 2 16 2.9 16 4V6M10 11V17M14 11V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
             <div>
-              <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1e293b", margin: 0 }}>Corbeille</h1>
-              <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>{items.length} element{items.length > 1 ? "s" : ""}</p>
+              <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>Corbeille</h1>
+              <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{items.length} element{items.length > 1 ? "s" : ""}</p>
             </div>
           </div>
           {items.length > 0 && (
@@ -177,9 +179,9 @@ export default function Corbeille() {
               onClick={handleEmptyTrash}
               style={{
                 padding: "12px 20px",
-                background: "#fef2f2",
-                color: "#ef4444",
-                border: "1px solid #fecaca",
+                background: colors.dangerBg,
+                color: colors.danger,
+                border: `1px solid ${colors.danger}`,
                 borderRadius: 10,
                 fontSize: 14,
                 fontWeight: 500,
@@ -199,11 +201,11 @@ export default function Corbeille() {
       </div>
 
       {items.length === 0 ? (
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: 60, textAlign: "center" }}>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 60, textAlign: "center" }}>
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 16px", color: "#cbd5e1" }}>
             <path d="M3 6H21M5 6V20C5 21.1 5.9 22 7 22H17C18.1 22 19 21.1 19 20V6M8 6V4C8 2.9 8.9 2 10 2H14C15.1 2 16 2.9 16 4V6M10 11V17M14 11V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>La corbeille est vide</p>
+          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>La corbeille est vide</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -213,9 +215,9 @@ export default function Corbeille() {
               <div
                 key={item.id}
                 style={{
-                  background: "#fff",
+                  background: colors.bgCard,
                   borderRadius: 12,
-                  border: "1px solid #e2e8f0",
+                  border: `1px solid ${colors.border}`,
                   padding: 16,
                   display: "flex",
                   alignItems: "center",
@@ -239,14 +241,14 @@ export default function Corbeille() {
                   </div>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <p style={{ margin: 0, fontWeight: 500, color: "#1e293b" }}>
+                      <p style={{ margin: 0, fontWeight: 500, color: colors.text }}>
                         {getItemDescription(item)}
                       </p>
                       <span style={{ padding: "2px 8px", background: typeColor.bg, color: typeColor.color, borderRadius: 4, fontSize: 11, fontWeight: 500 }}>
                         {getTypeLabel(item.type)}
                       </span>
                     </div>
-                    <p style={{ margin: 0, fontSize: 12, color: "#94a3b8" }}>
+                    <p style={{ margin: 0, fontSize: 12, color: colors.textLight }}>
                       Supprime le {formatDate(item.deletedAt)}
                     </p>
                   </div>
@@ -257,8 +259,8 @@ export default function Corbeille() {
                     disabled={restoring === item.id}
                     style={{
                       padding: "8px 14px",
-                      background: "#ecfdf5",
-                      color: "#10b981",
+                      background: colors.successBg,
+                      color: colors.success,
                       border: "none",
                       borderRadius: 8,
                       fontSize: 13,
@@ -280,8 +282,8 @@ export default function Corbeille() {
                     onClick={() => handleDeletePermanently(item)}
                     style={{
                       padding: "8px 14px",
-                      background: "#fef2f2",
-                      color: "#ef4444",
+                      background: colors.dangerBg,
+                      color: colors.danger,
                       border: "none",
                       borderRadius: 8,
                       fontSize: 13,

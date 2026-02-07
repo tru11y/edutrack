@@ -58,26 +58,57 @@ export default function AdminComptaDashboard() {
   const loadData = async () => {
     setLoading(true);
     setError("");
-    try {
-      const [statsRes, depensesRes, salairesRes, paiementsData, profsData] =
-        await Promise.all([
-          getComptaStatsSecure(mois),
-          getDepensesSecure(mois),
-          getSalairesSecure(mois),
-          getAllPaiements(),
-          getAllProfesseurs(),
-        ]);
-      setStats(statsRes.stats);
-      setDepenses(depensesRes.depenses);
-      setSalaires(salairesRes.salaires);
-      setPaiements(paiementsData.filter((p) => p.mois === mois));
-      setProfs(profsData);
-    } catch (err) {
-      console.error(err);
-      setError("Erreur lors du chargement des donnees.");
-    } finally {
-      setLoading(false);
+
+    const [paiementsRes, profsRes, statsRes, depensesRes, salairesRes] = await Promise.allSettled([
+      getAllPaiements(),
+      getAllProfesseurs(),
+      getComptaStatsSecure(mois),
+      getDepensesSecure(mois),
+      getSalairesSecure(mois),
+    ]);
+
+    const errors: string[] = [];
+
+    if (paiementsRes.status === "fulfilled") {
+      setPaiements(paiementsRes.value.filter((p) => p.mois === mois));
+    } else {
+      console.error("getAllPaiements failed:", paiementsRes.reason);
+      errors.push("paiements");
     }
+
+    if (profsRes.status === "fulfilled") {
+      setProfs(profsRes.value);
+    } else {
+      console.error("getAllProfesseurs failed:", profsRes.reason);
+      errors.push("professeurs");
+    }
+
+    if (statsRes.status === "fulfilled") {
+      setStats(statsRes.value.stats);
+    } else {
+      console.error("getComptaStats failed:", statsRes.reason);
+      errors.push("stats");
+    }
+
+    if (depensesRes.status === "fulfilled") {
+      setDepenses(depensesRes.value.depenses);
+    } else {
+      console.error("getDepenses failed:", depensesRes.reason);
+      errors.push("depenses");
+    }
+
+    if (salairesRes.status === "fulfilled") {
+      setSalaires(salairesRes.value.salaires);
+    } else {
+      console.error("getSalaires failed:", salairesRes.reason);
+      errors.push("salaires");
+    }
+
+    if (errors.length > 0) {
+      setError(`Erreur sur: ${errors.join(", ")}. Verifiez que les Cloud Functions sont deployees.`);
+    }
+
+    setLoading(false);
   };
 
   useEffect(() => { loadData(); }, [mois]);

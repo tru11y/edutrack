@@ -27,7 +27,7 @@ export default function CreateCreneau() {
     <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow max-w-xl">
       <h2 className="text-xl font-bold mb-4">➕ Nouveau créneau</h2>
 
-      <select className="input" onChange={e => setForm({ ...form, jour: e.target.value })}>
+      <select className="input" onChange={e => setForm({ ...form, jour: e.target.value as Jour })}>
         {JOURS.map(j => <option key={j}>{j}</option>)}
       </select>
 
@@ -40,7 +40,7 @@ export default function CreateCreneau() {
       <input className="input" placeholder="Matière" onChange={e => setForm({ ...form, matiere: e.target.value })} />
       <input className="input" placeholder="ID Professeur" onChange={e => setForm({ ...form, professeurId: e.target.value })} />
 
-      <select className="input" onChange={e => setForm({ ...form, type: e.target.value })}>
+      <select className="input" onChange={e => setForm({ ...form, type: e.target.value as "renforcement" | "soir" })}>
         <option value="renforcement">Renforcement</option>
         <option value="soir">Cours du soir</option>
       </select>

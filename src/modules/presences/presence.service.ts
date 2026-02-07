@@ -1,10 +1,9 @@
 import {
   collection,
-  addDoc,
   query,
   where,
   getDocs,
-  serverTimestamp,
+  collectionGroup,
 } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import type { PresenceCoursPayload, PresenceItem } from "./presence.types";
@@ -15,32 +14,49 @@ interface PresenceDocument extends PresenceCoursPayload {
   id: string;
 }
 
-/* SAVE */
-
-export async function savePresencesForCours(
-  payload: PresenceCoursPayload
-): Promise<void> {
-  if (!payload.coursId || !payload.classe || !payload.date) {
-    throw new Error("Payload présence invalide");
-  }
-
-  await addDoc(presencesRef, {
-    ...payload,
-    createdAt: serverTimestamp(),
-  });
+export interface AppelDocument {
+  id: string;
+  eleveId: string;
+  statut: string;
+  minutesRetard?: number;
+  coursId: string;
+  classe: string;
+  date: string;
+  marqueePar: string;
 }
 
-/* ADMIN */
+/* READ - subcollection based (Pattern B) */
 
 export async function getPresencesByCours(coursId: string): Promise<PresenceDocument[]> {
-  const q = query(presencesRef, where("coursId", "==", coursId));
-  const snap = await getDocs(q);
+  const appelsRef = collection(db, "presences", coursId, "appels");
+  const snap = await getDocs(appelsRef);
 
-  return snap.docs.map((d) => ({
-    id: d.id,
-    ...(d.data() as PresenceCoursPayload),
-  }));
+  if (snap.empty) return [];
+
+  const presenceItems: PresenceItem[] = snap.docs.map((d) => {
+    const data = d.data();
+    return {
+      eleveId: data.eleveId,
+      statut: data.statut || "present",
+      minutesRetard: data.minutesRetard ?? undefined,
+      facturable: true,
+      statutMetier: "autorise" as const,
+      message: "",
+    };
+  });
+
+  const firstDoc = snap.docs[0].data();
+
+  return [{
+    id: coursId,
+    coursId,
+    classe: firstDoc.classe || "",
+    date: firstDoc.date || "",
+    presences: presenceItems,
+  }];
 }
+
+/* ADMIN - top-level for backward compat */
 
 export async function getAllPresences(): Promise<PresenceDocument[]> {
   const snap = await getDocs(presencesRef);
@@ -51,14 +67,15 @@ export async function getAllPresences(): Promise<PresenceDocument[]> {
   }));
 }
 
-/* ELEVE */
+/* ELEVE - collectionGroup query on "appels" subcollection */
 
-export async function getPresenceHistoryForEleve(eleveId: string): Promise<PresenceDocument[]> {
-  const snap = await getDocs(presencesRef);
+export async function getPresenceHistoryForEleve(eleveId: string): Promise<AppelDocument[]> {
+  const appelsGroup = collectionGroup(db, "appels");
+  const q = query(appelsGroup, where("eleveId", "==", eleveId));
+  const snap = await getDocs(q);
 
-  return snap.docs
-    .map((d) => ({ id: d.id, ...(d.data() as PresenceCoursPayload) }))
-    .filter((p) =>
-      p.presences?.some((x: PresenceItem) => x.eleveId === eleveId)
-    );
+  return snap.docs.map((d) => ({
+    id: d.id,
+    ...(d.data() as Omit<AppelDocument, "id">),
+  }));
 }

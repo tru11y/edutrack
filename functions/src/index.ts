@@ -9,6 +9,7 @@ export { toggleUserStatus } from "./modules/users/users.toggle";
 
 // Paiements
 export { createPaiement } from "./modules/paiements/paiements.create";
+export { ajouterVersement } from "./modules/paiements/paiements.versement";
 export { resetStatutPaiementMensuel } from "./modules/paiements/paiements.reset";
 export { getStatsPaiementMensuel } from "./modules/paiements/paiements.stats";
 
@@ -19,6 +20,7 @@ export { getComptaStats } from "./modules/compta/compta.stats";
 
 // Presences
 export { marquerPresence } from "./modules/presences/presences.mark";
+export { marquerPresenceBatch } from "./modules/presences/presences.batch";
 
 // Cahier de texte
 export { getAllCahierEntries } from "./modules/cahier/cahier.list";

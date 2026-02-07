@@ -42,7 +42,10 @@ export const getAdminDashboardStats = functions
 
       let totalSalaires = 0;
       salairesSnap.docs.forEach((doc) => {
-        totalSalaires += doc.data().montant || 0;
+        const d = doc.data();
+        if (d.statut === "paye") {
+          totalSalaires += d.montant || 0;
+        }
       });
 
       return {
@@ -87,39 +90,27 @@ export const getDetailedStats = functions
     requirePermission(isAuthorized, "Acces refuse.");
 
     try {
-      const [elevesSnap, presencesSnap, paiementsSnap] = await Promise.all([
+      const [elevesSnap, appelsSnap, paiementsSnap] = await Promise.all([
         db.collection("eleves").get(),
-        db.collection("presences").get(),
+        db.collectionGroup("appels").get(),
         db.collection("paiements").get(),
       ]);
 
       // Build presence map: eleveId -> {present, absent, retard}
+      // Uses collectionGroup query to fetch all appels in a single read
       const presenceMap = new Map<string, { present: number; absent: number; retard: number }>();
 
-      // Presences are stored as presences/{coursId}/appels/{eleveId}
-      // The top-level presences collection contains course-level docs
-      // We need to fetch subcollections
-      const presencePromises = presencesSnap.docs.map(async (coursDoc) => {
-        const appelsSnap = await db
-          .collection("presences")
-          .doc(coursDoc.id)
-          .collection("appels")
-          .get();
+      appelsSnap.docs.forEach((appel) => {
+        const d = appel.data();
+        const eleveId = d.eleveId || appel.id;
+        const current = presenceMap.get(eleveId) || { present: 0, absent: 0, retard: 0 };
 
-        appelsSnap.docs.forEach((appel) => {
-          const d = appel.data();
-          const eleveId = d.eleveId || appel.id;
-          const current = presenceMap.get(eleveId) || { present: 0, absent: 0, retard: 0 };
+        if (d.statut === "present") current.present++;
+        else if (d.statut === "absent") current.absent++;
+        else if (d.statut === "retard") current.retard++;
 
-          if (d.statut === "present") current.present++;
-          else if (d.statut === "absent") current.absent++;
-          else if (d.statut === "retard") current.retard++;
-
-          presenceMap.set(eleveId, current);
-        });
+        presenceMap.set(eleveId, current);
       });
-
-      await Promise.all(presencePromises);
 
       // Build paiement map: eleveId -> {total, paye, hasImpaye, hasPartiel}
       const paiementMap = new Map<string, { total: number; paye: number; hasImpaye: boolean; hasPartiel: boolean }>();
@@ -188,7 +179,7 @@ export const getDetailedStats = functions
         global: {
           totalEleves: elevesSnap.size,
           elevesActifs,
-          totalPresences: presencesSnap.size,
+          totalPresences: appelsSnap.size,
           tauxPresenceMoyen,
           totalPaiements,
           totalPaye,

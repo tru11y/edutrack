@@ -92,12 +92,19 @@ service cloud.firestore {
     }
 
     // PRESENCES - Staff peut gerer, eleves/parents lecture limitee
-    match /presences/{presenceId} {
-      allow read: if signedIn();
-      // Profs peuvent marquer les presences, admin/gestionnaire peuvent modifier
+    match /presences/{coursId} {
+      allow read: if isStaff();
       allow create: if isStaff();
       allow update: if isStaff();
       allow delete: if isAdminOrGestionnaire();
+
+      // Subcollection appels (Pattern B: /presences/{coursId}/appels/{eleveId})
+      match /appels/{eleveId} {
+        allow read: if isStaff() ||
+          (isEleve() && getUserData().eleveId == eleveId) ||
+          (isParent() && eleveId in getUserData().enfantsIds);
+        allow write: if isStaff();
+      }
     }
 
     // PAIEMENTS - Donnees sensibles, acces tres restreint

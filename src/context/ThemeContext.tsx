@@ -28,6 +28,18 @@ export const themeColors = {
     dangerBg: "#fef2f2",
     info: "#3b82f6",
     infoBg: "#eff6ff",
+    // Gradients & gendered colors
+    gradientPrimary: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+    gradientMale: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+    gradientFemale: "linear-gradient(135deg, #ec4899 0%, #be185d 100%)",
+    maleBg: "#dbeafe",
+    maleText: "#3b82f6",
+    femaleBg: "#fce7f3",
+    femaleText: "#ec4899",
+    onGradient: "#ffffff",
+    onGradientMuted: "rgba(255,255,255,0.8)",
+    onGradientOverlay: "rgba(255,255,255,0.2)",
+    shadowPrimary: "0 4px 14px -3px rgba(99, 102, 241, 0.4)",
   },
   dark: {
     bg: "#0f172a",
@@ -53,6 +65,18 @@ export const themeColors = {
     dangerBg: "#7f1d1d",
     info: "#60a5fa",
     infoBg: "#1e3a5f",
+    // Gradients & gendered colors (dark mode)
+    gradientPrimary: "linear-gradient(135deg, #818cf8 0%, #a78bfa 100%)",
+    gradientMale: "linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)",
+    gradientFemale: "linear-gradient(135deg, #f472b6 0%, #ec4899 100%)",
+    maleBg: "#1e3a5f",
+    maleText: "#60a5fa",
+    femaleBg: "#4a1942",
+    femaleText: "#f472b6",
+    onGradient: "#ffffff",
+    onGradientMuted: "rgba(255,255,255,0.8)",
+    onGradientOverlay: "rgba(255,255,255,0.2)",
+    shadowPrimary: "0 4px 14px -3px rgba(129, 140, 248, 0.4)",
   },
 };
 
