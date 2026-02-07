@@ -1,12 +1,4 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "appels",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "statut", "order": "ASCENDING" }
-      ]
-    }
-  ],
+  "indexes": [],
   "fieldOverrides": []
 }
