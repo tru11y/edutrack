@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
-import { getPresenceHistoryForEleve } from "../presences/presence.service";
-import type { PresenceCoursPayload } from "../presences/presence.types";
+import { getPresenceHistoryForEleve, type AppelDocument } from "../presences/presence.service";
 
 export default function ElevePresences() {
   const { user } = useAuth();
   const { colors } = useTheme();
-  const [history, setHistory] = useState<PresenceCoursPayload[]>([]);
+  const [history, setHistory] = useState<AppelDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,25 +36,18 @@ export default function ElevePresences() {
           </tr>
         </thead>
         <tbody>
-          {history.map((h) => {
-            const p = h.presences.find(
-              (x) => x.eleveId === user!.eleveId
-            );
-            if (!p) return null;
-
-            return (
+          {history.map((h) => (
               <tr key={h.id} style={{ background: colors.bgCard }}>
                 <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>{h.date}</td>
                 <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>{h.coursId}</td>
                 <td className="p-2" style={{ border: `1px solid ${colors.border}`, color: colors.text }}>
-                  {p.statut === "present" && "Présent"}
-                  {p.statut === "absent" && "Absent"}
-                  {p.statut === "retard" &&
-                    `Retard (${p.minutesRetard || 0} min)`}
+                  {h.statut === "present" && "Présent"}
+                  {h.statut === "absent" && "Absent"}
+                  {h.statut === "retard" &&
+                    `Retard (${h.minutesRetard || 0} min)`}
                 </td>
               </tr>
-            );
-          })}
+          ))}
         </tbody>
       </table>
     </div>

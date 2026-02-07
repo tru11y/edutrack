@@ -30,7 +30,7 @@ export async function unbanEleve(eleveId: string) {
   });
 }
 
-async function unbanEleveIfFullyPaid(
+export async function unbanEleveIfFullyPaid(
   eleveId: string,
   montantRestant: number
 ) {

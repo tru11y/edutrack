@@ -4,9 +4,12 @@ import {
   where,
   getDocs,
   collectionGroup,
+  doc,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import type { PresenceCoursPayload, PresenceItem } from "./presence.types";
+import { estFacturable } from "./facturation.logic";
 
 const presencesRef = collection(db, "presences");
 
@@ -25,6 +28,26 @@ export interface AppelDocument {
   marqueePar: string;
 }
 
+/* WRITE - subcollection based */
+
+export async function savePresencesForCours(payload: PresenceCoursPayload): Promise<void> {
+  const { coursId, presences, classe, date } = payload;
+
+  for (const item of presences) {
+    const appelsRef = collection(db, "presences", coursId, "appels");
+    const appelDoc = doc(appelsRef, item.eleveId);
+    await setDoc(appelDoc, {
+      eleveId: item.eleveId,
+      statut: item.statut,
+      minutesRetard: item.minutesRetard ?? 0,
+      classe,
+      date,
+      coursId,
+      marqueePar: "manual",
+    });
+  }
+}
+
 /* READ - subcollection based (Pattern B) */
 
 export async function getPresencesByCours(coursId: string): Promise<PresenceDocument[]> {
@@ -35,11 +58,13 @@ export async function getPresencesByCours(coursId: string): Promise<PresenceDocu
 
   const presenceItems: PresenceItem[] = snap.docs.map((d) => {
     const data = d.data();
+    const statut = data.statut || "present";
+    const minutesRetard = data.minutesRetard ?? 0;
     return {
       eleveId: data.eleveId,
-      statut: data.statut || "present",
-      minutesRetard: data.minutesRetard ?? undefined,
-      facturable: true,
+      statut,
+      minutesRetard: minutesRetard || undefined,
+      facturable: estFacturable(statut, minutesRetard),
       statutMetier: "autorise" as const,
       message: "",
     };

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import { useMessageNotifications, type NotificationMessage } from "../hooks/useMessageNotifications";
 
@@ -37,7 +36,7 @@ function NotificationCard({ msg, onDismiss }: { msg: NotificationMessage & { _ke
         borderRadius: 12,
         padding: 14,
         cursor: "pointer",
-        boxShadow: `0 4px 20px ${colors.shadow || "rgba(0,0,0,0.1)"}`,
+        boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         opacity: exiting ? 0 : visible ? 1 : 0,
         transform: exiting ? "translateX(120%)" : visible ? "translateX(0)" : "translateX(120%)",
         transition: "all 0.3s ease",
