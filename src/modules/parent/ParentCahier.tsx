@@ -29,7 +29,7 @@ export default function ParentCahier() {
 
     const loadCahiers = async () => {
       // Récupérer les classes des enfants du parent
-      const enfantsIds: string[] = (user as Record<string, unknown>).enfantsIds as string[] || [];
+      const enfantsIds: string[] = (user as unknown as Record<string, unknown>).enfantsIds as string[] || [];
       const classesEnfants = new Set<string>();
 
       for (const eleveId of enfantsIds) {
@@ -97,8 +97,8 @@ export default function ParentCahier() {
             margin: "0 auto 16px"
           }}>
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <path d="M19.25 3.5H8.75C7.09315 3.5 5.75 4.84315 5.75 6.5V21.5C5.75 23.1569 7.09315 24.5 8.75 24.5H19.25C20.9069 24.5 22.25 23.1569 22.25 21.5V6.5C22.25 4.84315 20.9069 3.5 19.25 3.5Z" stroke="#94a3b8" strokeWidth="2"/>
-              <path d="M10.5 10.5H17.5M10.5 14H17.5M10.5 17.5H14" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M19.25 3.5H8.75C7.09315 3.5 5.75 4.84315 5.75 6.5V21.5C5.75 23.1569 7.09315 24.5 8.75 24.5H19.25C20.9069 24.5 22.25 23.1569 22.25 21.5V6.5C22.25 4.84315 20.9069 3.5 19.25 3.5Z" stroke={colors.textLight} strokeWidth="2"/>
+              <path d="M10.5 10.5H17.5M10.5 14H17.5M10.5 17.5H14" stroke={colors.textLight} strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </div>
           <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Aucun cours publie pour le moment</p>
