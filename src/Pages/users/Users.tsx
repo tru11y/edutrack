@@ -7,7 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { LoadingSpinner } from "../../components/ui/Skeleton";
 import { GRADIENTS, TIMING } from "../../constants";
-import { UserCard, UserStatsGrid, CreateUserModal } from "./components";
+import { UserCard, UserStatsGrid, CreateUserModal, EditUserModal } from "./components";
 import type { UserData, ClasseData, UserFormData } from "./types";
 
 export default function Users() {
@@ -22,6 +22,7 @@ export default function Users() {
 
   // UI state
   const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -164,6 +165,23 @@ export default function Users() {
     }
   };
 
+  const handleEditUser = async (userId: string, data: { nom: string; prenom: string; role: string; classesEnseignees: string[] }) => {
+    const updateData: Record<string, unknown> = {
+      nom: data.nom,
+      prenom: data.prenom,
+      role: data.role,
+      updatedAt: serverTimestamp(),
+    };
+    if (data.role === "prof") {
+      updateData.classesEnseignees = data.classesEnseignees;
+    } else {
+      updateData.classesEnseignees = [];
+    }
+    await updateDoc(doc(db, "users", userId), updateData);
+    await loadUsers();
+    showSuccessTemp("Utilisateur modifie avec succes");
+  };
+
   // Categorized users
   const admins = users.filter((u) => u.role === "admin");
   const gestionnaires = users.filter((u) => u.role === "gestionnaire");
@@ -204,7 +222,7 @@ export default function Users() {
           style={{
             padding: "10px 20px",
             background: colors.primary,
-            color: "#fff",
+            color: colors.onGradient,
             border: "none",
             borderRadius: 8,
             cursor: "pointer",
@@ -257,7 +275,7 @@ export default function Users() {
             style={{
               padding: "12px 20px",
               background: GRADIENTS.primary,
-              color: "#fff",
+              color: colors.onGradient,
               border: "none",
               borderRadius: 10,
               fontSize: 14,
@@ -302,7 +320,7 @@ export default function Users() {
                 user={user}
                 canEdit={canEditUser(user)}
                 canDelete={canDeleteUser()}
-                onEdit={() => {/* TODO: implement edit modal */}}
+                onEdit={() => setEditingUser(user)}
                 onResetPassword={() => sendPasswordReset(user.email)}
                 onToggleStatus={() => toggleUserStatus(user)}
                 onDelete={() => handleDeleteUser(user)}
@@ -323,7 +341,7 @@ export default function Users() {
                 user={user}
                 canEdit={canEditUser(user)}
                 canDelete={canDeleteUser()}
-                onEdit={() => {/* TODO: implement edit modal */}}
+                onEdit={() => setEditingUser(user)}
                 onResetPassword={() => sendPasswordReset(user.email)}
                 onToggleStatus={() => toggleUserStatus(user)}
                 onDelete={() => handleDeleteUser(user)}
@@ -348,7 +366,7 @@ export default function Users() {
                 user={user}
                 canEdit={canEditUser(user)}
                 canDelete={canDeleteUser()}
-                onEdit={() => {/* TODO: implement edit modal */}}
+                onEdit={() => setEditingUser(user)}
                 onResetPassword={() => sendPasswordReset(user.email)}
                 onToggleStatus={() => toggleUserStatus(user)}
                 onDelete={() => handleDeleteUser(user)}
@@ -365,6 +383,17 @@ export default function Users() {
           availableClasses={availableClasses}
           onClose={() => setShowModal(false)}
           onSubmit={handleCreateUser}
+        />
+      )}
+
+      {/* Modal Modifier */}
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          isAdmin={isAdmin}
+          availableClasses={availableClasses}
+          onClose={() => setEditingUser(null)}
+          onSubmit={handleEditUser}
         />
       )}
     </div>
