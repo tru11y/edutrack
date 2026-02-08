@@ -76,7 +76,7 @@ export function CreateUserModal({ isAdmin, availableClasses, onClose, onSubmit }
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 50,
+        zIndex: 100,
         padding: 16,
       }}
     >
@@ -233,7 +233,7 @@ export function CreateUserModal({ isAdmin, availableClasses, onClose, onSubmit }
                 flex: 1,
                 padding: "14px",
                 background: GRADIENTS.primary,
-                color: "#fff",
+                color: colors.onGradient,
                 border: "none",
                 borderRadius: 10,
                 fontSize: 14,

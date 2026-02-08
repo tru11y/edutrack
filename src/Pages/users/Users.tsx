@@ -177,9 +177,14 @@ export default function Users() {
     } else {
       updateData.classesEnseignees = [];
     }
-    await updateDoc(doc(db, "users", userId), updateData);
-    await loadUsers();
-    showSuccessTemp("Utilisateur modifie avec succes");
+    try {
+      await updateDoc(doc(db, "users", userId), updateData);
+      await loadUsers();
+      showSuccessTemp("Utilisateur modifie avec succes");
+    } catch (err) {
+      console.error(err);
+      throw new Error("Erreur lors de la modification");
+    }
   };
 
   // Categorized users
