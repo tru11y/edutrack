@@ -56,6 +56,7 @@ export function EditUserModal({ user, isAdmin, availableClasses, onClose, onSubm
 
   return (
     <div
+      onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,
@@ -63,11 +64,12 @@ export function EditUserModal({ user, isAdmin, availableClasses, onClose, onSubm
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 50,
+        zIndex: 100,
         padding: 16,
       }}
     >
       <div
+        onClick={(e) => e.stopPropagation()}
         style={{
           background: colors.bgCard,
           borderRadius: 16,

@@ -51,9 +51,25 @@ export const createPaiement = functions
     try {
       const datePaiementParsed = new Date(data.datePaiement);
 
+      // Générer une référence unique PAY-YYYYMM-XXXX
+      const moisClean = data.mois.replace("-", "");
+      const countSnap = await db.collection("paiements")
+        .where("mois", "==", data.mois)
+        .get();
+      const seq = String(countSnap.size + 1).padStart(4, "0");
+      const reference = `PAY-${moisClean}-${seq}`;
+
+      // Fetch creator name
+      const creatorDoc = await db.collection("users").doc(context.auth!.uid).get();
+      const creatorData = creatorDoc.exists ? creatorDoc.data() : null;
+      const createdByName = creatorData
+        ? `${creatorData.prenom || ""} ${creatorData.nom || ""}`.trim() || creatorData.email || context.auth!.uid
+        : context.auth!.uid;
+
       const paiementRef = await db.collection("paiements").add({
         eleveId: data.eleveId,
         eleveNom: `${eleveData?.prenom || ""} ${eleveData?.nom || ""}`.trim(),
+        reference,
         mois: data.mois,
         montantTotal: data.montantTotal,
         montantPaye: data.montantPaye,
@@ -62,6 +78,7 @@ export const createPaiement = functions
         datePaiement: admin.firestore.Timestamp.fromDate(datePaiementParsed),
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: context.auth!.uid,
+        createdByName,
       });
 
       await db.collection("eleves").doc(data.eleveId).update({

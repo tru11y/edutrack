@@ -55,31 +55,52 @@ export const ajouterVersement = functions
         else if (nouveauPaye < montantTotal) statut = "partiel";
         else statut = "paye";
 
+        // Fetch creator name
+        const creatorDoc = await transaction.get(db.collection("users").doc(context.auth!.uid));
+        const creatorData = creatorDoc.exists ? creatorDoc.data() : null;
+        const createdByName = creatorData
+          ? `${creatorData.prenom || ""} ${creatorData.nom || ""}`.trim() || creatorData.email || context.auth!.uid
+          : context.auth!.uid;
+
         const versements = paiementData.versements || [];
         versements.push({
           montant: data.montant,
           methode: data.methode,
-          date: data.datePaiement,
+          date: admin.firestore.Timestamp.fromDate(new Date(data.datePaiement)),
+          createdBy: context.auth!.uid,
+          createdByName,
         });
 
         transaction.update(paiementRef, {
           montantPaye: nouveauPaye,
           montantRestant,
           statut,
-          datePaiement: data.datePaiement,
+          datePaiement: admin.firestore.Timestamp.fromDate(new Date(data.datePaiement)),
           versements,
         });
 
-        // Unban si entierement paye
+        // Unban seulement si AUCUN mois impaye restant
         if (montantRestant <= 0) {
           const eleveId = paiementData.eleveId;
           if (eleveId) {
-            const eleveRef = db.collection("eleves").doc(eleveId);
-            transaction.update(eleveRef, {
-              isBanned: false,
-              banReason: null,
-              banDate: null,
+            const allPaiements = await db.collection("paiements")
+              .where("eleveId", "==", eleveId)
+              .get();
+
+            const hasUnpaid = allPaiements.docs.some((doc) => {
+              if (doc.id === data.paiementId) return false;
+              const p = doc.data();
+              return p.statut !== "paye";
             });
+
+            if (!hasUnpaid) {
+              const eleveRef = db.collection("eleves").doc(eleveId);
+              transaction.update(eleveRef, {
+                isBanned: false,
+                banReason: null,
+                banDate: null,
+              });
+            }
           }
         }
 
