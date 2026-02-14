@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useTheme } from "../context/ThemeContext";
+import { useToast, ConfirmModal } from "../components/ui";
 import { getCreneaux, createCreneau, deleteCreneau } from "../modules/emploi-du-temps/emploi.service";
 import { getAllProfesseurs } from "../modules/professeurs/professeur.service";
 import { JOURS } from "../constants";
@@ -31,6 +32,10 @@ const EMPTY_FORM = {
 
 export default function EmploiDuTemps() {
   const { colors } = useTheme();
+  const toast = useToast();
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
   const [creneaux, setCreneaux] = useState<Creneau[]>([]);
   const [profs, setProfs] = useState<Professeur[]>([]);
   const [classes, setClasses] = useState<ClasseOption[]>([]);
@@ -91,14 +96,21 @@ export default function EmploiDuTemps() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer ce creneau ?")) return;
-    try {
-      await deleteCreneau(id);
-      await loadData();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleDelete = (id: string) => {
+    setConfirmState({
+      isOpen: true, title: "Supprimer le creneau", message: "Supprimer ce creneau ?", variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          await deleteCreneau(id);
+          await loadData();
+          toast.success("Creneau supprime");
+        } catch (err) {
+          console.error(err);
+          toast.error("Erreur lors de la suppression");
+        }
+      },
+    });
   };
 
   const getProfNom = (profId: string): string => {
@@ -254,6 +266,15 @@ export default function EmploiDuTemps() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

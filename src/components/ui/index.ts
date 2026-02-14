@@ -20,3 +20,4 @@ export {
   LoadingSpinner,
 } from "./Skeleton";
 export { useToast, ToastProvider } from "./Toast";
+export { default as ConfirmModal } from "./ConfirmModal";

@@ -3,9 +3,11 @@ import { collection, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, setDoc
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, getAuth } from "firebase/auth";
 import { initializeApp, deleteApp } from "firebase/app";
 import { db, auth } from "../../services/firebase";
+import { toggleUserStatusSecure } from "../../services/cloudFunctions";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { LoadingSpinner } from "../../components/ui/Skeleton";
+import { useToast, ConfirmModal } from "../../components/ui";
 import { GRADIENTS, TIMING } from "../../constants";
 import { UserCard, UserStatsGrid, CreateUserModal, EditUserModal } from "./components";
 import type { UserData, ClasseData, UserFormData } from "./types";
@@ -25,6 +27,15 @@ export default function Users() {
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
+
+  const toast = useToast();
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: "danger" | "warning" | "info";
+    onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   const isAdmin = currentUser?.role === "admin";
   const isGestionnaire = currentUser?.role === "gestionnaire";
@@ -127,42 +138,59 @@ export default function Users() {
 
   const toggleUserStatus = async (user: UserData) => {
     try {
-      await updateDoc(doc(db, "users", user.id), { isActive: !user.isActive });
+      await toggleUserStatusSecure({ userId: user.id, isActive: !user.isActive });
       await loadUsers();
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de la mise a jour");
+      toast.error("Erreur lors de la mise a jour");
     }
   };
 
-  const handleDeleteUser = async (user: UserData) => {
+  const handleDeleteUser = (user: UserData) => {
     if (isGestionnaire) {
-      if (!window.confirm(`Envoyer une demande de suppression pour ${user.email} ?`)) return;
-      try {
-        await addDoc(collection(db, "demandes_suppression"), {
-          userId: user.id,
-          userEmail: user.email,
-          userName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email,
-          requestedBy: currentUser?.email,
-          requestedAt: serverTimestamp(),
-          status: "pending",
-        });
-        showSuccessTemp("Demande de suppression envoyee");
-      } catch (err) {
-        console.error(err);
-        alert("Erreur lors de l'envoi de la demande");
-      }
+      setConfirmState({
+        isOpen: true,
+        title: "Demande de suppression",
+        message: `Envoyer une demande de suppression pour ${user.email} ?`,
+        variant: "warning",
+        onConfirm: async () => {
+          setConfirmState((s) => ({ ...s, isOpen: false }));
+          try {
+            await addDoc(collection(db, "demandes_suppression"), {
+              userId: user.id,
+              userEmail: user.email,
+              userName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email,
+              requestedBy: currentUser?.email,
+              requestedAt: serverTimestamp(),
+              status: "pending",
+            });
+            toast.success("Demande de suppression envoyee");
+          } catch (err) {
+            console.error(err);
+            toast.error("Erreur lors de l'envoi de la demande");
+          }
+        },
+      });
       return;
     }
 
-    if (!window.confirm(`Supprimer l'utilisateur ${user.email} ? Cette action est irreversible.`)) return;
-    try {
-      await deleteDoc(doc(db, "users", user.id));
-      await loadUsers();
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la suppression");
-    }
+    setConfirmState({
+      isOpen: true,
+      title: "Supprimer l'utilisateur",
+      message: `Supprimer l'utilisateur ${user.email} ?\n\nCette action est irreversible.`,
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          await deleteDoc(doc(db, "users", user.id));
+          await loadUsers();
+          toast.success("Utilisateur supprime");
+        } catch (err) {
+          console.error(err);
+          toast.error("Erreur lors de la suppression");
+        }
+      },
+    });
   };
 
   const handleEditUser = async (userId: string, data: { nom: string; prenom: string; role: string; classesEnseignees: string[] }) => {
@@ -401,6 +429,16 @@ export default function Users() {
           onSubmit={handleEditUser}
         />
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        confirmLabel="Confirmer"
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

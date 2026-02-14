@@ -20,7 +20,3 @@ export const createUserProfile = async (uid: string, data: CreateUserInput) => {
     createdAt: new Date(),
   });
 };
-
-export const toggleUserStatus = async (id: string, isActive: boolean) => {
-  await updateDoc(doc(db, "users", id), { isActive });
-};

@@ -3,6 +3,7 @@ import { collection, addDoc, query, orderBy, serverTimestamp, Timestamp, onSnaps
 import { db } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useToast, ConfirmModal } from "../components/ui";
 
 interface UserData {
   id: string;
@@ -33,10 +34,14 @@ export default function Messages() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
   const [sending, setSending] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [destinataire, setDestinataire] = useState("tous");
   const [error, setError] = useState("");
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   // Listener temps reel pour les utilisateurs
   useEffect(() => {
@@ -143,20 +148,24 @@ export default function Messages() {
     return msg.destinataireNom || "Prive";
   };
 
-  // Supprimer un message (admin uniquement)
-  const handleDeleteMessage = async (messageId: string) => {
+  const handleDeleteMessage = (messageId: string) => {
     if (!isOnlyAdmin) {
-      alert("Seul un administrateur peut supprimer les messages.");
+      toast.warning("Seul un administrateur peut supprimer les messages.");
       return;
     }
-    if (!window.confirm("Voulez-vous vraiment supprimer ce message ? Cette action est irreversible.")) return;
-
-    try {
-      await deleteDoc(doc(db, "messages", messageId));
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la suppression du message");
-    }
+    setConfirmState({
+      isOpen: true, title: "Supprimer le message", message: "Voulez-vous vraiment supprimer ce message ?\n\nCette action est irreversible.", variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          await deleteDoc(doc(db, "messages", messageId));
+          toast.success("Message supprime");
+        } catch (err) {
+          console.error(err);
+          toast.error("Erreur lors de la suppression du message");
+        }
+      },
+    });
   };
 
   const profs = users.filter((u) => u.role === "prof");
@@ -320,6 +329,15 @@ export default function Messages() {
           </div>
         </form>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

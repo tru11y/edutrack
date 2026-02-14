@@ -4,18 +4,23 @@ import { getEleveById, desactiverEleve, moveEleveToTrash } from "../modules/elev
 import { getPaiementsByEleve } from "../modules/paiements/paiement.service";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useToast, ConfirmModal } from "../components/ui";
 import type { Eleve } from "../modules/eleves/eleve.types";
 import type { Paiement } from "../modules/paiements/paiement.types";
 
 export default function EleveDetail() {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const toast = useToast();
   const isGestionnaire = user?.role === "gestionnaire";
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [eleve, setEleve] = useState<Eleve | null>(null);
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   useEffect(() => {
     if (!id) return;
@@ -28,21 +33,33 @@ export default function EleveDetail() {
       .catch((err) => { console.error(err); setLoading(false); });
   }, [id]);
 
-  const handleDesactiver = async () => {
-    if (!id || !confirm("Desactiver cet eleve ?")) return;
-    await desactiverEleve(id);
-    navigate("/eleves");
+  const handleDesactiver = () => {
+    if (!id) return;
+    setConfirmState({
+      isOpen: true, title: "Desactiver l'eleve", message: "Desactiver cet eleve ?", variant: "warning",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        await desactiverEleve(id);
+        navigate("/eleves");
+      },
+    });
   };
 
-  const handleDelete = async () => {
-    if (!id || !confirm(`Supprimer ${eleve?.prenom} ${eleve?.nom} ?\n\nL'eleve sera deplace dans la corbeille.`)) return;
-    try {
-      await moveEleveToTrash(id);
-      navigate("/eleves");
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la suppression");
-    }
+  const handleDelete = () => {
+    if (!id) return;
+    setConfirmState({
+      isOpen: true, title: "Supprimer l'eleve", message: `Supprimer ${eleve?.prenom} ${eleve?.nom} ?\n\nL'eleve sera deplace dans la corbeille.`, variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          await moveEleveToTrash(id);
+          navigate("/eleves");
+        } catch (err) {
+          console.error(err);
+          toast.error("Erreur lors de la suppression");
+        }
+      },
+    });
   };
 
   if (loading) {
@@ -136,6 +153,15 @@ export default function EleveDetail() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

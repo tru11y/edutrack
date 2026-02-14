@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
+import { useToast, ConfirmModal } from "../../components/ui";
 import { toggleUserStatusSecure, getCloudFunctionErrorMessage } from "../../services/cloudFunctions";
 
 interface Admin {
@@ -18,8 +19,12 @@ interface Admin {
 
 export default function AdminsList() {
   const { colors } = useTheme();
+  const toast = useToast();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   useEffect(() => {
     const load = async () => {
@@ -49,17 +54,23 @@ export default function AdminsList() {
     load();
   }, []);
 
-  const toggleActive = async (adminId: string, currentStatus: boolean) => {
-    if (!confirm(currentStatus ? "Desactiver cet admin ?" : "Reactiver cet admin ?")) return;
-
-    try {
-      await toggleUserStatusSecure({ userId: adminId, isActive: !currentStatus });
-      setAdmins((prev) =>
-        prev.map((a) => (a.id === adminId ? { ...a, isActive: !currentStatus } : a))
-      );
-    } catch (e) {
-      alert(getCloudFunctionErrorMessage(e));
-    }
+  const toggleActive = (adminId: string, currentStatus: boolean) => {
+    setConfirmState({
+      isOpen: true, title: currentStatus ? "Desactiver l'admin" : "Reactiver l'admin",
+      message: currentStatus ? "Desactiver cet admin ?" : "Reactiver cet admin ?",
+      variant: currentStatus ? "warning" : "info",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          await toggleUserStatusSecure({ userId: adminId, isActive: !currentStatus });
+          setAdmins((prev) =>
+            prev.map((a) => (a.id === adminId ? { ...a, isActive: !currentStatus } : a))
+          );
+        } catch (e) {
+          toast.error(getCloudFunctionErrorMessage(e));
+        }
+      },
+    });
   };
 
   if (loading) {
@@ -220,6 +231,15 @@ export default function AdminsList() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

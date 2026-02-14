@@ -6,12 +6,17 @@ import {
   desactiverProfesseur,
 } from "./professeur.service";
 import { useTheme } from "../../context/ThemeContext";
+import { useToast, ConfirmModal } from "../../components/ui";
 import type { Professeur } from "./professeur.types";
 
 export default function ProfesseurProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { colors } = useTheme();
+  const toast = useToast();
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   const [prof, setProf] = useState<Professeur | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,17 +71,22 @@ export default function ProfesseurProfile() {
       });
       setEditing(false);
     } catch {
-      alert("Erreur lors de la sauvegarde");
+      toast.error("Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!id) return;
-    if (!confirm("Desactiver ce professeur ?")) return;
-    await desactiverProfesseur(id);
-    navigate("/admin/professeurs");
+    setConfirmState({
+      isOpen: true, title: "Desactiver le professeur", message: "Desactiver ce professeur ?", variant: "warning",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        await desactiverProfesseur(id);
+        navigate("/admin/professeurs");
+      },
+    });
   };
 
   if (loading) {
@@ -422,6 +432,15 @@ export default function ProfesseurProfile() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

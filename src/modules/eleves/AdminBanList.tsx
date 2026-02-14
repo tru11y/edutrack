@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getElevesBannis } from "./eleve.service";
 import { unbanEleve } from "../paiements/paiement.service";
 import { useTheme } from "../../context/ThemeContext";
+import { ConfirmModal } from "../../components/ui";
 import type { Eleve } from "./eleve.types";
 
 interface EleveBanni {
@@ -19,6 +20,9 @@ export default function AdminBansList() {
   const [eleves, setEleves] = useState<EleveBanni[]>([]);
   const [loading, setLoading] = useState(true);
   const [unbanning, setUnbanning] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   useEffect(() => {
     getElevesBannis()
@@ -39,14 +43,17 @@ export default function AdminBansList() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleUnban = async (eleveId: string) => {
-    const confirm = window.confirm("Lever le bannissement de cet eleve ?");
-    if (!confirm) return;
-
-    setUnbanning(eleveId);
-    await unbanEleve(eleveId);
-    setEleves((prev) => prev.filter((e) => e.id !== eleveId));
-    setUnbanning(null);
+  const handleUnban = (eleveId: string) => {
+    setConfirmState({
+      isOpen: true, title: "Lever le bannissement", message: "Lever le bannissement de cet eleve ?", variant: "warning",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        setUnbanning(eleveId);
+        await unbanEleve(eleveId);
+        setEleves((prev) => prev.filter((e) => e.id !== eleveId));
+        setUnbanning(null);
+      },
+    });
   };
 
   if (loading) {
@@ -287,6 +294,15 @@ export default function AdminBansList() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

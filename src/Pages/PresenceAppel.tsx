@@ -4,6 +4,7 @@ import { getAllEleves } from "../modules/eleves/eleve.service";
 import { savePresencesForCours } from "../modules/presences/presence.service";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useToast } from "../components/ui";
 import type { Eleve } from "../modules/eleves/eleve.types";
 import type { PresenceItem, StatutMetier } from "../modules/presences/presence.types";
 
@@ -21,6 +22,7 @@ export default function PresenceAppel() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { colors } = useTheme();
+  const toast = useToast();
   const isProf = user?.role === "prof";
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +80,7 @@ export default function PresenceAppel() {
 
   const handleSubmit = async () => {
     if (!classe || !date || presences.length === 0) {
-      alert("Veuillez selectionner une classe");
+      toast.warning("Veuillez selectionner une classe");
       return;
     }
     try {
@@ -105,7 +107,7 @@ export default function PresenceAppel() {
       navigate("/presences");
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'enregistrement");
+      toast.error("Erreur lors de l'enregistrement");
     } finally {
       setSaving(false);
     }
