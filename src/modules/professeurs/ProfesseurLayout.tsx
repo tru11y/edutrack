@@ -1,8 +1,10 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function ProfesseurLayout() {
   const { logout, user } = useAuth();
+  const { colors } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -11,24 +13,23 @@ export default function ProfesseurLayout() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f5f5f7" }}>
-      {/* Sidebar */}
+    <div style={{ display: "flex", minHeight: "100vh", background: colors.bg }}>
       <aside style={{
         width: 260,
-        background: "#fff",
-        borderRight: "1px solid #e5e5e5",
+        background: colors.bgCard,
+        borderRight: `1px solid ${colors.border}`,
         display: "flex",
         flexDirection: "column",
         padding: "24px 16px"
       }}>
         <div style={{ padding: "0 12px", marginBottom: 32 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: "#1d1d1f" }}>EDUTRACK</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: colors.text }}>EDUTRACK</h1>
           <span style={{
             display: "inline-block",
             marginTop: 8,
             padding: "4px 10px",
-            background: "#5856d6",
-            color: "#fff",
+            background: colors.primary,
+            color: colors.bgCard,
             borderRadius: 6,
             fontSize: 12,
             fontWeight: 500
@@ -47,8 +48,8 @@ export default function ProfesseurLayout() {
               borderRadius: 8,
               fontSize: 14,
               fontWeight: 500,
-              color: isActive ? "#fff" : "#1d1d1f",
-              background: isActive ? "#1d1d1f" : "transparent",
+              color: isActive ? colors.bgCard : colors.text,
+              background: isActive ? colors.primary : "transparent",
               textDecoration: "none"
             })}
           >
@@ -58,14 +59,14 @@ export default function ProfesseurLayout() {
 
         <div style={{
           padding: 16,
-          background: "#f5f5f7",
+          background: colors.bgSecondary,
           borderRadius: 12,
           marginTop: 16
         }}>
-          <div style={{ fontSize: 14, fontWeight: 500, color: "#1d1d1f", marginBottom: 4 }}>
+          <div style={{ fontSize: 14, fontWeight: 500, color: colors.text, marginBottom: 4 }}>
             {user?.email?.split("@")[0]}
           </div>
-          <div style={{ fontSize: 12, color: "#86868b", marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: colors.textMuted, marginBottom: 12 }}>
             {user?.email}
           </div>
           <button
@@ -73,16 +74,16 @@ export default function ProfesseurLayout() {
             style={{
               width: "100%",
               padding: "8px 12px",
-              background: "#fff",
-              border: "1px solid #e5e5e5",
+              background: colors.bgCard,
+              border: `1px solid ${colors.border}`,
               borderRadius: 8,
               fontSize: 13,
               fontWeight: 500,
-              color: "#1d1d1f",
+              color: colors.text,
               cursor: "pointer"
             }}
           >
-            Déconnexion
+            Deconnexion
           </button>
         </div>
       </aside>

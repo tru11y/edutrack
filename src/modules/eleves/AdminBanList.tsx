@@ -166,9 +166,9 @@ export default function AdminBansList() {
               }}>
                 <div style={{
                   width: 56, height: 56, borderRadius: 14,
-                  background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                  background: `linear-gradient(135deg, ${colors.danger} 0%, ${colors.danger} 100%)`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#fff", fontWeight: 600, fontSize: 18
+                  color: colors.onGradient, fontWeight: 600, fontSize: 18
                 }}>
                   {e.prenom?.[0]}{e.nom?.[0]}
                 </div>
@@ -230,12 +230,12 @@ export default function AdminBansList() {
                     style={{
                       flex: 1,
                       padding: "12px 16px",
-                      background: unbanning === e.id ? "#86efac" : colors.success,
+                      background: unbanning === e.id ? colors.successBg : colors.success,
                       border: "none",
                       borderRadius: 10,
                       fontSize: 14,
                       fontWeight: 500,
-                      color: "#fff",
+                      color: colors.onGradient,
                       cursor: unbanning === e.id ? "not-allowed" : "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -248,7 +248,7 @@ export default function AdminBansList() {
                         <div style={{
                           width: 16, height: 16,
                           border: "2px solid rgba(255,255,255,0.3)",
-                          borderTopColor: "#fff",
+                          borderTopColor: colors.onGradient,
                           borderRadius: "50%",
                           animation: "spin 0.8s linear infinite"
                         }} />

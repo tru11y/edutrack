@@ -76,8 +76,8 @@ export default function EleveDetail() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>Profil Eleve</h1>
           <div style={{ display: "flex", gap: 12 }}>
-            <Link to={`/eleves/${id}/modifier`} style={{ padding: "10px 20px", background: colors.primary, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Modifier</Link>
-            <button onClick={handleDesactiver} style={{ padding: "10px 20px", background: colors.warningBg, color: colors.warning, border: "1px solid #fde68a", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Desactiver</button>
+            <Link to={`/eleves/${id}/modifier`} style={{ padding: "10px 20px", background: colors.primary, color: colors.onGradient, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Modifier</Link>
+            <button onClick={handleDesactiver} style={{ padding: "10px 20px", background: colors.warningBg, color: colors.warning, border: `1px solid ${colors.warning}40`, borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Desactiver</button>
             <button onClick={handleDelete} style={{ padding: "10px 20px", background: colors.dangerBg, color: colors.danger, border: `1px solid ${colors.danger}`, borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Supprimer</button>
           </div>
         </div>
@@ -91,7 +91,7 @@ export default function EleveDetail() {
               <h2 style={{ fontSize: 24, fontWeight: 700, color: colors.onGradient, margin: "0 0 4px" }}>{eleve.prenom} {eleve.nom}</h2>
               <p style={{ fontSize: 14, color: colors.onGradientMuted, margin: 0 }}>{eleve.classe}</p>
             </div>
-            <span style={{ marginLeft: "auto", padding: "8px 16px", background: eleve.statut === "actif" ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)", color: "#fff", borderRadius: 20, fontSize: 13, fontWeight: 600 }}>{eleve.statut === "actif" ? "Actif" : "Inactif"}</span>
+            <span style={{ marginLeft: "auto", padding: "8px 16px", background: eleve.statut === "actif" ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)", color: colors.onGradient, borderRadius: 20, fontSize: 13, fontWeight: 600 }}>{eleve.statut === "actif" ? "Actif" : "Inactif"}</span>
           </div>
           <div style={{ padding: 24 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>

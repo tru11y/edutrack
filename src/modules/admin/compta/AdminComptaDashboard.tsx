@@ -17,8 +17,9 @@ import type { Professeur } from "../../professeurs/professeur.types";
 import PaiementsTab from "./components/PaiementsTab";
 import DepensesTab from "./components/DepensesTab";
 import SalairesTab from "./components/SalairesTab";
+import JournalTab from "./components/JournalTab";
 
-type Tab = "paiements" | "depenses" | "salaires";
+type Tab = "paiements" | "depenses" | "salaires" | "journal";
 
 function getCurrentMonth(): string {
   const now = new Date();
@@ -176,6 +177,7 @@ export default function AdminComptaDashboard() {
     { key: "paiements", label: "Paiements" },
     { key: "depenses", label: "Depenses" },
     { key: "salaires", label: "Salaires" },
+    { key: "journal", label: "Journal" },
   ];
 
   return (
@@ -222,6 +224,7 @@ export default function AdminComptaDashboard() {
       {tab === "paiements" && <PaiementsTab paiements={paiements} colors={colors} />}
       {tab === "depenses" && <DepensesTab depenses={depenses} colors={colors} showForm={showDepenseForm} setShowForm={setShowDepenseForm} form={depenseForm} setForm={setDepenseForm} onSubmit={handleCreateDepense} onDelete={handleDeleteDepense} submitting={submitting} />}
       {tab === "salaires" && <SalairesTab salaires={salaires} profs={profs} colors={colors} showForm={showSalaireForm} setShowForm={setShowSalaireForm} form={salaireForm} setForm={setSalaireForm} onSubmit={handleCreateSalaire} onToggleStatut={handleToggleSalaireStatut} submitting={submitting} mois={mois} />}
+      {tab === "journal" && <JournalTab paiements={paiements} depenses={depenses} salaires={salaires} colors={colors} />}
     </div>
   );
 }

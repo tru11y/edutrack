@@ -112,7 +112,7 @@ export default function ElevesList() {
               }}
             >
               <p style={{ fontSize: 12, color: filterClasse === stat.classe ? "rgba(255,255,255,0.8)" : colors.textMuted, margin: "0 0 4px" }}>{stat.classe}</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: filterClasse === stat.classe ? "#fff" : colors.text, margin: 0 }}>{stat.total}</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: filterClasse === stat.classe ? colors.onGradient : colors.text, margin: 0 }}>{stat.total}</p>
               <p style={{ fontSize: 11, color: filterClasse === stat.classe ? "rgba(255,255,255,0.7)" : colors.textLight, margin: "4px 0 0" }}>
                 {stat.garcons}G / {stat.filles}F
               </p>
@@ -174,7 +174,7 @@ export default function ElevesList() {
               <div key={classe} style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, overflow: "hidden" }}>
                 <div style={{ padding: "16px 20px", borderBottom: `1px solid ${colors.border}`, background: colors.bg, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: colors.primary, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: colors.primary, color: colors.onGradient, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>
                       {classe.slice(0, 2)}
                     </div>
                     <div>

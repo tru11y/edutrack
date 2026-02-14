@@ -1,3 +1,4 @@
+import { useTheme } from "../../../context/ThemeContext";
 import { ROLE_CONFIG } from "../../../constants";
 
 interface UserStatsGridProps {
@@ -7,6 +8,7 @@ interface UserStatsGridProps {
 }
 
 export function UserStatsGrid({ admins, gestionnaires, profs }: UserStatsGridProps) {
+  const { colors } = useTheme();
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16, marginBottom: 24 }}>
       <div
@@ -18,7 +20,7 @@ export function UserStatsGrid({ admins, gestionnaires, profs }: UserStatsGridPro
         }}
       >
         <p style={{ fontSize: 13, color: ROLE_CONFIG.admin.color, margin: "0 0 8px" }}>Administrateurs</p>
-        <p style={{ fontSize: 28, fontWeight: 700, color: "#4f46e5", margin: 0 }}>{admins}</p>
+        <p style={{ fontSize: 28, fontWeight: 700, color: colors.primary, margin: 0 }}>{admins}</p>
       </div>
       <div
         style={{
@@ -29,7 +31,7 @@ export function UserStatsGrid({ admins, gestionnaires, profs }: UserStatsGridPro
         }}
       >
         <p style={{ fontSize: 13, color: ROLE_CONFIG.gestionnaire.color, margin: "0 0 8px" }}>Gestionnaires</p>
-        <p style={{ fontSize: 28, fontWeight: 700, color: "#b45309", margin: 0 }}>{gestionnaires}</p>
+        <p style={{ fontSize: 28, fontWeight: 700, color: colors.warning, margin: 0 }}>{gestionnaires}</p>
       </div>
       <div
         style={{
@@ -40,7 +42,7 @@ export function UserStatsGrid({ admins, gestionnaires, profs }: UserStatsGridPro
         }}
       >
         <p style={{ fontSize: 13, color: ROLE_CONFIG.prof.color, margin: "0 0 8px" }}>Professeurs</p>
-        <p style={{ fontSize: 28, fontWeight: 700, color: "#059669", margin: 0 }}>{profs}</p>
+        <p style={{ fontSize: 28, fontWeight: 700, color: colors.success, margin: 0 }}>{profs}</p>
       </div>
     </div>
   );

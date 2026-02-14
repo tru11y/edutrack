@@ -135,7 +135,7 @@ export default function ProfesseurProfile() {
                 style={{
                   padding: "10px 20px",
                   background: colors.primary,
-                  color: "#fff",
+                  color: colors.onGradient,
                   border: "none",
                   borderRadius: 10,
                   fontSize: 14,
@@ -181,7 +181,7 @@ export default function ProfesseurProfile() {
         {/* Header with avatar */}
         <div style={{
           padding: 24,
-          background: `linear-gradient(135deg, ${colors.primary} 0%, #a855f7 100%)`,
+          background: colors.gradientPrimary,
           display: "flex",
           alignItems: "center",
           gap: 20
@@ -194,14 +194,14 @@ export default function ProfesseurProfile() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#fff",
+            color: colors.onGradient,
             fontSize: 28,
             fontWeight: 700
           }}>
             {prof.prenom?.[0]}{prof.nom?.[0]}
           </div>
           <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: colors.onGradient, margin: "0 0 4px" }}>
               {prof.prenom} {prof.nom}
             </h2>
             <p style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", margin: 0 }}>
@@ -212,7 +212,7 @@ export default function ProfesseurProfile() {
             <span style={{
               padding: "8px 16px",
               background: prof.statut === "actif" ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)",
-              color: "#fff",
+              color: colors.onGradient,
               borderRadius: 20,
               fontSize: 13,
               fontWeight: 600
@@ -336,7 +336,7 @@ export default function ProfesseurProfile() {
                   style={{
                     padding: "12px 24px",
                     background: colors.success,
-                    color: "#fff",
+                    color: colors.onGradient,
                     border: "none",
                     borderRadius: 10,
                     fontSize: 14,

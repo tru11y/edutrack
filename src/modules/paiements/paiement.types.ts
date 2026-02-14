@@ -12,6 +12,7 @@ export interface Versement {
 
 export interface Paiement {
   id?: string;
+  reference?: string; // PAY-YYYYMM-XXXX
 
   eleveId: string;
   eleveNom: string;

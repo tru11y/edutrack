@@ -1,15 +1,16 @@
 import * as functions from "firebase-functions";
 import { db } from "../../firebase";
-import { verifyAdmin } from "../../helpers/auth";
+import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getLastDayOfMonth } from "../../helpers/validation";
 
 // FIX C2: Optimiser queries Firestore par mois
 export const getComptaStats = functions
   .region("europe-west1")
   .https.onCall(async (data: { mois?: string }, context) => {
     requireAuth(context.auth?.uid);
-    const isAdmin = await verifyAdmin(context.auth!.uid);
-    requirePermission(isAdmin, "Seuls les administrateurs peuvent voir les statistiques comptables.");
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent voir les statistiques comptables.");
 
     try {
       let totalPaiementsRecus = 0;
@@ -18,7 +19,7 @@ export const getComptaStats = functions
 
       if (data?.mois) {
         const startDate = `${data.mois}-01`;
-        const endDate = `${data.mois}-31`;
+        const endDate = getLastDayOfMonth(data.mois);
 
         const [paiementsSnap, depensesSnap, salairesSnap] = await Promise.all([
           db.collection("paiements").where("mois", "==", data.mois).get(),

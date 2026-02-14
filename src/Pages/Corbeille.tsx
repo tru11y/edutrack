@@ -106,7 +106,7 @@ export default function Corbeille() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case "cahier": return { bg: "#f5f3ff", color: "#8b5cf6" };
+      case "cahier": return { bg: colors.primaryBg, color: colors.primary };
       case "eleves": return { bg: colors.primaryBg, color: colors.primary };
       case "paiements": return { bg: colors.warningBg, color: colors.warning };
       case "presences": return { bg: colors.successBg, color: colors.success };
@@ -202,7 +202,7 @@ export default function Corbeille() {
 
       {items.length === 0 ? (
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 60, textAlign: "center" }}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 16px", color: "#cbd5e1" }}>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 16px", color: colors.textMuted }}>
             <path d="M3 6H21M5 6V20C5 21.1 5.9 22 7 22H17C18.1 22 19 21.1 19 20V6M8 6V4C8 2.9 8.9 2 10 2H14C15.1 2 16 2.9 16 4V6M10 11V17M14 11V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>La corbeille est vide</p>

@@ -77,7 +77,7 @@ export default function ProfesseurDashboard() {
                 <Link
                   to={`/prof/cours/${c.id}?tab=cahier`}
                   className="px-3 py-1 rounded text-sm"
-                  style={{ background: colors.primary, color: "#fff" }}
+                  style={{ background: colors.primary, color: colors.onGradient }}
                 >
                   📘 Cahier
                 </Link>
@@ -85,7 +85,7 @@ export default function ProfesseurDashboard() {
                 <Link
                   to={`/prof/cours/${c.id}?tab=exclusion`}
                   className="px-3 py-1 rounded text-sm"
-                  style={{ background: colors.danger, color: "#fff" }}
+                  style={{ background: colors.danger, color: colors.onGradient }}
                 >
                   🚫 Exclure
                 </Link>

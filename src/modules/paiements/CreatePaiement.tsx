@@ -127,7 +127,7 @@ export default function CreatePaiement({ paiement, onSuccess }: { paiement: Paie
           width: "100%",
           padding: "12px 20px",
           background: colors.primary,
-          color: "#fff",
+          color: colors.onGradient,
           border: "none",
           borderRadius: 10,
           fontSize: 14,

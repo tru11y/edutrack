@@ -76,11 +76,12 @@ export const marquerPresence = functions
       );
     }
 
+    const GRACE_PERIOD_MS = 15 * 60 * 1000; // 15 minutes après la fin
     const now = admin.firestore.Timestamp.now();
-    if (now.toMillis() < debutMillis || now.toMillis() > finMillis) {
+    if (now.toMillis() < debutMillis || now.toMillis() > finMillis + GRACE_PERIOD_MS) {
       throw new functions.https.HttpsError(
         "failed-precondition",
-        "La presence ne peut etre marquee que pendant le cours."
+        "La presence ne peut etre marquee que pendant le cours (+ 15 min apres la fin)."
       );
     }
 

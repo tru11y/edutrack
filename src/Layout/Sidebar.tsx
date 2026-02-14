@@ -33,7 +33,7 @@ export default function Sidebar({
               className="block px-4 py-2 rounded"
               style={{
                 background: isActive ? colors.primary : "transparent",
-                color: isActive ? "#fff" : colors.textSecondary,
+                color: isActive ? colors.onGradient : colors.textSecondary,
               }}
             >
               {l.label}

@@ -1,8 +1,8 @@
 import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
-import { verifyAdmin } from "../../helpers/auth";
+import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError, notFound } from "../../helpers/errors";
-import { isValidDate, isPositiveNumber } from "../../helpers/validation";
+import { isValidDate, isPositiveNumber, getLastDayOfMonth } from "../../helpers/validation";
 
 interface CreateDepenseData {
   libelle: string;
@@ -15,8 +15,8 @@ export const createDepense = functions
   .region("europe-west1")
   .https.onCall(async (data: CreateDepenseData, context) => {
     requireAuth(context.auth?.uid);
-    const isAdmin = await verifyAdmin(context.auth!.uid);
-    requirePermission(isAdmin, "Seuls les administrateurs peuvent creer des depenses.");
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent creer des depenses.");
 
     requireArgument(!!data.libelle && !!data.categorie && !!data.date, "Libelle, categorie et date sont requis.");
     requireArgument(isPositiveNumber(data.montant), "Le montant doit etre un nombre positif.");
@@ -51,8 +51,8 @@ export const getDepenses = functions
   .region("europe-west1")
   .https.onCall(async (data: { mois?: string }, context) => {
     requireAuth(context.auth?.uid);
-    const isAdmin = await verifyAdmin(context.auth!.uid);
-    requirePermission(isAdmin, "Seuls les administrateurs peuvent voir les depenses.");
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent voir les depenses.");
 
     try {
       let snap;
@@ -60,7 +60,7 @@ export const getDepenses = functions
       if (data?.mois) {
         // Query par range de dates pour le mois specifie
         const startDate = `${data.mois}-01`;
-        const endDate = `${data.mois}-31`;
+        const endDate = getLastDayOfMonth(data.mois);
         snap = await db.collection("depenses")
           .where("date", ">=", startDate)
           .where("date", "<=", endDate)
@@ -95,8 +95,8 @@ export const deleteDepense = functions
   .region("europe-west1")
   .https.onCall(async (data: { depenseId: string }, context) => {
     requireAuth(context.auth?.uid);
-    const isAdmin = await verifyAdmin(context.auth!.uid);
-    requirePermission(isAdmin, "Seuls les administrateurs peuvent supprimer des depenses.");
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent supprimer des depenses.");
     requireArgument(!!data.depenseId, "ID de la depense requis.");
 
     try {

@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
-import { verifyProf } from "../../helpers/auth";
+import { verifyProf, verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
 import { VALID_PRESENCE_STATUTS } from "../../helpers/validation";
 
@@ -52,6 +52,48 @@ export const marquerPresenceBatch = functions
       coursData.type === "exceptionnel";
 
     requirePermission(estAutorise, "Vous n'etes pas autorise a modifier ce cours.");
+
+    // Controle horaire (sauf admin/gestionnaire)
+    const isStaff = await verifyAdminOrGestionnaire(context.auth!.uid);
+    if (!isStaff) {
+      const GRACE_PERIOD_MS = 15 * 60 * 1000;
+
+      const parseDateStr = (): string => {
+        if (coursData.date instanceof admin.firestore.Timestamp) {
+          return coursData.date.toDate().toISOString().split("T")[0];
+        }
+        return String(coursData.date || "");
+      };
+
+      let debutMillis: number;
+      let finMillis: number;
+
+      if (typeof coursData.heureDebut === "string") {
+        const [hh, mm] = coursData.heureDebut.split(":").map(Number);
+        const d = new Date(`${parseDateStr()}T00:00:00`);
+        d.setHours(hh, mm, 0, 0);
+        debutMillis = d.getTime();
+      } else {
+        debutMillis = coursData.heureDebut?.toMillis?.() || 0;
+      }
+
+      if (typeof coursData.heureFin === "string") {
+        const [hh, mm] = coursData.heureFin.split(":").map(Number);
+        const d = new Date(`${parseDateStr()}T00:00:00`);
+        d.setHours(hh, mm, 0, 0);
+        finMillis = d.getTime();
+      } else {
+        finMillis = coursData.heureFin?.toMillis?.() || 0;
+      }
+
+      const now = admin.firestore.Timestamp.now();
+      if (now.toMillis() < debutMillis || now.toMillis() > finMillis + GRACE_PERIOD_MS) {
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "La presence ne peut etre marquee que pendant le cours (+ 15 min apres la fin)."
+        );
+      }
+    }
 
     const batch = db.batch();
 

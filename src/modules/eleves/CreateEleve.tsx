@@ -261,7 +261,7 @@ export default function CreateEleve() {
           width: "100%",
           padding: "14px 24px",
           background: colors.primary,
-          color: "#fff",
+          color: colors.onGradient,
           border: "none",
           borderRadius: 10,
           fontSize: 16,

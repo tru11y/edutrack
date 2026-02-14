@@ -3,32 +3,89 @@ import { useTheme } from "../../../context/ThemeContext";
 import { JOURS, GRADIENTS } from "../../../constants";
 import type { ClasseData, ScheduleSlot, Matiere } from "../types";
 
+interface Professeur {
+  id: string;
+  prenom: string;
+  nom: string;
+}
+
 interface ScheduleModalProps {
   classe: ClasseData;
   matieres: Matiere[];
+  professeurs: Professeur[];
   isAdmin: boolean;
   onClose: () => void;
   onAddSlot: (slot: ScheduleSlot) => Promise<void>;
   onRemoveSlot: (index: number) => Promise<void>;
 }
 
-export function ScheduleModal({ classe, matieres, isAdmin, onClose, onAddSlot, onRemoveSlot }: ScheduleModalProps) {
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function hasOverlap(a: ScheduleSlot, b: ScheduleSlot): boolean {
+  if (a.jour !== b.jour) return false;
+  const aStart = timeToMinutes(a.heureDebut);
+  const aEnd = timeToMinutes(a.heureFin);
+  const bStart = timeToMinutes(b.heureDebut);
+  const bEnd = timeToMinutes(b.heureFin);
+  return aStart < bEnd && bStart < aEnd;
+}
+
+export function ScheduleModal({ classe, matieres, professeurs, isAdmin, onClose, onAddSlot, onRemoveSlot }: ScheduleModalProps) {
   const { colors } = useTheme();
   const [newSlot, setNewSlot] = useState<ScheduleSlot>({
     jour: "lundi",
     heureDebut: "08:00",
     heureFin: "09:00",
     matiere: "",
+    profId: "",
     profNom: "",
   });
+  const [error, setError] = useState("");
 
   const handleAdd = async () => {
     if (!newSlot.matiere.trim()) return;
+
+    if (newSlot.heureDebut >= newSlot.heureFin) {
+      setError("L'heure de fin doit etre apres l'heure de debut.");
+      return;
+    }
+
+    // Verifier les chevauchements
+    const existingSlots = classe.emploiDuTemps || [];
+    for (const slot of existingSlots) {
+      if (hasOverlap(newSlot, slot)) {
+        setError(`Conflit: un cours de ${slot.matiere} existe deja ${slot.heureDebut}-${slot.heureFin} ce jour.`);
+        return;
+      }
+    }
+
+    setError("");
     await onAddSlot(newSlot);
-    setNewSlot({ jour: "lundi", heureDebut: "08:00", heureFin: "09:00", matiere: "", profNom: "" });
+    setNewSlot({ jour: "lundi", heureDebut: "08:00", heureFin: "09:00", matiere: "", profId: "", profNom: "" });
+  };
+
+  const handleProfChange = (profId: string) => {
+    const prof = professeurs.find((p) => p.id === profId);
+    setNewSlot({
+      ...newSlot,
+      profId: profId,
+      profNom: prof ? `${prof.prenom} ${prof.nom}` : "",
+    });
   };
 
   const isAddDisabled = !newSlot.matiere.trim();
+
+  const selectStyle = {
+    padding: "10px 12px",
+    border: `1px solid ${colors.border}`,
+    borderRadius: 8,
+    fontSize: 13,
+    background: colors.bgInput,
+    color: colors.text,
+  };
 
   return (
     <div
@@ -101,18 +158,18 @@ export function ScheduleModal({ classe, matieres, isAdmin, onClose, onAddSlot, o
           {isAdmin && (
             <div style={{ background: colors.bgSecondary, borderRadius: 12, padding: 16, marginBottom: 24 }}>
               <p style={{ margin: "0 0 12px", fontSize: 14, fontWeight: 600, color: colors.text }}>Ajouter un cours</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 2fr 2fr", gap: 12, marginBottom: 12 }}>
+
+              {error && (
+                <div style={{ padding: "8px 12px", background: colors.dangerBg, border: `1px solid ${colors.danger}40`, borderRadius: 8, marginBottom: 12 }}>
+                  <p style={{ fontSize: 13, color: colors.danger, margin: 0 }}>{error}</p>
+                </div>
+              )}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
                 <select
                   value={newSlot.jour}
                   onChange={(e) => setNewSlot({ ...newSlot, jour: e.target.value as typeof newSlot.jour })}
-                  style={{
-                    padding: "10px 12px",
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    background: colors.bgInput,
-                    color: colors.text,
-                  }}
+                  style={selectStyle}
                 >
                   {JOURS.map((j) => (
                     <option key={j} value={j}>
@@ -124,39 +181,20 @@ export function ScheduleModal({ classe, matieres, isAdmin, onClose, onAddSlot, o
                   type="time"
                   value={newSlot.heureDebut}
                   onChange={(e) => setNewSlot({ ...newSlot, heureDebut: e.target.value })}
-                  style={{
-                    padding: "10px 12px",
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    background: colors.bgInput,
-                    color: colors.text,
-                  }}
+                  style={selectStyle}
                 />
                 <input
                   type="time"
                   value={newSlot.heureFin}
                   onChange={(e) => setNewSlot({ ...newSlot, heureFin: e.target.value })}
-                  style={{
-                    padding: "10px 12px",
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    background: colors.bgInput,
-                    color: colors.text,
-                  }}
+                  style={selectStyle}
                 />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
                 <select
                   value={newSlot.matiere}
                   onChange={(e) => setNewSlot({ ...newSlot, matiere: e.target.value })}
-                  style={{
-                    padding: "10px 12px",
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    background: colors.bgInput,
-                    color: colors.text,
-                  }}
+                  style={selectStyle}
                 >
                   <option value="">Matiere *</option>
                   {matieres.map((m) => (
@@ -165,20 +203,18 @@ export function ScheduleModal({ classe, matieres, isAdmin, onClose, onAddSlot, o
                     </option>
                   ))}
                 </select>
-                <input
-                  type="text"
-                  placeholder="Professeur (optionnel)"
-                  value={newSlot.profNom || ""}
-                  onChange={(e) => setNewSlot({ ...newSlot, profNom: e.target.value })}
-                  style={{
-                    padding: "10px 12px",
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    background: colors.bgInput,
-                    color: colors.text,
-                  }}
-                />
+                <select
+                  value={newSlot.profId || ""}
+                  onChange={(e) => handleProfChange(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="">Professeur (optionnel)</option>
+                  {professeurs.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.prenom} {p.nom}
+                    </option>
+                  ))}
+                </select>
               </div>
               <button
                 onClick={handleAdd}
@@ -186,7 +222,7 @@ export function ScheduleModal({ classe, matieres, isAdmin, onClose, onAddSlot, o
                 style={{
                   padding: "10px 20px",
                   background: isAddDisabled ? colors.border : GRADIENTS.primary,
-                  color: isAddDisabled ? colors.textMuted : "#fff",
+                  color: isAddDisabled ? colors.textMuted : colors.onGradient,
                   border: "none",
                   borderRadius: 8,
                   fontSize: 13,

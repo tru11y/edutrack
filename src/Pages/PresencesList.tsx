@@ -95,7 +95,7 @@ export default function PresencesList() {
             style={{
               padding: "12px 20px",
               background: `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)`,
-              color: "#fff",
+              color: colors.onGradient,
               borderRadius: 10,
               textDecoration: "none",
               fontSize: 14,
@@ -169,7 +169,7 @@ export default function PresencesList() {
               style={{
                 padding: "10px 20px",
                 background: colors.success,
-                color: "#fff",
+                color: colors.onGradient,
                 border: "none",
                 borderRadius: 8,
                 cursor: "pointer",

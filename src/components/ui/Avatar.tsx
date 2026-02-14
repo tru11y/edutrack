@@ -20,14 +20,16 @@ const sizeMap: Record<AvatarSize, { size: number; fontSize: number; borderRadius
   xl: { size: 80, fontSize: 28, borderRadius: 20 },
 };
 
-const variantColors: Record<AvatarVariant, { bg: string; color: string; gradient?: string }> = {
-  default: { bg: "#e2e8f0", color: "#64748b" },
-  male: { bg: "#dbeafe", color: "#3b82f6" },
-  female: { bg: "#fce7f3", color: "#ec4899" },
-  admin: { bg: "#eef2ff", color: "#6366f1", gradient: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" },
-  gestionnaire: { bg: "#fef3c7", color: "#d97706", gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" },
-  prof: { bg: "#ecfdf5", color: "#10b981", gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)" },
-};
+function getVariantColors(colors: ReturnType<typeof useTheme>["colors"]): Record<AvatarVariant, { bg: string; color: string; gradient?: string }> {
+  return {
+    default: { bg: colors.border, color: colors.textMuted },
+    male: { bg: colors.maleBg, color: colors.maleText },
+    female: { bg: colors.femaleBg, color: colors.femaleText },
+    admin: { bg: colors.primaryBg, color: colors.primary, gradient: colors.gradientPrimary },
+    gestionnaire: { bg: colors.warningBg, color: colors.warning, gradient: `linear-gradient(135deg, ${colors.warning} 0%, ${colors.warning} 100%)` },
+    prof: { bg: colors.successBg, color: colors.success, gradient: `linear-gradient(135deg, ${colors.success} 0%, ${colors.success} 100%)` },
+  };
+}
 
 export default function Avatar({
   name,
@@ -38,6 +40,7 @@ export default function Avatar({
 }: AvatarProps) {
   const { colors } = useTheme();
   const sizeConfig = sizeMap[size];
+  const variantColors = getVariantColors(colors);
   const colorConfig = variantColors[variant];
 
   // Obtenir les initiales
@@ -90,7 +93,7 @@ export default function Avatar({
         height: sizeConfig.size,
         borderRadius: sizeConfig.borderRadius,
         background: useGradient ? colorConfig.gradient : colorConfig.bg,
-        color: useGradient ? "#fff" : colorConfig.color,
+        color: useGradient ? colors.onGradient : colorConfig.color,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

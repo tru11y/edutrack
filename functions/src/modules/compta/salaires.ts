@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
-import { verifyAdmin } from "../../helpers/auth";
+import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError, notFound } from "../../helpers/errors";
 import { isValidMonth, isValidDate, isPositiveNumber, VALID_SALARY_STATUTS } from "../../helpers/validation";
 
@@ -16,8 +16,8 @@ export const createSalaire = functions
   .region("europe-west1")
   .https.onCall(async (data: CreateSalaireData, context) => {
     requireAuth(context.auth?.uid);
-    const isAdmin = await verifyAdmin(context.auth!.uid);
-    requirePermission(isAdmin, "Seuls les administrateurs peuvent creer des salaires.");
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent creer des salaires.");
 
     requireArgument(!!data.profId && !!data.mois, "Professeur et mois sont requis.");
     requireArgument(isPositiveNumber(data.montant), "Le montant doit etre un nombre positif.");
@@ -78,8 +78,8 @@ export const getSalaires = functions
   .region("europe-west1")
   .https.onCall(async (data: { mois?: string }, context) => {
     requireAuth(context.auth?.uid);
-    const isAdmin = await verifyAdmin(context.auth!.uid);
-    requirePermission(isAdmin, "Seuls les administrateurs peuvent voir les salaires.");
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent voir les salaires.");
 
     try {
       let query: FirebaseFirestore.Query = db.collection("salaires");
@@ -119,8 +119,8 @@ export const updateSalaireStatut = functions
   .region("europe-west1")
   .https.onCall(async (data: { salaireId: string; statut: "paye" | "non_paye"; datePaiement?: string }, context) => {
     requireAuth(context.auth?.uid);
-    const isAdmin = await verifyAdmin(context.auth!.uid);
-    requirePermission(isAdmin, "Seuls les administrateurs peuvent modifier les salaires.");
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent modifier les salaires.");
     requireArgument(!!data.salaireId && !!data.statut, "ID du salaire et statut sont requis.");
 
     try {

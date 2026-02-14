@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { getCoursByProfesseur } from "../cours/cours.service";
 import type { Cours } from "../cours/cours.types";
 
 export default function ProfesseurDashboard() {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [cours, setCours] = useState<Cours[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +32,7 @@ export default function ProfesseurDashboard() {
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
-        <p style={{ color: "#86868b" }}>Chargement...</p>
+        <p style={{ color: colors.textMuted }}>Chargement...</p>
       </div>
     );
   }
@@ -41,77 +43,77 @@ export default function ProfesseurDashboard() {
   return (
     <div>
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1d1d1f", marginBottom: 4 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, marginBottom: 4 }}>
           Bonjour
         </h1>
-        <p style={{ fontSize: 15, color: "#86868b" }}>
+        <p style={{ fontSize: 15, color: colors.textMuted }}>
           {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e5e5", padding: 20 }}>
-          <p style={{ fontSize: 13, color: "#86868b", marginBottom: 8 }}>Total cours</p>
-          <p style={{ fontSize: 32, fontWeight: 600, color: "#1d1d1f" }}>{cours.length}</p>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 20 }}>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 8 }}>Total cours</p>
+          <p style={{ fontSize: 32, fontWeight: 600, color: colors.text }}>{cours.length}</p>
         </div>
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e5e5", padding: 20 }}>
-          <p style={{ fontSize: 13, color: "#86868b", marginBottom: 8 }}>Aujourd'hui</p>
-          <p style={{ fontSize: 32, fontWeight: 600, color: "#007aff" }}>{coursAujourdhui.length}</p>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 20 }}>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 8 }}>Aujourd'hui</p>
+          <p style={{ fontSize: 32, fontWeight: 600, color: colors.primary }}>{coursAujourdhui.length}</p>
         </div>
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e5e5", padding: 20 }}>
-          <p style={{ fontSize: 13, color: "#86868b", marginBottom: 8 }}>À venir</p>
-          <p style={{ fontSize: 32, fontWeight: 600, color: "#34c759" }}>{coursAVenir.length}</p>
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 20 }}>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 8 }}>À venir</p>
+          <p style={{ fontSize: 32, fontWeight: 600, color: colors.success }}>{coursAVenir.length}</p>
         </div>
       </div>
 
       {/* Cours aujourd'hui */}
-      <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e5e5", padding: 24, marginBottom: 24 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: "#1d1d1f", marginBottom: 16 }}>Aujourd'hui</h2>
+      <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginBottom: 24 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: colors.text, marginBottom: 16 }}>Aujourd'hui</h2>
 
         {coursAujourdhui.length === 0 ? (
-          <p style={{ color: "#86868b", fontSize: 14 }}>Aucun cours aujourd'hui</p>
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Aucun cours aujourd'hui</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {coursAujourdhui.map((c) => (
-              <CoursItem key={c.id} cours={c} />
+              <CoursItem key={c.id} cours={c} colors={colors} />
             ))}
           </div>
         )}
       </div>
 
       {/* Tous les cours */}
-      <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e5e5", padding: 24 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: "#1d1d1f", marginBottom: 16 }}>Tous mes cours</h2>
+      <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: colors.text, marginBottom: 16 }}>Tous mes cours</h2>
 
         {cours.length === 0 ? (
-          <p style={{ color: "#86868b", fontSize: 14 }}>Aucun cours assigné</p>
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Aucun cours assigné</p>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
-                <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, fontWeight: 500, color: "#86868b" }}>Matière</th>
-                <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, fontWeight: 500, color: "#86868b" }}>Classe</th>
-                <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, fontWeight: 500, color: "#86868b" }}>Date</th>
-                <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, fontWeight: 500, color: "#86868b" }}>Horaire</th>
-                <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, fontWeight: 500, color: "#86868b" }}>Statut</th>
+              <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, fontWeight: 500, color: colors.textMuted }}>Matière</th>
+                <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, fontWeight: 500, color: colors.textMuted }}>Classe</th>
+                <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, fontWeight: 500, color: colors.textMuted }}>Date</th>
+                <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, fontWeight: 500, color: colors.textMuted }}>Horaire</th>
+                <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, fontWeight: 500, color: colors.textMuted }}>Statut</th>
                 <th style={{ padding: "12px 8px" }}></th>
               </tr>
             </thead>
             <tbody>
               {cours.map((c) => (
-                <tr key={c.id} style={{ borderBottom: "1px solid #f5f5f7" }}>
-                  <td style={{ padding: "12px 8px", fontSize: 14, fontWeight: 500, color: "#1d1d1f" }}>{c.matiere}</td>
-                  <td style={{ padding: "12px 8px", fontSize: 14, color: "#86868b" }}>{c.classe}</td>
-                  <td style={{ padding: "12px 8px", fontSize: 14, color: "#86868b" }}>
+                <tr key={c.id} style={{ borderBottom: `1px solid ${colors.borderLight}` }}>
+                  <td style={{ padding: "12px 8px", fontSize: 14, fontWeight: 500, color: colors.text }}>{c.matiere}</td>
+                  <td style={{ padding: "12px 8px", fontSize: 14, color: colors.textMuted }}>{c.classe}</td>
+                  <td style={{ padding: "12px 8px", fontSize: 14, color: colors.textMuted }}>
                     {new Date(c.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
                   </td>
-                  <td style={{ padding: "12px 8px", fontSize: 14, color: "#86868b" }}>{c.heureDebut} - {c.heureFin}</td>
+                  <td style={{ padding: "12px 8px", fontSize: 14, color: colors.textMuted }}>{c.heureDebut} - {c.heureFin}</td>
                   <td style={{ padding: "12px 8px" }}>
-                    <StatusBadge statut={c.statut} />
+                    <StatusBadge statut={c.statut} colors={colors} />
                   </td>
                   <td style={{ padding: "12px 8px", textAlign: "right" }}>
-                    <Link to={`/prof/cours/${c.id}`} style={{ fontSize: 14, color: "#007aff", textDecoration: "none", fontWeight: 500 }}>
+                    <Link to={`/prof/cours/${c.id}`} style={{ fontSize: 14, color: colors.primary, textDecoration: "none", fontWeight: 500 }}>
                       Ouvrir
                     </Link>
                   </td>
@@ -125,7 +127,7 @@ export default function ProfesseurDashboard() {
   );
 }
 
-function CoursItem({ cours }: { cours: Cours }) {
+function CoursItem({ cours, colors }: { cours: Cours; colors: ReturnType<typeof useTheme>["colors"] }) {
   return (
     <Link
       to={`/prof/cours/${cours.id}`}
@@ -134,7 +136,7 @@ function CoursItem({ cours }: { cours: Cours }) {
         alignItems: "center",
         justifyContent: "space-between",
         padding: 16,
-        background: "#f5f5f7",
+        background: colors.bgSecondary,
         borderRadius: 12,
         textDecoration: "none"
       }}
@@ -144,8 +146,8 @@ function CoursItem({ cours }: { cours: Cours }) {
           width: 48,
           height: 48,
           borderRadius: 12,
-          background: "#007aff",
-          color: "#fff",
+          background: colors.primary,
+          color: colors.onGradient,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -155,20 +157,20 @@ function CoursItem({ cours }: { cours: Cours }) {
           {cours.heureDebut}
         </div>
         <div>
-          <p style={{ fontSize: 15, fontWeight: 500, color: "#1d1d1f" }}>{cours.matiere}</p>
-          <p style={{ fontSize: 13, color: "#86868b" }}>{cours.classe} · {cours.heureDebut} - {cours.heureFin}</p>
+          <p style={{ fontSize: 15, fontWeight: 500, color: colors.text }}>{cours.matiere}</p>
+          <p style={{ fontSize: 13, color: colors.textMuted }}>{cours.classe} · {cours.heureDebut} - {cours.heureFin}</p>
         </div>
       </div>
-      <StatusBadge statut={cours.statut} />
+      <StatusBadge statut={cours.statut} colors={colors} />
     </Link>
   );
 }
 
-function StatusBadge({ statut }: { statut: Cours["statut"] }) {
+function StatusBadge({ statut, colors }: { statut: Cours["statut"]; colors: ReturnType<typeof useTheme>["colors"] }) {
   const config = {
-    planifie: { label: "Planifié", bg: "#e3f2fd", color: "#1976d2" },
-    termine: { label: "Terminé", bg: "#e8f5e9", color: "#388e3c" },
-    annule: { label: "Annulé", bg: "#ffebee", color: "#d32f2f" },
+    planifie: { label: "Planifié", bg: colors.infoBg, color: colors.info },
+    termine: { label: "Terminé", bg: colors.successBg, color: colors.success },
+    annule: { label: "Annulé", bg: colors.dangerBg, color: colors.danger },
   };
 
   const { label, bg, color } = config[statut];

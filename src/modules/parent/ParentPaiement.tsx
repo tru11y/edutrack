@@ -74,7 +74,7 @@ export default function ParentPaiements() {
         <div style={{
           background: colors.successBg,
           borderRadius: 16,
-          border: "1px solid #a7f3d0",
+          border: `1px solid ${colors.success}40`,
           padding: 20
         }}>
           <p style={{ fontSize: 13, color: colors.success, marginBottom: 4 }}>Deja paye</p>
@@ -110,8 +110,8 @@ export default function ParentPaiements() {
             margin: "0 auto 16px"
           }}>
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <rect x="3.5" y="7" width="21" height="14" rx="2" stroke="#94a3b8" strokeWidth="2"/>
-              <path d="M3.5 11.5H24.5" stroke="#94a3b8" strokeWidth="2"/>
+              <rect x="3.5" y="7" width="21" height="14" rx="2" stroke={colors.textLight} strokeWidth="2"/>
+              <path d="M3.5 11.5H24.5" stroke={colors.textLight} strokeWidth="2"/>
             </svg>
           </div>
           <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Aucun paiement enregistre</p>
@@ -138,8 +138,8 @@ export default function ParentPaiements() {
                   display: "flex", alignItems: "center", justifyContent: "center"
                 }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <rect x="2" y="5" width="20" height="14" rx="2" stroke={p.statut === "paye" ? "#059669" : p.statut === "partiel" ? "#d97706" : "#dc2626"} strokeWidth="2"/>
-                    <path d="M2 10H22" stroke={p.statut === "paye" ? "#059669" : p.statut === "partiel" ? "#d97706" : "#dc2626"} strokeWidth="2"/>
+                    <rect x="2" y="5" width="20" height="14" rx="2" stroke={p.statut === "paye" ? colors.success : p.statut === "partiel" ? colors.warning : colors.danger} strokeWidth="2"/>
+                    <path d="M2 10H22" stroke={p.statut === "paye" ? colors.success : p.statut === "partiel" ? colors.warning : colors.danger} strokeWidth="2"/>
                   </svg>
                 </div>
                 <div>
@@ -201,10 +201,11 @@ export default function ParentPaiements() {
 }
 
 function StatusBadge({ statut }: { statut: "paye" | "partiel" | "impaye" }) {
+  const { colors } = useTheme();
   const config = {
-    paye: { label: "Paye", bg: "#ecfdf5", color: "#059669" },
-    partiel: { label: "Partiel", bg: "#fffbeb", color: "#d97706" },
-    impaye: { label: "Impaye", bg: "#fef2f2", color: "#dc2626" },
+    paye: { label: "Paye", bg: colors.successBg, color: colors.success },
+    partiel: { label: "Partiel", bg: colors.warningBg, color: colors.warning },
+    impaye: { label: "Impaye", bg: colors.dangerBg, color: colors.danger },
   };
 
   const { label, bg, color } = config[statut] || config.impaye;

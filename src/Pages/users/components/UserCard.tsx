@@ -40,7 +40,7 @@ export function UserCard({ user, canEdit, canDelete, onEdit, onResetPassword, on
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#fff",
+            color: colors.onGradient,
             fontWeight: 600,
             fontSize: 16,
           }}

@@ -29,7 +29,7 @@ export default function AdminDisciplineList() {
 
         <button
           onClick={handleExport}
-          style={{ background: colors.primary, color: "#fff", padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer" }}
+          style={{ background: colors.primary, color: colors.onGradient, padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer" }}
         >
           Export PDF
         </button>

@@ -39,7 +39,7 @@ export default function SalairesTab({
           Total: <strong style={{ color: colors.text }}>{formatMontant(totalSalaires)}</strong>
           {" — "}Paye: <strong style={{ color: colors.success }}>{formatMontant(totalPaye)}</strong>
         </span>
-        <button onClick={() => { setShowForm(!showForm); if (!showForm) setForm({ ...form, mois }); }} style={{ padding: "10px 20px", background: colors.primary, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+        <button onClick={() => { setShowForm(!showForm); if (!showForm) setForm({ ...form, mois }); }} style={{ padding: "10px 20px", background: colors.primary, color: colors.bgCard, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
           {showForm ? "Annuler" : "+ Salaire"}
         </button>
       </div>
@@ -143,7 +143,7 @@ function SalaireForm({
           </select>
         </div>
       </div>
-      <button type="submit" disabled={submitting} style={{ padding: "10px 24px", background: colors.primary, color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.7 : 1 }}>
+      <button type="submit" disabled={submitting} style={{ padding: "10px 24px", background: colors.primary, color: colors.bgCard, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.7 : 1 }}>
         {submitting ? "Enregistrement..." : "Enregistrer"}
       </button>
     </form>
