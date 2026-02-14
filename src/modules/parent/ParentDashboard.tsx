@@ -145,7 +145,7 @@ export default function ParentDashboard() {
                     height: 48,
                     borderRadius: "50%",
                     background: enfant.isBanned ? colors.danger : colors.info,
-                    color: "#fff",
+                    color: colors.onGradient,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",

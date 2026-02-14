@@ -85,9 +85,11 @@ service cloud.firestore {
       allow write: if isAdminOrGestionnaire();
     }
 
-    // COURS - Staff peut gerer, eleves/parents lecture
+    // COURS - Staff peut gerer, eleves/parents lecture de leur classe
     match /cours/{coursId} {
-      allow read: if signedIn();
+      allow read: if isStaff() ||
+        (isEleve() && resource.data.classe == get(/databases/$(database)/documents/eleves/$(getUserData().eleveId)).data.classe) ||
+        isParent();
       allow write: if isStaff();
     }
 
@@ -152,12 +154,6 @@ service cloud.firestore {
       allow write: if isAdminOrGestionnaire();
     }
 
-    // CRENEAUX - Staff peut gerer, tous peuvent lire
-    match /creneaux/{creneauId} {
-      allow read: if signedIn();
-      allow write: if isAdminOrGestionnaire();
-    }
-
     // CLASSES - Staff peut gerer, tous peuvent lire
     match /classes/{classeId} {
       allow read: if signedIn();
@@ -186,6 +182,34 @@ service cloud.firestore {
     match /online_users/{userId} {
       allow read: if isAdminOrGestionnaire();
       allow write: if signedIn() && request.auth.uid == userId;
+    }
+
+    // DEPENSES - Admin/gestionnaire uniquement
+    match /depenses/{depenseId} {
+      allow read, write: if isAdminOrGestionnaire();
+    }
+
+    // SALAIRES - Admin/gestionnaire uniquement
+    match /salaires/{salaireId} {
+      allow read, write: if isAdminOrGestionnaire();
+    }
+
+    // AUDIT LOGS - Admin/gestionnaire lecture, ecriture par CF
+    match /audit_logs/{logId} {
+      allow read: if isAdminOrGestionnaire();
+      allow write: if false;
+    }
+
+    // CONFIG - Admin uniquement
+    match /config/{docId} {
+      allow read: if isAdminOrGestionnaire();
+      allow write: if isAdmin();
+    }
+
+    // EMPLOI DU TEMPS
+    match /emploi_du_temps/{creneauId} {
+      allow read: if signedIn();
+      allow write: if isAdminOrGestionnaire();
     }
   }
 }

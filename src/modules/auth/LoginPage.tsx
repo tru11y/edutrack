@@ -30,7 +30,7 @@ export default function LoginPage() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      background: colors.gradientPrimary,
       padding: 20
     }}>
       {/* Background pattern */}
@@ -59,7 +59,7 @@ export default function LoginPage() {
           <div style={{
             width: 64,
             height: 64,
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: colors.gradientPrimary,
             borderRadius: 16,
             display: "flex",
             alignItems: "center",
@@ -67,7 +67,7 @@ export default function LoginPage() {
             margin: "0 auto 20px",
             boxShadow: "0 10px 20px -5px rgba(102, 126, 234, 0.4)"
           }}>
-            <span style={{ fontSize: 28, color: "#fff", fontWeight: 700 }}>E</span>
+            <span style={{ fontSize: 28, color: colors.onGradient, fontWeight: 700 }}>E</span>
           </div>
           <h1 style={{
             fontSize: 28,
@@ -134,8 +134,8 @@ export default function LoginPage() {
                 color: colors.text
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = "#667eea";
-                e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                e.target.style.borderColor = colors.primary;
+                e.target.style.boxShadow = `0 0 0 3px ${colors.primary}1a`;
               }}
               onBlur={(e) => {
                 e.target.style.borderColor = colors.border;
@@ -173,8 +173,8 @@ export default function LoginPage() {
                 color: colors.text
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = "#667eea";
-                e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                e.target.style.borderColor = colors.primary;
+                e.target.style.boxShadow = `0 0 0 3px ${colors.primary}1a`;
               }}
               onBlur={(e) => {
                 e.target.style.borderColor = colors.border;
@@ -191,25 +191,25 @@ export default function LoginPage() {
               padding: "14px 24px",
               fontSize: 15,
               fontWeight: 600,
-              color: "#fff",
+              color: colors.onGradient,
               background: loading
-                ? "#a5b4fc"
-                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                ? colors.textLight
+                : colors.gradientPrimary,
               border: "none",
               borderRadius: 12,
               cursor: loading ? "not-allowed" : "pointer",
               transition: "transform 0.2s, box-shadow 0.2s",
-              boxShadow: "0 4px 14px 0 rgba(102, 126, 234, 0.4)"
+              boxShadow: colors.shadowPrimary
             }}
             onMouseEnter={(e) => {
               if (!loading) {
                 e.currentTarget.style.transform = "translateY(-1px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px 0 rgba(102, 126, 234, 0.5)";
+                e.currentTarget.style.boxShadow = colors.shadowPrimary;
               }
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 4px 14px 0 rgba(102, 126, 234, 0.4)";
+              e.currentTarget.style.boxShadow = colors.shadowPrimary;
             }}
           >
             {loading ? (
@@ -218,7 +218,7 @@ export default function LoginPage() {
                   width: 18,
                   height: 18,
                   border: "2px solid rgba(255,255,255,0.3)",
-                  borderTopColor: "#fff",
+                  borderTopColor: colors.onGradient,
                   borderRadius: "50%",
                   animation: "spin 0.8s linear infinite"
                 }} />

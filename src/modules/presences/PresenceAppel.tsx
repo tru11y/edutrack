@@ -21,7 +21,9 @@ interface Props {
   heureFin: string;
 }
 
-type LockStatus = "not-started" | "in-progress" | "ended" | "invalid-date" | "no-data";
+type LockStatus = "not-started" | "in-progress" | "grace-period" | "ended" | "invalid-date" | "no-data";
+
+const GRACE_PERIOD_MS = 15 * 60 * 1000; // 15 minutes après la fin du cours
 
 function computeLockStatus(date: string, heureDebut: string, heureFin: string): { isLocked: boolean; status: LockStatus } {
   if (!date || !heureDebut || !heureFin) {
@@ -41,6 +43,10 @@ function computeLockStatus(date: string, heureDebut: string, heureFin: string): 
   }
 
   if (now > coursEnd) {
+    // Période de grâce de 15 min après la fin pour ajouter retardataires
+    if (now.getTime() <= coursEnd.getTime() + GRACE_PERIOD_MS) {
+      return { isLocked: false, status: "grace-period" };
+    }
     return { isLocked: true, status: "ended" };
   }
 
@@ -200,44 +206,54 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
     setSelectedEleveId("");
   };
 
+  const [saveError, setSaveError] = useState("");
+
   const handleSave = async () => {
     if (isLocked) {
-      alert("L'appel ne peut être modifié que pendant la durée du cours.");
+      alert("L'appel ne peut plus être modifié (délai de 15 min après la fin dépassé).");
       return;
     }
 
     setLoading(true);
+    setSaveError("");
 
-    const presents = presences
-      .filter((p) => p.statut === "present" || p.statut === "retard")
-      .map((p) => p.eleveId);
+    try {
+      const presents = presences
+        .filter((p) => p.statut === "present" || p.statut === "retard")
+        .map((p) => p.eleveId);
 
-    // 1) sauvegarde des présences via Cloud Function (Pattern B)
-    await marquerPresenceBatchSecure({
-      coursId,
-      date,
-      classe,
-      presences: presences.map((p) => ({
-        eleveId: p.eleveId,
-        statut: p.statut,
-        minutesRetard: p.minutesRetard,
-      })),
-    });
+      // 1) sauvegarde des présences via Cloud Function
+      await marquerPresenceBatchSecure({
+        coursId,
+        date,
+        classe,
+        presences: presences.map((p) => ({
+          eleveId: p.eleveId,
+          statut: p.statut,
+          minutesRetard: p.statut === "retard" ? (p.minutesRetard || 0) : undefined,
+        })),
+      });
 
-    // 2) écriture auto dans le cahier de texte
-    await createCahierEntry({
-      coursId,
-      date,
-      classe,
-      profId: user!.uid,
-      profNom: user?.email?.split("@")[0] || "Professeur",
-      eleves: presents,
-      contenu: contenu.trim(),
-      devoirs: devoirs.trim() || undefined,
-    });
+      // 2) écriture auto dans le cahier de texte
+      await createCahierEntry({
+        coursId,
+        date,
+        classe,
+        profId: user!.uid,
+        profNom: user?.email?.split("@")[0] || "Professeur",
+        eleves: presents,
+        contenu: contenu.trim(),
+        devoirs: devoirs.trim() || undefined,
+      });
 
-    setLoading(false);
-    alert("Présences + cahier enregistrés");
+      alert("Présences + cahier enregistrés");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erreur lors de l'enregistrement";
+      setSaveError(message);
+      console.error("Erreur sauvegarde appel:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (initialLoading) {
@@ -245,13 +261,17 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
   }
 
   const statusMessages: Record<LockStatus, string> = {
-    "not-started": "⏳ Le cours n'a pas encore commencé",
-    "ended": "🔒 Cours terminé — lecture seule",
-    "in-progress": "✅ Appel en cours",
-    "invalid-date": "⚠️ Date invalide",
+    "not-started": "Le cours n'a pas encore commence",
+    "grace-period": "Cours termine - vous avez 15 min pour modifier l'appel",
+    "ended": "Cours termine - delai de modification depasse",
+    "in-progress": "Appel en cours",
+    "invalid-date": "Date invalide",
     "no-data": "",
   };
   const statusMessage = statusMessages[status];
+  const statusColor = status === "in-progress" ? colors.success
+    : status === "grace-period" ? colors.warning
+    : colors.danger;
 
   return (
     <div className="space-y-6">
@@ -261,7 +281,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
         {statusMessage && (
           <span
             className="text-sm font-medium"
-            style={{ color: status === "in-progress" ? colors.success : colors.danger }}
+            style={{ color: statusColor }}
           >
             {statusMessage}
           </span>
@@ -324,7 +344,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
           <button
             onClick={handleAddEleve}
             className="px-3 py-2 rounded"
-            style={{ background: colors.primary, color: "#fff" }}
+            style={{ background: colors.primary, color: colors.onGradient }}
           >
             Ajouter
           </button>
@@ -400,7 +420,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
                   <button
                     onClick={() => _handleExclude(presence.eleveId)}
                     className="text-xs px-2 py-1 rounded"
-                    style={{ background: colors.danger, color: "#fff" }}
+                    style={{ background: colors.danger, color: colors.onGradient }}
                   >
                     Exclure
                   </button>
@@ -412,6 +432,12 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
         </tbody>
       </table>
 
+      {saveError && (
+        <div className="p-3 rounded" style={{ background: colors.dangerBg, border: `1px solid ${colors.danger}40` }}>
+          <p className="text-sm" style={{ color: colors.danger, margin: 0 }}>{saveError}</p>
+        </div>
+      )}
+
       {!isLocked && (
         <button
           onClick={handleSave}
@@ -420,8 +446,8 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
           style={{ background: colors.text, color: colors.bg }}
         >
           {loading
-            ? "Enregistrement…"
-            : "💾 Enregistrer appel + cahier"}
+            ? "Enregistrement..."
+            : "Enregistrer appel + cahier"}
         </button>
       )}
 

@@ -1,14 +1,14 @@
 import * as functions from "firebase-functions";
 import { db } from "../../firebase";
-import { verifyAdmin, verifyAdminOrGestionnaire } from "../../helpers/auth";
+import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
 
 export const getAdminDashboardStats = functions
   .region("europe-west1")
   .https.onCall(async (_data: unknown, context) => {
     requireAuth(context.auth?.uid);
-    const isAdmin = await verifyAdmin(context.auth!.uid);
-    requirePermission(isAdmin, "Seuls les administrateurs peuvent acceder aux statistiques.");
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent acceder aux statistiques.");
 
     try {
       const [elevesSnap, profsSnap, classesSnap, paiementsSnap, depensesSnap, salairesSnap] =

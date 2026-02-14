@@ -60,7 +60,7 @@ function NavItem({ to, children }: { to: string; children: React.ReactNode }) {
       className="px-4 py-2 rounded-lg text-sm font-medium transition"
       style={({ isActive }) => ({
         background: isActive ? colors.primary : "transparent",
-        color: isActive ? "#fff" : colors.textSecondary,
+        color: isActive ? colors.onGradient : colors.textSecondary,
       })}
     >
       {children}

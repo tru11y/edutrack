@@ -193,7 +193,7 @@ export default function CahierForm() {
 
           <div style={{ marginBottom: 24 }}>
             <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>Devoirs</label>
-            <textarea name="devoirs" value={form.devoirs} onChange={handleChange} rows={4} placeholder="Devoirs a faire pour la prochaine fois..." style={{ width: "100%", padding: "12px 14px", border: "1px solid #fde68a", borderRadius: 10, fontSize: 14, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit", background: colors.warningBg, color: colors.text }} />
+            <textarea name="devoirs" value={form.devoirs} onChange={handleChange} rows={4} placeholder="Devoirs a faire pour la prochaine fois..." style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.warning}40`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit", background: colors.warningBg, color: colors.text }} />
           </div>
 
           {error && (
@@ -203,7 +203,7 @@ export default function CahierForm() {
           )}
 
           <div style={{ display: "flex", gap: 12 }}>
-            <button type="submit" disabled={saving} style={{ padding: "14px 28px", background: isProf ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+            <button type="submit" disabled={saving} style={{ padding: "14px 28px", background: isProf ? `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)` : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`, color: colors.onGradient, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
               {saving ? "Enregistrement..." : (isEditing ? "Mettre a jour" : "Enregistrer")}
             </button>
             <button type="button" onClick={() => navigate(-1)} style={{ padding: "14px 28px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>

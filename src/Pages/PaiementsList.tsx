@@ -69,7 +69,7 @@ export default function PaiementsList() {
               </svg>
               Corbeille
             </Link>
-            <Link to="/paiements/nouveau" style={{ padding: "12px 20px", background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", color: "#fff", borderRadius: 10, textDecoration: "none", fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+            <Link to="/paiements/nouveau" style={{ padding: "12px 20px", background: colors.warning, color: colors.bgCard, borderRadius: 10, textDecoration: "none", fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>Nouveau
             </Link>
           </div>
@@ -78,7 +78,7 @@ export default function PaiementsList() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
         <div style={{ background: colors.bgCard, borderRadius: 12, padding: 20, border: `1px solid ${colors.border}` }}><p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 8px" }}>Total attendu</p><p style={{ fontSize: 24, fontWeight: 700, color: colors.text, margin: 0 }}>{stats.total.toLocaleString()} <span style={{ fontSize: 14, fontWeight: 500 }}>FCFA</span></p></div>
-        <div style={{ background: colors.successBg, borderRadius: 12, padding: 20, border: "1px solid #a7f3d0" }}><p style={{ fontSize: 13, color: colors.success, margin: "0 0 8px" }}>Total paye</p><p style={{ fontSize: 24, fontWeight: 700, color: colors.success, margin: 0 }}>{stats.paye.toLocaleString()} <span style={{ fontSize: 14, fontWeight: 500 }}>FCFA</span></p></div>
+        <div style={{ background: colors.successBg, borderRadius: 12, padding: 20, border: `1px solid ${colors.success}40` }}><p style={{ fontSize: 13, color: colors.success, margin: "0 0 8px" }}>Total paye</p><p style={{ fontSize: 24, fontWeight: 700, color: colors.success, margin: 0 }}>{stats.paye.toLocaleString()} <span style={{ fontSize: 14, fontWeight: 500 }}>FCFA</span></p></div>
         <div style={{ background: colors.dangerBg, borderRadius: 12, padding: 20, border: `1px solid ${colors.danger}` }}><p style={{ fontSize: 13, color: colors.danger, margin: "0 0 8px" }}>Reste a payer</p><p style={{ fontSize: 24, fontWeight: 700, color: colors.danger, margin: 0 }}>{stats.impaye.toLocaleString()} <span style={{ fontSize: 14, fontWeight: 500 }}>FCFA</span></p></div>
       </div>
 
@@ -107,10 +107,11 @@ export default function PaiementsList() {
       ) : (
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr style={{ background: colors.bg }}><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Eleve</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Mois</th><th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Montant</th><th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Paye</th><th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Statut</th><th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Actions</th></tr></thead>
+            <thead><tr style={{ background: colors.bg }}><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Ref</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Eleve</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Mois</th><th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Montant</th><th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Paye</th><th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Statut</th><th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Actions</th></tr></thead>
             <tbody>
               {filtered.map((p) => (
                 <tr key={p.id} style={{ borderTop: `1px solid ${colors.border}` }}>
+                  <td style={{ padding: "16px 20px" }}><span style={{ fontSize: 12, fontFamily: "monospace", color: colors.textMuted }}>{p.reference || "—"}</span></td>
                   <td style={{ padding: "16px 20px" }}><p style={{ margin: 0, fontWeight: 500, color: colors.text }}>{p.eleveNom}</p></td>
                   <td style={{ padding: "16px 20px", color: colors.textMuted, fontSize: 14 }}>{new Date(p.mois + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</td>
                   <td style={{ padding: "16px 20px", textAlign: "right", fontWeight: 500, color: colors.text }}>{(p.montantTotal || 0).toLocaleString()} FCFA</td>

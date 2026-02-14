@@ -28,7 +28,7 @@ export default function Button({
   const variantStyles: Record<Variant, React.CSSProperties> = {
     primary: {
       background: colors.primary,
-      color: "#fff",
+      color: colors.onGradient,
     },
     secondary: {
       background: colors.bgSecondary,
@@ -37,7 +37,7 @@ export default function Button({
     },
     danger: {
       background: colors.danger,
-      color: "#fff",
+      color: colors.onGradient,
     },
   };
 

@@ -183,7 +183,7 @@ export default function AdminCahierList() {
                 {f.label}
                 <span style={{
                   background: filter === f.value ? f.color : colors.bgSecondary,
-                  color: filter === f.value ? "#fff" : colors.textMuted,
+                  color: filter === f.value ? colors.onGradient : colors.textMuted,
                   padding: "2px 8px",
                   borderRadius: 20,
                   fontSize: 11,

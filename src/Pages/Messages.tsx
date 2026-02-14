@@ -211,7 +211,7 @@ export default function Messages() {
                     padding: 16,
                     borderRadius: 16,
                     background: isMe
-                      ? (isProf ? `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)` : `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`)
+                      ? (isProf ? `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)` : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`)
                       : colors.bgSecondary,
                     borderBottomRightRadius: isMe ? 4 : 16,
                     borderBottomLeftRadius: isMe ? 16 : 4,
@@ -229,7 +229,7 @@ export default function Messages() {
                           height: 20,
                           borderRadius: 4,
                           background: isMe ? "rgba(255,255,255,0.2)" : colors.dangerBg,
-                          color: isMe ? "#fff" : colors.danger,
+                          color: isMe ? colors.onGradient : colors.danger,
                           border: "none",
                           cursor: "pointer",
                           display: "flex",
@@ -256,7 +256,7 @@ export default function Messages() {
                         </span>
                       </div>
                     )}
-                    <p style={{ margin: 0, fontSize: 14, color: isMe ? "#fff" : colors.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{message.contenu}</p>
+                    <p style={{ margin: 0, fontSize: 14, color: isMe ? colors.onGradient : colors.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{message.contenu}</p>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8, gap: 8 }}>
                       {destLabel && (
                         <span style={{ fontSize: 10, color: isMe ? "rgba(255,255,255,0.7)" : colors.textMuted, background: isMe ? "rgba(255,255,255,0.15)" : colors.border, padding: "2px 6px", borderRadius: 4 }}>
@@ -313,7 +313,7 @@ export default function Messages() {
 
           <div style={{ display: "flex", gap: 12 }}>
             <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Ecrivez votre message..." style={{ flex: 1, padding: "14px 18px", border: `1px solid ${colors.border}`, borderRadius: 12, fontSize: 14, outline: "none", background: colors.bgInput, color: colors.text }} />
-            <button type="submit" disabled={sending || !newMessage.trim()} style={{ padding: "14px 24px", background: sending || !newMessage.trim() ? colors.border : (isProf ? `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)` : `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`), color: sending || !newMessage.trim() ? colors.textMuted : "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 500, cursor: sending || !newMessage.trim() ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+            <button type="submit" disabled={sending || !newMessage.trim()} style={{ padding: "14px 24px", background: sending || !newMessage.trim() ? colors.border : (isProf ? `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)` : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`), color: sending || !newMessage.trim() ? colors.textMuted : colors.onGradient, border: "none", borderRadius: 12, fontSize: 14, fontWeight: 500, cursor: sending || !newMessage.trim() ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M16.5 1.5L8.25 9.75M16.5 1.5L11.25 16.5L8.25 9.75M16.5 1.5L1.5 6.75L8.25 9.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Envoyer
             </button>

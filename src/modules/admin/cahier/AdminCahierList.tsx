@@ -173,7 +173,7 @@ export default function AdminCahierList() {
               marginTop: 16,
               padding: "10px 20px",
               background: colors.primary,
-              color: "#fff",
+              color: colors.onGradient,
               border: "none",
               borderRadius: 8,
               cursor: "pointer",

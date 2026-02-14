@@ -68,10 +68,10 @@ export function StatCard({ label, value, color = "primary", icon }: StatCardProp
 
   const colorMap = {
     primary: { bg: colors.primaryBg, border: colors.primary + "40", text: colors.primary, value: colors.primaryHover },
-    success: { bg: colors.successBg, border: colors.success + "40", text: colors.success, value: "#059669" },
-    warning: { bg: colors.warningBg, border: colors.warning + "40", text: colors.warning, value: "#b45309" },
-    danger: { bg: colors.dangerBg, border: colors.danger + "40", text: colors.danger, value: "#dc2626" },
-    info: { bg: colors.infoBg, border: colors.info + "40", text: colors.info, value: "#1d4ed8" },
+    success: { bg: colors.successBg, border: colors.success + "40", text: colors.success, value: colors.success },
+    warning: { bg: colors.warningBg, border: colors.warning + "40", text: colors.warning, value: colors.warning },
+    danger: { bg: colors.dangerBg, border: colors.danger + "40", text: colors.danger, value: colors.danger },
+    info: { bg: colors.infoBg, border: colors.info + "40", text: colors.info, value: colors.info },
   };
 
   const colorStyle = colorMap[color];

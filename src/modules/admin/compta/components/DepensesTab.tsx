@@ -38,7 +38,7 @@ export default function DepensesTab({
         <span style={{ fontSize: 14, color: colors.textMuted }}>
           Total: <strong style={{ color: colors.text }}>{formatMontant(totalDepenses)}</strong>
         </span>
-        <button onClick={() => setShowForm(!showForm)} style={{ padding: "10px 20px", background: colors.primary, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+        <button onClick={() => setShowForm(!showForm)} style={{ padding: "10px 20px", background: colors.primary, color: colors.bgCard, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
           {showForm ? "Annuler" : "+ Depense"}
         </button>
       </div>
@@ -123,7 +123,7 @@ function DepenseForm({
           <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required style={inputStyle} />
         </div>
       </div>
-      <button type="submit" disabled={submitting} style={{ padding: "10px 24px", background: colors.primary, color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.7 : 1 }}>
+      <button type="submit" disabled={submitting} style={{ padding: "10px 24px", background: colors.primary, color: colors.bgCard, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.7 : 1 }}>
         {submitting ? "Enregistrement..." : "Enregistrer"}
       </button>
     </form>

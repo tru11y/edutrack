@@ -46,7 +46,7 @@ export function ClassCard({
                 height: 48,
                 borderRadius: 12,
                 background: GRADIENTS.primary,
-                color: "#fff",
+                color: colors.onGradient,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

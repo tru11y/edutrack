@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { getAllEleves } from "../../modules/eleves/eleve.service";
+import { getAllProfesseurs } from "../../modules/professeurs/professeur.service";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { LoadingSpinner } from "../../components/ui/Skeleton";
 import { GRADIENTS } from "../../constants";
 import { ClassCard, ClassForm, GenderStatsCard, MatieresModal, ScheduleModal } from "./components";
 import type { Eleve } from "../../modules/eleves/eleve.types";
+import type { Professeur } from "../../modules/professeurs/professeur.types";
 import type { ClasseData, Matiere, ScheduleSlot } from "./types";
 
 export default function Classes() {
@@ -20,6 +22,7 @@ export default function Classes() {
   const [classes, setClasses] = useState<ClasseData[]>([]);
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [matieres, setMatieres] = useState<Matiere[]>([]);
+  const [professeurs, setProfesseurs] = useState<Professeur[]>([]);
   const [loading, setLoading] = useState(true);
 
   // UI state
@@ -31,16 +34,18 @@ export default function Classes() {
   // Data loading
   const loadData = useCallback(async () => {
     try {
-      const [classesSnap, matieresSnap, elevesData] = await Promise.all([
+      const [classesSnap, matieresSnap, elevesData, profsData] = await Promise.all([
         getDocs(collection(db, "classes")),
         getDocs(collection(db, "matieres")),
         getAllEleves(),
+        getAllProfesseurs(),
       ]);
 
       const classesData = classesSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as ClasseData[];
       const matieresData = matieresSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as Matiere[];
 
       setMatieres(matieresData.sort((a, b) => a.nom.localeCompare(b.nom)));
+      setProfesseurs(profsData.filter((p) => p.statut === "actif"));
       setEleves(elevesData);
 
       // Ajouter les classes des eleves qui n'existent pas encore
@@ -112,7 +117,7 @@ export default function Classes() {
   const handleAddSlot = async (slot: ScheduleSlot) => {
     if (!selectedClasse?.id) return;
     const currentSchedule = selectedClasse.emploiDuTemps || [];
-    const updatedSchedule = [...currentSchedule, { ...slot, matiere: slot.matiere.trim(), profNom: slot.profNom?.trim() || "" }];
+    const updatedSchedule = [...currentSchedule, { ...slot, matiere: slot.matiere.trim(), profId: slot.profId || "", profNom: slot.profNom?.trim() || "" }];
     await updateDoc(doc(db, "classes", selectedClasse.id), { emploiDuTemps: updatedSchedule });
     await loadData();
     setSelectedClasse((prev) => (prev ? { ...prev, emploiDuTemps: updatedSchedule } : null));
@@ -239,7 +244,7 @@ export default function Classes() {
                 style={{
                   padding: "12px 20px",
                   background: showForm ? colors.bgSecondary : GRADIENTS.primary,
-                  color: showForm ? colors.textMuted : "#fff",
+                  color: showForm ? colors.textMuted : colors.onGradient,
                   border: "none",
                   borderRadius: 10,
                   fontSize: 14,
@@ -306,6 +311,7 @@ export default function Classes() {
         <ScheduleModal
           classe={selectedClasse}
           matieres={matieres}
+          professeurs={professeurs}
           isAdmin={isAdmin}
           onClose={() => {
             setShowScheduleModal(false);

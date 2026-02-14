@@ -279,7 +279,7 @@ export default function EleveForm() {
           )}
 
           <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
-            <button type="submit" disabled={loading} style={{ padding: "14px 28px", background: `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`, color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}>
+            <button type="submit" disabled={loading} style={{ padding: "14px 28px", background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`, color: colors.onGradient, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}>
               {loading ? "Enregistrement..." : isEdit ? "Mettre a jour" : "Creer l'eleve"}
             </button>
             <button type="button" onClick={() => navigate(-1)} style={{ padding: "14px 28px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>

@@ -174,7 +174,7 @@ export default function AdminsList() {
                 <span style={{
                   padding: "4px 10px",
                   background: admin.isActive ? "rgba(16, 185, 129, 0.3)" : "rgba(239, 68, 68, 0.3)",
-                  color: "#fff",
+                  color: colors.onGradient,
                   borderRadius: 20,
                   fontSize: 11,
                   fontWeight: 600

@@ -127,7 +127,7 @@ export default function AdminStats() {
           label="Professeurs"
           value={totalProfs}
           icon="teacher"
-          color="#8b5cf6"
+          color={colors.primary}
           colors={colors}
         />
         <KPICard
@@ -166,7 +166,7 @@ export default function AdminStats() {
           <FinanceCard label="Total attendu" value={stats.totalAttendu} color={colors.primary} colors={colors} />
           <FinanceCard label="Impayes" value={stats.totalImpayes} color={colors.danger} colors={colors} />
           <FinanceCard label="Taux recouvrement" value={`${tauxRecouvrement}%`} isPercent color={tauxRecouvrement >= 80 ? colors.success : colors.warning} colors={colors} />
-          <FinanceCard label="Nb paiements" value={stats.nombrePaiements} isCount color="#8b5cf6" colors={colors} />
+          <FinanceCard label="Nb paiements" value={stats.nombrePaiements} isCount color={colors.primary} colors={colors} />
         </div>
       </div>
 

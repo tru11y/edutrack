@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { useTheme } from "../../context/ThemeContext";
 
 type ToastType = "success" | "error" | "info" | "warning";
 
@@ -18,14 +19,18 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | null>(null);
 
-const toastStyles: Record<ToastType, { bg: string; icon: string }> = {
-  success: { bg: "linear-gradient(135deg, #10b981 0%, #059669 100%)", icon: "✓" },
-  error: { bg: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)", icon: "✕" },
-  warning: { bg: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", icon: "!" },
-  info: { bg: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)", icon: "i" },
-};
+function getToastStyles(colors: ReturnType<typeof useTheme>["colors"]): Record<ToastType, { bg: string; icon: string }> {
+  return {
+    success: { bg: `linear-gradient(135deg, ${colors.success} 0%, ${colors.success} 100%)`, icon: "✓" },
+    error: { bg: `linear-gradient(135deg, ${colors.danger} 0%, ${colors.danger} 100%)`, icon: "✕" },
+    warning: { bg: `linear-gradient(135deg, ${colors.warning} 0%, ${colors.warning} 100%)`, icon: "!" },
+    info: { bg: colors.gradientPrimary, icon: "i" },
+  };
+}
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { colors } = useTheme();
+  const toastStyles = getToastStyles(colors);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const show = useCallback((message: string, type: ToastType = "info") => {
@@ -50,7 +55,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             style={{
               background: toastStyles[t.type].bg,
-              color: "#fff",
+              color: colors.onGradient,
               padding: "14px 20px",
               borderRadius: 12,
               boxShadow: "0 10px 40px rgba(0,0,0,.2)",

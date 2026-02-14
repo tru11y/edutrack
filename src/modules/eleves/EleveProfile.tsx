@@ -72,7 +72,7 @@ export default function EleveProfile() {
         <Link
           to={`/admin/eleves/${eleve.id}/paiements`}
           className="px-4 py-2 rounded"
-          style={{ background: colors.primary, color: "#fff" }}
+          style={{ background: colors.primary, color: colors.onGradient }}
         >
           Paiements
         </Link>

@@ -1,10 +1,4 @@
-export type Jour =
-  | "Lundi"
-  | "Mardi"
-  | "Mercredi"
-  | "Jeudi"
-  | "Vendredi"
-  | "Samedi";
+import type { Jour } from "../../constants";
 
 export interface Creneau {
   id?: string;

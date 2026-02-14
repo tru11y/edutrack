@@ -29,7 +29,7 @@ export default function ProfesseursList() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{
-            width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: "#8b5cf6",
+            width: 40, height: 40, border: `3px solid ${colors.border}`, borderTopColor: colors.primary,
             borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px"
           }} />
           <p style={{ color: colors.textMuted, fontSize: 14 }}>Chargement des professeurs...</p>
@@ -49,8 +49,8 @@ export default function ProfesseursList() {
             to="/admin/professeurs/create"
             style={{
               padding: "10px 20px",
-              background: "linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)",
-              color: "#fff",
+              background: colors.gradientPrimary,
+              color: colors.onGradient,
               borderRadius: 10,
               textDecoration: "none",
               fontSize: 14,
@@ -58,7 +58,7 @@ export default function ProfesseursList() {
               display: "flex",
               alignItems: "center",
               gap: 8,
-              boxShadow: "0 4px 14px -3px rgba(139, 92, 246, 0.4)"
+              boxShadow: colors.shadowPrimary
             }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -82,8 +82,8 @@ export default function ProfesseursList() {
       }}>
         <div style={{ position: "relative", maxWidth: 400 }}>
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>
-            <circle cx="8" cy="8" r="5.5" stroke="#94a3b8" strokeWidth="1.5"/>
-            <path d="M12 12L16 16" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="8" cy="8" r="5.5" stroke={colors.textLight} strokeWidth="1.5"/>
+            <path d="M12 12L16 16" stroke={colors.textLight} strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
           <input
             type="text"
@@ -120,8 +120,8 @@ export default function ProfesseursList() {
             margin: "0 auto 16px"
           }}>
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <path d="M14 17.5L4.67 11.67L14 5.83L23.33 11.67L14 17.5Z" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4.67 11.67V18.67L14 24.5L23.33 18.67V11.67" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M14 17.5L4.67 11.67L14 5.83L23.33 11.67L14 17.5Z" stroke={colors.textLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4.67 11.67V18.67L14 24.5L23.33 18.67V11.67" stroke={colors.textLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
           <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>
@@ -141,7 +141,7 @@ export default function ProfesseursList() {
                 transition: "all 0.2s"
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#8b5cf6";
+                e.currentTarget.style.borderColor = colors.primary;
                 e.currentTarget.style.boxShadow = "0 10px 40px -10px rgba(139, 92, 246, 0.2)";
               }}
               onMouseLeave={(e) => {
@@ -152,9 +152,9 @@ export default function ProfesseursList() {
               <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
                 <div style={{
                   width: 56, height: 56, borderRadius: 14,
-                  background: "linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)",
+                  background: colors.gradientPrimary,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#fff", fontWeight: 600, fontSize: 18,
+                  color: colors.onGradient, fontWeight: 600, fontSize: 18,
                   flexShrink: 0
                 }}>
                   {prof.prenom?.[0]}{prof.nom?.[0]}
@@ -179,8 +179,8 @@ export default function ProfesseursList() {
                     prof.matieres.map((m, i) => (
                       <span key={i} style={{
                         padding: "4px 10px",
-                        background: "#f5f3ff",
-                        color: "#7c3aed",
+                        background: colors.primaryBg,
+                        color: colors.primary,
                         borderRadius: 6,
                         fontSize: 12,
                         fontWeight: 500

@@ -255,7 +255,7 @@ export default function Dashboard() {
             style={{
               padding: "14px 16px",
               background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
-              color: "#fff", borderRadius: 10, textDecoration: "none",
+              color: colors.onGradient, borderRadius: 10, textDecoration: "none",
               fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 10,
             }}
           >

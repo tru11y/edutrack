@@ -63,7 +63,7 @@ export default function ElevesList() {
             style={{
               padding: "10px 20px",
               background: `linear-gradient(135deg, ${colors.info} 0%, ${colors.primary} 100%)`,
-              color: "#fff",
+              color: colors.onGradient,
               borderRadius: 10,
               textDecoration: "none",
               fontSize: 14,
@@ -71,7 +71,7 @@ export default function ElevesList() {
               display: "flex",
               alignItems: "center",
               gap: 8,
-              boxShadow: `0 4px 14px -3px ${colors.primary}66`
+              boxShadow: colors.shadowPrimary
             }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -227,10 +227,10 @@ export default function ElevesList() {
                       <div style={{
                         width: 40, height: 40, borderRadius: "50%",
                         background: e.isBanned
-                          ? `linear-gradient(135deg, ${colors.danger} 0%, #dc2626 100%)`
+                          ? `linear-gradient(135deg, ${colors.danger} 0%, ${colors.danger} 100%)`
                           : `linear-gradient(135deg, ${colors.info} 0%, ${colors.primary} 100%)`,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        color: "#fff", fontWeight: 600, fontSize: 14
+                        color: colors.onGradient, fontWeight: 600, fontSize: 14
                       }}>
                         {e.prenom?.[0]}{e.nom?.[0]}
                       </div>

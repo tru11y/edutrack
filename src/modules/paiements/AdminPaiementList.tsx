@@ -77,8 +77,8 @@ export default function AdminPaiementsList() {
             to="/admin/eleves"
             style={{
               padding: "10px 20px",
-              background: `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
-              color: "#fff",
+              background: colors.gradientPrimary,
+              color: colors.onGradient,
               borderRadius: 10,
               textDecoration: "none",
               fontSize: 14,
@@ -86,7 +86,7 @@ export default function AdminPaiementsList() {
               display: "flex",
               alignItems: "center",
               gap: 8,
-              boxShadow: "0 4px 14px -3px rgba(99, 102, 241, 0.4)"
+              boxShadow: colors.shadowPrimary
             }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -199,7 +199,7 @@ export default function AdminPaiementsList() {
                 {f.label}
                 <span style={{
                   background: filter === f.value ? (f.color || colors.primary) : colors.border,
-                  color: filter === f.value ? "#fff" : colors.textMuted,
+                  color: filter === f.value ? colors.onGradient : colors.textMuted,
                   padding: "2px 8px",
                   borderRadius: 20,
                   fontSize: 11,
@@ -262,9 +262,9 @@ export default function AdminPaiementsList() {
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{
                         width: 40, height: 40, borderRadius: "50%",
-                        background: `linear-gradient(135deg, ${colors.primary} 0%, #8b5cf6 100%)`,
+                        background: colors.gradientPrimary,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        color: "#fff", fontWeight: 600, fontSize: 14
+                        color: colors.onGradient, fontWeight: 600, fontSize: 14
                       }}>
                         {p.eleveNom?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?"}
                       </div>

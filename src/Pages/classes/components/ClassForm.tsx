@@ -110,7 +110,7 @@ export function ClassForm({ onSubmit, onCancel, existingNames }: ClassFormProps)
             style={{
               padding: "12px 24px",
               background: isDisabled ? colors.border : GRADIENTS.primary,
-              color: isDisabled ? colors.textMuted : "#fff",
+              color: isDisabled ? colors.textMuted : colors.onGradient,
               border: "none",
               borderRadius: 10,
               fontSize: 14,

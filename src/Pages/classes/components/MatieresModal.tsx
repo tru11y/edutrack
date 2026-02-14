@@ -151,7 +151,7 @@ export function MatieresModal({ matieres, onClose, onAdd, onUpdate, onDelete }: 
                         flex: 1,
                         padding: "10px 20px",
                         background: isUpdateDisabled ? colors.border : GRADIENTS.primary,
-                        color: isUpdateDisabled ? colors.textMuted : "#fff",
+                        color: isUpdateDisabled ? colors.textMuted : colors.onGradient,
                         border: "none",
                         borderRadius: 8,
                         fontSize: 13,
@@ -184,7 +184,7 @@ export function MatieresModal({ matieres, onClose, onAdd, onUpdate, onDelete }: 
                     style={{
                       padding: "10px 20px",
                       background: isAddDisabled ? colors.border : GRADIENTS.primary,
-                      color: isAddDisabled ? colors.textMuted : "#fff",
+                      color: isAddDisabled ? colors.textMuted : colors.onGradient,
                       border: "none",
                       borderRadius: 8,
                       fontSize: 13,
