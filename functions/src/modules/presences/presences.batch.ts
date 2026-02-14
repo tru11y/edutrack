@@ -97,6 +97,31 @@ export const marquerPresenceBatch = functions
 
     const batch = db.batch();
 
+    // Creer/mettre a jour le document parent avec le resume de l'appel
+    const parentRef = db.collection("presences").doc(data.coursId);
+    const presencesSummary = data.presences.map((e) => ({
+      eleveId: e.eleveId,
+      statut: e.statut,
+      minutesRetard: e.statut === "retard" ? e.minutesRetard || 0 : undefined,
+      facturable: e.statut !== "absent",
+      statutMetier: "autorise",
+      message: "",
+    }));
+
+    batch.set(
+      parentRef,
+      {
+        coursId: data.coursId,
+        classe: data.classe,
+        date: data.date,
+        presences: presencesSummary,
+        marqueePar: context.auth!.uid,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    // Ecrire chaque appel individuel dans la subcollection
     for (const entry of data.presences) {
       const presenceRef = db
         .collection("presences")

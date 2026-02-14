@@ -2,7 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError, notFound } from "../../helpers/errors";
-import { isValidDate, isPositiveNumber, getLastDayOfMonth } from "../../helpers/validation";
+import { isValidDate, isValidMonth, isPositiveNumber, getLastDayOfMonth } from "../../helpers/validation";
 
 interface CreateDepenseData {
   libelle: string;
@@ -58,7 +58,7 @@ export const getDepenses = functions
       let snap;
 
       if (data?.mois) {
-        // Query par range de dates pour le mois specifie
+        requireArgument(isValidMonth(data.mois), "Format de mois invalide (attendu: YYYY-MM).");
         const startDate = `${data.mois}-01`;
         const endDate = getLastDayOfMonth(data.mois);
         snap = await db.collection("depenses")

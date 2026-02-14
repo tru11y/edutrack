@@ -11,6 +11,7 @@ import {
 } from "./compta.service";
 import { getAllPaiements } from "../../paiements/paiement.service";
 import { getAllProfesseurs } from "../../professeurs/professeur.service";
+import { useToast, ConfirmModal } from "../../../components/ui";
 import type { ComptaStats, Depense, Salaire, CreateDepenseParams, CreateSalaireParams } from "./compta.types";
 import type { Paiement } from "../../paiements/paiement.types";
 import type { Professeur } from "../../professeurs/professeur.types";
@@ -32,6 +33,10 @@ function formatMontant(n: number): string {
 
 export default function AdminComptaDashboard() {
   const { colors } = useTheme();
+  const toast = useToast();
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
   const [tab, setTab] = useState<Tab>("paiements");
   const [mois, setMois] = useState(getCurrentMonth());
   const [loading, setLoading] = useState(true);
@@ -131,9 +136,14 @@ export default function AdminComptaDashboard() {
     }
   };
 
-  const handleDeleteDepense = async (id: string) => {
-    if (!confirm("Supprimer cette depense ?")) return;
-    try { await deleteDepenseSecure(id); await loadData(); } catch (err) { console.error(err); }
+  const handleDeleteDepense = (id: string) => {
+    setConfirmState({
+      isOpen: true, title: "Supprimer la depense", message: "Supprimer cette depense ?", variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try { await deleteDepenseSecure(id); await loadData(); toast.success("Depense supprimee"); } catch (err) { console.error(err); toast.error("Erreur lors de la suppression"); }
+      },
+    });
   };
 
   const handleCreateSalaire = async (e: React.FormEvent) => {
@@ -225,6 +235,15 @@ export default function AdminComptaDashboard() {
       {tab === "depenses" && <DepensesTab depenses={depenses} colors={colors} showForm={showDepenseForm} setShowForm={setShowDepenseForm} form={depenseForm} setForm={setDepenseForm} onSubmit={handleCreateDepense} onDelete={handleDeleteDepense} submitting={submitting} />}
       {tab === "salaires" && <SalairesTab salaires={salaires} profs={profs} colors={colors} showForm={showSalaireForm} setShowForm={setShowSalaireForm} form={salaireForm} setForm={setSalaireForm} onSubmit={handleCreateSalaire} onToggleStatut={handleToggleSalaireStatut} submitting={submitting} mois={mois} />}
       {tab === "journal" && <JournalTab paiements={paiements} depenses={depenses} salaires={salaires} colors={colors} />}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

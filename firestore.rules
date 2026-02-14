@@ -132,20 +132,24 @@ service cloud.firestore {
       allow read, write: if isAdminOrGestionnaire();
     }
 
-    // CAHIER DE TEXTE - Admin via Cloud Function uniquement, autres staff peuvent lire directement
+    // CAHIER DE TEXTE - Staff peut lire, ecriture par prof/admin
     match /cahier/{docId} {
-      // Admin INTERDIT en lecture directe (doit utiliser Cloud Function getAllCahierEntries)
-      // Gestionnaire et Prof peuvent lire directement
-      allow read: if signedIn() && getUserData().role != "admin";
-      allow write: if isStaff();
+      allow read: if isStaff();
+      // Prof peut creer/modifier ses propres entrees, admin peut tout modifier
+      allow create: if isStaff();
+      allow update: if isAdmin() || (isProf() && resource.data.profId == request.auth.uid);
+      allow delete: if isAdminOrGestionnaire();
     }
 
     // MESSAGES - Tous peuvent lire/ecrire leurs messages
     match /messages/{messageId} {
       allow read: if signedIn();
       allow create: if signedIn();
-      // Seul l'auteur ou admin peut modifier/supprimer
-      allow update, delete: if isAdmin() || resource.data.senderId == request.auth.uid;
+      // Seul l'auteur ou admin peut supprimer
+      allow delete: if isAdmin() || resource.data.senderId == request.auth.uid;
+      // Modification: seul admin ou auteur, et seulement certains champs
+      allow update: if (isAdmin() || resource.data.senderId == request.auth.uid) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt', 'deletedAt']);
     }
 
     // ALERTS - Admin/gestionnaire peuvent gerer, tous peuvent lire
@@ -178,10 +182,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ONLINE USERS - Tous les utilisateurs connectes
+    // ONLINE USERS - Chaque utilisateur gere sa propre entree
     match /online_users/{userId} {
       allow read: if isAdminOrGestionnaire();
-      allow write: if signedIn() && request.auth.uid == userId;
+      allow create, update: if signedIn() && request.auth.uid == userId;
+      allow delete: if signedIn() && (request.auth.uid == userId || isAdmin());
     }
 
     // DEPENSES - Admin/gestionnaire uniquement
@@ -204,6 +209,12 @@ service cloud.firestore {
     match /config/{docId} {
       allow read: if isAdminOrGestionnaire();
       allow write: if isAdmin();
+    }
+
+    // MATIERES - Staff peut lire, admin/gestionnaire peut gerer
+    match /matieres/{matiereId} {
+      allow read: if signedIn();
+      allow write: if isAdminOrGestionnaire();
     }
 
     // EMPLOI DU TEMPS

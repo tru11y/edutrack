@@ -7,6 +7,7 @@ import { getAllProfesseurs } from "../../modules/professeurs/professeur.service"
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { LoadingSpinner } from "../../components/ui/Skeleton";
+import { useToast, ConfirmModal } from "../../components/ui";
 import { GRADIENTS } from "../../constants";
 import { ClassCard, ClassForm, GenderStatsCard, MatieresModal, ScheduleModal } from "./components";
 import type { Eleve } from "../../modules/eleves/eleve.types";
@@ -16,6 +17,7 @@ import type { ClasseData, Matiere, ScheduleSlot } from "./types";
 export default function Classes() {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const toast = useToast();
   const isAdmin = user?.role === "admin" || user?.role === "gestionnaire";
 
   // Data state
@@ -30,6 +32,9 @@ export default function Classes() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showMatieresModal, setShowMatieresModal] = useState(false);
   const [selectedClasse, setSelectedClasse] = useState<ClasseData | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   // Data loading
   const loadData = useCallback(async () => {
@@ -99,19 +104,25 @@ export default function Classes() {
     await loadData();
   };
 
-  const handleDeleteClasse = async (classe: ClasseData) => {
+  const handleDeleteClasse = (classe: ClasseData) => {
     const count = getElevesCount(classe.nom);
     if (count > 0) {
-      alert(`Impossible de supprimer: ${count} eleve(s) dans cette classe`);
+      toast.warning(`Impossible de supprimer: ${count} eleve(s) dans cette classe`);
       return;
     }
     if (!classe.id) {
-      alert("Cette classe n'est pas enregistree dans la base");
+      toast.error("Cette classe n'est pas enregistree dans la base");
       return;
     }
-    if (!window.confirm(`Supprimer la classe "${classe.nom}" ?`)) return;
-    await deleteDoc(doc(db, "classes", classe.id));
-    await loadData();
+    setConfirmState({
+      isOpen: true, title: "Supprimer la classe", message: `Supprimer la classe "${classe.nom}" ?`, variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        await deleteDoc(doc(db, "classes", classe.id!));
+        await loadData();
+        toast.success("Classe supprimee");
+      },
+    });
   };
 
   const handleAddSlot = async (slot: ScheduleSlot) => {
@@ -148,11 +159,17 @@ export default function Classes() {
     await loadData();
   };
 
-  const handleDeleteMatiere = async (matiere: Matiere) => {
+  const handleDeleteMatiere = (matiere: Matiere) => {
     if (!matiere.id) return;
-    if (!window.confirm(`Supprimer la matiere "${matiere.nom}" ?`)) return;
-    await deleteDoc(doc(db, "matieres", matiere.id));
-    await loadData();
+    setConfirmState({
+      isOpen: true, title: "Supprimer la matiere", message: `Supprimer la matiere "${matiere.nom}" ?`, variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        await deleteDoc(doc(db, "matieres", matiere.id!));
+        await loadData();
+        toast.success("Matiere supprimee");
+      },
+    });
   };
 
   // Stats
@@ -311,7 +328,7 @@ export default function Classes() {
         <ScheduleModal
           classe={selectedClasse}
           matieres={matieres}
-          professeurs={professeurs}
+          professeurs={professeurs.filter((p): p is Professeur & { id: string } => !!p.id)}
           isAdmin={isAdmin}
           onClose={() => {
             setShowScheduleModal(false);
@@ -331,6 +348,15 @@ export default function Classes() {
           onDelete={handleDeleteMatiere}
         />
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Timestamp } from "firebase/firestore";
 import { getAllPaiements } from "./paiement.service";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -14,6 +15,22 @@ interface Paiement {
   montantPaye: number;
   montantRestant: number;
   statut: "paye" | "partiel" | "impaye";
+  datePaiement?: Timestamp | Date;
+}
+
+function toDate(val: unknown): Date | null {
+  if (!val) return null;
+  if (val instanceof Timestamp) return val.toDate();
+  if (val instanceof Date) return val;
+  if (typeof val === "object" && "seconds" in val) return new Date((val as { seconds: number }).seconds * 1000);
+  if (typeof val === "string") return new Date(val);
+  return null;
+}
+
+function formatDate(val: unknown): string {
+  const d = toDate(val);
+  if (!d || isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function AdminPaiementsList() {
@@ -240,6 +257,7 @@ export default function AdminPaiementsList() {
               <tr style={{ background: colors.bgSecondary }}>
                 <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Eleve</th>
                 <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Mois</th>
+                <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Date</th>
                 {!isGestionnaire && <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Total</th>}
                 {!isGestionnaire && <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Paye</th>}
                 {!isGestionnaire && <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Reste</th>}
@@ -277,6 +295,7 @@ export default function AdminPaiementsList() {
                     </div>
                   </td>
                   <td style={{ padding: "16px 20px", fontSize: 14, color: colors.textSecondary }}>{p.mois}</td>
+                  <td style={{ padding: "16px 20px", fontSize: 14, color: colors.text }}>{formatDate(p.datePaiement)}</td>
                   {!isGestionnaire && (
                     <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 500, color: colors.text, textAlign: "right" }}>
                       {p.montantTotal.toLocaleString("fr-FR")} F

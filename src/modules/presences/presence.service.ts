@@ -33,6 +33,24 @@ export interface AppelDocument {
 export async function savePresencesForCours(payload: PresenceCoursPayload): Promise<void> {
   const { coursId, presences, classe, date } = payload;
 
+  // Creer le document parent avec le resume
+  const parentDoc = doc(db, "presences", coursId);
+  await setDoc(parentDoc, {
+    coursId,
+    classe,
+    date,
+    presences: presences.map((item) => ({
+      eleveId: item.eleveId,
+      statut: item.statut,
+      minutesRetard: item.minutesRetard ?? 0,
+      facturable: item.facturable ?? item.statut !== "absent",
+      statutMetier: item.statutMetier ?? "autorise",
+      message: item.message ?? "",
+    })),
+    updatedAt: new Date(),
+  }, { merge: true });
+
+  // Ecrire chaque appel dans la subcollection
   for (const item of presences) {
     const appelsRef = collection(db, "presences", coursId, "appels");
     const appelDoc = doc(appelsRef, item.eleveId);
@@ -81,15 +99,53 @@ export async function getPresencesByCours(coursId: string): Promise<PresenceDocu
   }];
 }
 
-/* ADMIN - top-level for backward compat */
+/* ADMIN - top-level documents + fallback subcollection read */
 
 export async function getAllPresences(): Promise<PresenceDocument[]> {
   const snap = await getDocs(presencesRef);
+  const results: PresenceDocument[] = [];
 
-  return snap.docs.map((d) => ({
-    id: d.id,
-    ...(d.data() as PresenceCoursPayload),
-  }));
+  for (const d of snap.docs) {
+    const data = d.data();
+
+    // Si le doc parent a deja le tableau presences (nouveau format)
+    if (data.presences && Array.isArray(data.presences) && data.presences.length > 0) {
+      results.push({
+        id: d.id,
+        coursId: data.coursId || d.id,
+        classe: data.classe || "",
+        date: data.date || "",
+        presences: data.presences,
+      });
+    } else if (data.classe && data.date) {
+      // Ancien format: lire la subcollection appels
+      const appelsSnap = await getDocs(collection(db, "presences", d.id, "appels"));
+      if (!appelsSnap.empty) {
+        const presenceItems: PresenceItem[] = appelsSnap.docs.map((a) => {
+          const ad = a.data();
+          const statut = ad.statut || "present";
+          const minutesRetard = ad.minutesRetard ?? 0;
+          return {
+            eleveId: ad.eleveId,
+            statut,
+            minutesRetard: minutesRetard || undefined,
+            facturable: estFacturable(statut, minutesRetard),
+            statutMetier: "autorise" as const,
+            message: "",
+          };
+        });
+        results.push({
+          id: d.id,
+          coursId: data.coursId || d.id,
+          classe: data.classe,
+          date: data.date,
+          presences: presenceItems,
+        });
+      }
+    }
+  }
+
+  return results;
 }
 
 /* ELEVE - collectionGroup query on "appels" subcollection */

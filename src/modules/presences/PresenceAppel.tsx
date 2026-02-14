@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useToast, ConfirmModal } from "../../components/ui";
 
 import { getAllEleves } from "../eleves/eleve.service";
 import { getElevesEligibles } from "../eleves/eleve.select.service";
@@ -56,10 +57,14 @@ function computeLockStatus(date: string, heureDebut: string, heureFin: string): 
 export default function PresenceAppel({ coursId, classe, date, heureDebut, heureFin }: Props) {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const toast = useToast();
 
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [presences, setPresences] = useState<PresenceItem[]>([]);
   const [allEleves, setAllEleves] = useState<Eleve[]>([]);
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   const [selectedEleveId, setSelectedEleveId] = useState("");
   const [contenu, setContenu] = useState("");
@@ -161,21 +166,18 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
     );
   };
 
-  const _handleExclude = async (eleveId: string) => {
+  const _handleExclude = (eleveId: string) => {
     if (isLocked) return;
-
-    const confirm = window.confirm(
-      "Exclure cet élève pour non paiement ?"
-    );
-
-    if (!confirm) return;
-
-    await banEleveByProf(eleveId, "Non paiement");
-
-    setEleves((prev) => prev.filter((e) => e.id !== eleveId));
-    setPresences((prev) => prev.filter((p) => p.eleveId !== eleveId));
-
-    alert("Élève exclu et signalé à l'administration");
+    setConfirmState({
+      isOpen: true, title: "Exclure l'eleve", message: "Exclure cet eleve pour non paiement ?", variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        await banEleveByProf(eleveId, "Non paiement");
+        setEleves((prev) => prev.filter((e) => e.id !== eleveId));
+        setPresences((prev) => prev.filter((p) => p.eleveId !== eleveId));
+        toast.success("Eleve exclu et signale a l'administration");
+      },
+    });
   };
 
   const handleAddEleve = () => {
@@ -186,7 +188,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
     if (!eleve) return;
 
     if (presences.some((p) => p.eleveId === eleve.id)) {
-      alert("Élève déjà présent");
+      toast.warning("Eleve deja present");
       return;
     }
 
@@ -210,7 +212,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
 
   const handleSave = async () => {
     if (isLocked) {
-      alert("L'appel ne peut plus être modifié (délai de 15 min après la fin dépassé).");
+      toast.warning("L'appel ne peut plus etre modifie (delai de 15 min apres la fin depasse).");
       return;
     }
 
@@ -246,7 +248,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
         devoirs: devoirs.trim() || undefined,
       });
 
-      alert("Présences + cahier enregistrés");
+      toast.success("Presences + cahier enregistres");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erreur lors de l'enregistrement";
       setSaveError(message);
@@ -451,6 +453,14 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
         </button>
       )}
 
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { moveCahierToTrash } from "../modules/cahier/cahier.service";
 import { getAllCahierEntriesSecure, type CahierEntryAdmin } from "../services/cloudFunctions";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useToast, ConfirmModal } from "../components/ui";
 import type { CahierEntry } from "../modules/cahier/cahier.types";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../services/firebase";
@@ -13,6 +14,7 @@ type CahierDisplay = CahierEntry & { id: string };
 export default function CahierList() {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const toast = useToast();
   const isAdmin = user?.role === "admin";
   const isGestionnaire = user?.role === "gestionnaire";
   const isProf = user?.role === "prof";
@@ -20,6 +22,9 @@ export default function CahierList() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterClasse, setFilterClasse] = useState("");
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
   const [filterDate, setFilterDate] = useState("");
 
   // Verifier si une entree est modifiable (moins de 24h)
@@ -107,21 +112,27 @@ export default function CahierList() {
     loadCahiers();
   }, [user?.uid, isProf, isAdmin, isGestionnaire]);
 
-  const handleDelete = async (cahier: CahierDisplay) => {
+  const handleDelete = (cahier: CahierDisplay) => {
     if (!cahier.id) return;
     if (!canDelete(cahier)) {
-      alert("Vous n'avez pas la permission de supprimer cette entree.");
+      toast.warning("Vous n'avez pas la permission de supprimer cette entree.");
       return;
     }
-    if (!window.confirm(`Supprimer cette entree du ${new Date(cahier.date).toLocaleDateString("fr-FR")} pour ${cahier.classe} ?\n\nElle sera deplacee dans la corbeille.`)) return;
-
-    try {
-      await moveCahierToTrash(cahier.id);
-      await loadCahiers();
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la suppression");
-    }
+    const dateLabel = new Date(cahier.date).toLocaleDateString("fr-FR");
+    setConfirmState({
+      isOpen: true, title: "Supprimer l'entree", message: `Supprimer cette entree du ${dateLabel} pour ${cahier.classe} ?\n\nElle sera deplacee dans la corbeille.`, variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          await moveCahierToTrash(cahier.id);
+          await loadCahiers();
+          toast.success("Entree deplacee dans la corbeille");
+        } catch (err) {
+          console.error(err);
+          toast.error("Erreur lors de la suppression");
+        }
+      },
+    });
   };
 
   const classes = [...new Set(cahiers.map((c) => c.classe).filter(Boolean))];
@@ -285,6 +296,15 @@ export default function CahierList() {
           })}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

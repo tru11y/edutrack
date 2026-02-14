@@ -1,16 +1,37 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Timestamp } from "firebase/firestore";
 import { getAllPaiements, movePaiementToTrash } from "../modules/paiements/paiement.service";
 import { useTheme } from "../context/ThemeContext";
+import { useToast, ConfirmModal } from "../components/ui";
 import type { Paiement } from "../modules/paiements/paiement.types";
+
+function toDate(val: unknown): Date | null {
+  if (!val) return null;
+  if (val instanceof Timestamp) return val.toDate();
+  if (val instanceof Date) return val;
+  if (typeof val === "object" && "seconds" in val) return new Date((val as { seconds: number }).seconds * 1000);
+  if (typeof val === "string") return new Date(val);
+  return null;
+}
+
+function formatDate(val: unknown): string {
+  const d = toDate(val);
+  if (!d || isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+}
 
 export default function PaiementsList() {
   const { colors } = useTheme();
+  const toast = useToast();
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
   const [filterMois, setFilterMois] = useState("");
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   const loadPaiements = async () => {
     try {
@@ -27,16 +48,23 @@ export default function PaiementsList() {
     loadPaiements();
   }, []);
 
-  const handleDelete = async (paiement: Paiement) => {
+  const handleDelete = (paiement: Paiement) => {
     if (!paiement.id) return;
-    if (!window.confirm(`Supprimer le paiement de ${paiement.eleveNom} pour ${new Date(paiement.mois + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })} ?\n\nIl sera deplace dans la corbeille.`)) return;
-    try {
-      await movePaiementToTrash(paiement.id);
-      await loadPaiements();
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la suppression");
-    }
+    const moisLabel = new Date(paiement.mois + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    setConfirmState({
+      isOpen: true, title: "Supprimer le paiement", message: `Supprimer le paiement de ${paiement.eleveNom} pour ${moisLabel} ?\n\nIl sera deplace dans la corbeille.`, variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          await movePaiementToTrash(paiement.id!);
+          await loadPaiements();
+          toast.success("Paiement deplace dans la corbeille");
+        } catch (err) {
+          console.error(err);
+          toast.error("Erreur lors de la suppression");
+        }
+      },
+    });
   };
 
   const mois = [...new Set(paiements.map((p) => p.mois))].sort().reverse();
@@ -107,13 +135,14 @@ export default function PaiementsList() {
       ) : (
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr style={{ background: colors.bg }}><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Ref</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Eleve</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Mois</th><th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Montant</th><th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Paye</th><th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Statut</th><th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Actions</th></tr></thead>
+            <thead><tr style={{ background: colors.bg }}><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Ref</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Eleve</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Mois</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Date</th><th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Montant</th><th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Paye</th><th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Statut</th><th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Actions</th></tr></thead>
             <tbody>
               {filtered.map((p) => (
                 <tr key={p.id} style={{ borderTop: `1px solid ${colors.border}` }}>
                   <td style={{ padding: "16px 20px" }}><span style={{ fontSize: 12, fontFamily: "monospace", color: colors.textMuted }}>{p.reference || "—"}</span></td>
                   <td style={{ padding: "16px 20px" }}><p style={{ margin: 0, fontWeight: 500, color: colors.text }}>{p.eleveNom}</p></td>
                   <td style={{ padding: "16px 20px", color: colors.textMuted, fontSize: 14 }}>{new Date(p.mois + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</td>
+                  <td style={{ padding: "16px 20px", color: colors.text, fontSize: 14 }}>{formatDate(p.datePaiement)}</td>
                   <td style={{ padding: "16px 20px", textAlign: "right", fontWeight: 500, color: colors.text }}>{(p.montantTotal || 0).toLocaleString()} FCFA</td>
                   <td style={{ padding: "16px 20px", textAlign: "right", color: colors.success, fontWeight: 500 }}>{(p.montantPaye || 0).toLocaleString()} FCFA</td>
                   <td style={{ padding: "16px 20px", textAlign: "center" }}><span style={{ padding: "4px 12px", background: p.statut === "paye" ? colors.successBg : p.statut === "partiel" ? colors.warningBg : colors.dangerBg, color: p.statut === "paye" ? colors.success : p.statut === "partiel" ? colors.warning : colors.danger, borderRadius: 20, fontSize: 12, fontWeight: 500 }}>{p.statut === "paye" ? "Paye" : p.statut === "partiel" ? "Partiel" : "Impaye"}</span></td>
@@ -129,6 +158,15 @@ export default function PaiementsList() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

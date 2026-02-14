@@ -8,7 +8,7 @@ interface MatieresModalProps {
   onClose: () => void;
   onAdd: (data: { nom: string; description: string }) => Promise<void>;
   onUpdate: (matiere: Matiere) => Promise<void>;
-  onDelete: (matiere: Matiere) => Promise<void>;
+  onDelete: (matiere: Matiere) => void;
 }
 
 export function MatieresModal({ matieres, onClose, onAdd, onUpdate, onDelete }: MatieresModalProps) {

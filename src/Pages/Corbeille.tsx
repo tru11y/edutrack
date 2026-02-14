@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useTheme } from "../context/ThemeContext";
+import { useToast, ConfirmModal } from "../components/ui";
 import type { Timestamp } from "firebase/firestore";
 
 interface TrashItem {
@@ -15,9 +16,13 @@ interface TrashItem {
 
 export default function Corbeille() {
   const { colors } = useTheme();
+  const toast = useToast();
   const [items, setItems] = useState<TrashItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   const loadItems = async () => {
     try {
@@ -43,54 +48,62 @@ export default function Corbeille() {
     loadItems();
   }, []);
 
-  const handleRestore = async (item: TrashItem) => {
-    if (!window.confirm("Restaurer cet element ?")) return;
-
-    setRestoring(item.id);
-    try {
-      // Restore to original collection
-      const collectionName = item.type;
-      await addDoc(collection(db, collectionName), {
-        ...item.data,
-        restoredAt: serverTimestamp(),
-      });
-
-      // Delete from trash
-      await deleteDoc(doc(db, "corbeille", item.id));
-      await loadItems();
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la restauration");
-    } finally {
-      setRestoring(null);
-    }
+  const handleRestore = (item: TrashItem) => {
+    setConfirmState({
+      isOpen: true, title: "Restaurer", message: "Restaurer cet element ?", variant: "info",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        setRestoring(item.id);
+        try {
+          await addDoc(collection(db, item.type), { ...item.data, restoredAt: serverTimestamp() });
+          await deleteDoc(doc(db, "corbeille", item.id));
+          await loadItems();
+          toast.success("Element restaure");
+        } catch (err) {
+          console.error(err);
+          toast.error("Erreur lors de la restauration");
+        } finally {
+          setRestoring(null);
+        }
+      },
+    });
   };
 
-  const handleDeletePermanently = async (item: TrashItem) => {
-    if (!window.confirm("Supprimer definitivement cet element ?\n\nCette action est irreversible.")) return;
-
-    try {
-      await deleteDoc(doc(db, "corbeille", item.id));
-      await loadItems();
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la suppression");
-    }
+  const handleDeletePermanently = (item: TrashItem) => {
+    setConfirmState({
+      isOpen: true, title: "Suppression definitive", message: "Supprimer definitivement cet element ?\n\nCette action est irreversible.", variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          await deleteDoc(doc(db, "corbeille", item.id));
+          await loadItems();
+          toast.success("Element supprime");
+        } catch (err) {
+          console.error(err);
+          toast.error("Erreur lors de la suppression");
+        }
+      },
+    });
   };
 
-  const handleEmptyTrash = async () => {
+  const handleEmptyTrash = () => {
     if (items.length === 0) return;
-    if (!window.confirm(`Vider la corbeille ?\n\n${items.length} element(s) seront supprimes definitivement.\n\nCette action est irreversible.`)) return;
-
-    try {
-      for (const item of items) {
-        await deleteDoc(doc(db, "corbeille", item.id));
-      }
-      await loadItems();
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors du vidage de la corbeille");
-    }
+    setConfirmState({
+      isOpen: true, title: "Vider la corbeille", message: `${items.length} element(s) seront supprimes definitivement.\n\nCette action est irreversible.`, variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try {
+          for (const item of items) {
+            await deleteDoc(doc(db, "corbeille", item.id));
+          }
+          await loadItems();
+          toast.success("Corbeille videe");
+        } catch (err) {
+          console.error(err);
+          toast.error("Erreur lors du vidage de la corbeille");
+        }
+      },
+    });
   };
 
   const getTypeLabel = (type: string) => {
@@ -305,6 +318,15 @@ export default function Corbeille() {
           })}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }
