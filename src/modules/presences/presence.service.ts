@@ -6,6 +6,7 @@ import {
   collectionGroup,
   doc,
   setDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import type { PresenceCoursPayload, PresenceItem } from "./presence.types";
@@ -28,14 +29,20 @@ export interface AppelDocument {
   marqueePar: string;
 }
 
-/* WRITE - subcollection based */
+/* WRITE - batch atomique */
 
 export async function savePresencesForCours(payload: PresenceCoursPayload): Promise<void> {
   const { coursId, presences, classe, date } = payload;
 
-  // Creer le document parent avec le resume
-  const parentDoc = doc(db, "presences", coursId);
-  await setDoc(parentDoc, {
+  if (!coursId || !classe || !date || presences.length === 0) {
+    throw new Error("Donnees de presence invalides: coursId, classe, date et presences sont requis.");
+  }
+
+  const batch = writeBatch(db);
+
+  // Document parent avec le resume
+  const parentRef = doc(db, "presences", coursId);
+  batch.set(parentRef, {
     coursId,
     classe,
     date,
@@ -52,9 +59,9 @@ export async function savePresencesForCours(payload: PresenceCoursPayload): Prom
 
   // Ecrire chaque appel dans la subcollection
   for (const item of presences) {
-    const appelsRef = collection(db, "presences", coursId, "appels");
-    const appelDoc = doc(appelsRef, item.eleveId);
-    await setDoc(appelDoc, {
+    if (!item.eleveId) continue;
+    const appelRef = doc(db, "presences", coursId, "appels", item.eleveId);
+    batch.set(appelRef, {
       eleveId: item.eleveId,
       statut: item.statut,
       minutesRetard: item.minutesRetard ?? 0,
@@ -64,6 +71,8 @@ export async function savePresencesForCours(payload: PresenceCoursPayload): Prom
       marqueePar: "manual",
     });
   }
+
+  await batch.commit();
 }
 
 /* READ - subcollection based (Pattern B) */
@@ -106,42 +115,46 @@ export async function getAllPresences(): Promise<PresenceDocument[]> {
   const results: PresenceDocument[] = [];
 
   for (const d of snap.docs) {
-    const data = d.data();
+    try {
+      const data = d.data();
 
-    // Si le doc parent a deja le tableau presences (nouveau format)
-    if (data.presences && Array.isArray(data.presences) && data.presences.length > 0) {
-      results.push({
-        id: d.id,
-        coursId: data.coursId || d.id,
-        classe: data.classe || "",
-        date: data.date || "",
-        presences: data.presences,
-      });
-    } else if (data.classe && data.date) {
-      // Ancien format: lire la subcollection appels
-      const appelsSnap = await getDocs(collection(db, "presences", d.id, "appels"));
-      if (!appelsSnap.empty) {
-        const presenceItems: PresenceItem[] = appelsSnap.docs.map((a) => {
-          const ad = a.data();
-          const statut = ad.statut || "present";
-          const minutesRetard = ad.minutesRetard ?? 0;
-          return {
-            eleveId: ad.eleveId,
-            statut,
-            minutesRetard: minutesRetard || undefined,
-            facturable: estFacturable(statut, minutesRetard),
-            statutMetier: "autorise" as const,
-            message: "",
-          };
-        });
+      // Si le doc parent a deja le tableau presences (nouveau format)
+      if (data.presences && Array.isArray(data.presences) && data.presences.length > 0) {
         results.push({
           id: d.id,
           coursId: data.coursId || d.id,
-          classe: data.classe,
-          date: data.date,
-          presences: presenceItems,
+          classe: data.classe || "",
+          date: data.date || "",
+          presences: data.presences,
         });
+      } else if (data.classe && data.date) {
+        // Ancien format: lire la subcollection appels
+        const appelsSnap = await getDocs(collection(db, "presences", d.id, "appels"));
+        if (!appelsSnap.empty) {
+          const presenceItems: PresenceItem[] = appelsSnap.docs.map((a) => {
+            const ad = a.data();
+            const statut = ad.statut || "present";
+            const minutesRetard = ad.minutesRetard ?? 0;
+            return {
+              eleveId: ad.eleveId,
+              statut,
+              minutesRetard: minutesRetard || undefined,
+              facturable: estFacturable(statut, minutesRetard),
+              statutMetier: "autorise" as const,
+              message: "",
+            };
+          });
+          results.push({
+            id: d.id,
+            coursId: data.coursId || d.id,
+            classe: data.classe,
+            date: data.date,
+            presences: presenceItems,
+          });
+        }
       }
+    } catch (err) {
+      console.error(`Erreur lecture presence doc ${d.id}:`, err);
     }
   }
 

@@ -104,10 +104,12 @@ export default function PresenceAppel() {
         date,
         presences: presenceItems,
       });
+      toast.success(`Appel enregistre (${presenceItems.length} eleves)`);
       navigate("/presences");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erreur lors de l'enregistrement");
+    } catch (err: unknown) {
+      console.error("Erreur sauvegarde presences:", err);
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      toast.error(`Echec de l'enregistrement: ${msg}`);
     } finally {
       setSaving(false);
     }
