@@ -6,6 +6,12 @@ export const VALID_ROLES = ["admin", "gestionnaire", "prof", "eleve", "parent"] 
 export const VALID_PRESENCE_STATUTS = ["present", "absent", "retard", "excuse"] as const;
 export const VALID_PAYMENT_STATUTS = ["paye", "partiel", "impaye"] as const;
 export const VALID_SALARY_STATUTS = ["paye", "non_paye"] as const;
+export const VALID_EVALUATION_TYPES = ["devoir", "examen", "interro"] as const;
+export const VALID_TRIMESTRES = [1, 2, 3] as const;
+
+export function isValidNote(note: number, max: number): boolean {
+  return typeof note === "number" && typeof max === "number" && note >= 0 && note <= max;
+}
 
 export function isValidEmail(email: string): boolean {
   return EMAIL_REGEX.test(email);

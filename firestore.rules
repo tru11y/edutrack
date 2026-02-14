@@ -222,5 +222,47 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if isAdminOrGestionnaire();
     }
+
+    // EVALUATIONS - Staff peut gerer, eleves/parents lecture de leur classe
+    match /evaluations/{evaluationId} {
+      allow read: if isStaff() ||
+        (isEleve() && resource.data.classe == get(/databases/$(database)/documents/eleves/$(getUserData().eleveId)).data.classe) ||
+        isParent();
+      allow create, update: if isStaff();
+      allow delete: if isAdminOrGestionnaire();
+    }
+
+    // NOTES - Staff peut gerer, eleves/parents lecture limitee
+    match /notes/{noteId} {
+      allow read: if isStaff() ||
+        (isEleve() && resource.data.eleveId == getUserData().eleveId) ||
+        (isParent() && resource.data.eleveId in getUserData().enfantsIds);
+      allow create, update: if isStaff();
+      allow delete: if isAdminOrGestionnaire();
+    }
+
+    // NOTIFICATIONS - Chacun voit ses notifications
+    match /notifications/{notifId} {
+      allow read: if signedIn() && resource.data.recipientId == request.auth.uid;
+      allow update: if signedIn() && resource.data.recipientId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'readAt']);
+      allow create: if isStaff();
+      allow delete: if isAdmin();
+    }
+
+    // NOTIFICATION CONFIG - Admin uniquement
+    match /notification_config/{docId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // BULLETINS - Staff peut gerer, eleves/parents lecture limitee
+    match /bulletins/{bulletinId} {
+      allow read: if isStaff() ||
+        (isEleve() && resource.data.eleveId == getUserData().eleveId) ||
+        (isParent() && resource.data.eleveId in getUserData().enfantsIds);
+      allow create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
   }
 }

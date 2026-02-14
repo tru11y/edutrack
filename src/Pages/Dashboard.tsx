@@ -3,13 +3,19 @@ import { Link } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import {
   getAdminDashboardStatsSecure,
+  getAdvancedStatsSecure,
+  getClasseComparisonSecure,
   getCloudFunctionErrorMessage,
   type AdminDashboardStats,
+  type AdvancedStatsResult,
+  type ClasseComparisonItem,
 } from "../services/cloudFunctions";
 
 export default function Dashboard() {
   const { colors } = useTheme();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
+  const [advancedStats, setAdvancedStats] = useState<AdvancedStatsResult | null>(null);
+  const [classeComparison, setClasseComparison] = useState<ClasseComparisonItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -22,6 +28,9 @@ export default function Dashboard() {
         setError(getCloudFunctionErrorMessage(err));
       })
       .finally(() => setLoading(false));
+
+    getAdvancedStatsSecure().then(setAdvancedStats).catch(() => {});
+    getClasseComparisonSecure().then((res) => setClasseComparison(res.classes || [])).catch(() => {});
   }, []);
 
   if (loading) {
@@ -314,6 +323,138 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+
+      {/* Trends - Presences over 6 months */}
+      {advancedStats && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: 24, marginTop: 24 }}>
+          <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
+              Tendances presences (6 mois)
+            </h2>
+            <div style={{ display: "flex", gap: 8, height: 160, alignItems: "flex-end" }}>
+              {advancedStats.months.map((month) => {
+                const data = advancedStats.presencesByMonth[month];
+                const total = data.present + data.absent + data.retard;
+                const maxH = 140;
+                const barH = total > 0 ? maxH : 4;
+                const presentH = total > 0 ? (data.present / total) * barH : 0;
+                const retardH = total > 0 ? (data.retard / total) * barH : 0;
+                const absentH = total > 0 ? (data.absent / total) * barH : 0;
+                return (
+                  <div key={month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <div style={{ display: "flex", flexDirection: "column", height: maxH, justifyContent: "flex-end", width: "100%" }}>
+                      <div style={{ height: absentH, background: colors.danger, borderRadius: "4px 4px 0 0" }} />
+                      <div style={{ height: retardH, background: colors.warning }} />
+                      <div style={{ height: presentH, background: colors.success, borderRadius: absentH + retardH > 0 ? 0 : "4px 4px 0 0" }} />
+                    </div>
+                    <span style={{ fontSize: 10, color: colors.textMuted }}>{month.slice(5)}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", gap: 16, marginTop: 12, justifyContent: "center" }}>
+              <span style={{ fontSize: 11, color: colors.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.success }} /> Presents
+              </span>
+              <span style={{ fontSize: 11, color: colors.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.warning }} /> Retards
+              </span>
+              <span style={{ fontSize: 11, color: colors.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.danger }} /> Absents
+              </span>
+            </div>
+          </div>
+
+          <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
+              Tendances paiements (6 mois)
+            </h2>
+            <div style={{ display: "flex", gap: 8, height: 160, alignItems: "flex-end" }}>
+              {advancedStats.months.map((month) => {
+                const data = advancedStats.paiementsByMonth[month];
+                const maxVal = Math.max(...advancedStats.months.map((m) => advancedStats.paiementsByMonth[m].total || 1));
+                const totalH = maxVal > 0 ? (data.total / maxVal) * 140 : 4;
+                const payeH = data.total > 0 ? (data.paye / data.total) * totalH : 0;
+                return (
+                  <div key={month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <div style={{ display: "flex", flexDirection: "column", height: 140, justifyContent: "flex-end", width: "100%" }}>
+                      <div style={{ height: totalH - payeH, background: colors.border, borderRadius: "4px 4px 0 0" }} />
+                      <div style={{ height: payeH, background: colors.success }} />
+                    </div>
+                    <span style={{ fontSize: 10, color: colors.textMuted }}>{month.slice(5)}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", gap: 16, marginTop: 12, justifyContent: "center" }}>
+              <span style={{ fontSize: 11, color: colors.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.success }} /> Paye
+              </span>
+              <span style={{ fontSize: 11, color: colors.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.border }} /> Restant
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Classe Comparison */}
+      {classeComparison.length > 0 && (
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginTop: 24 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
+            Comparaison des classes
+          </h2>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: `2px solid ${colors.border}` }}>
+                  <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 13, fontWeight: 600, color: colors.textMuted }}>Classe</th>
+                  <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 13, fontWeight: 600, color: colors.textMuted }}>Eleves</th>
+                  <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 13, fontWeight: 600, color: colors.textMuted }}>Presences</th>
+                  <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 13, fontWeight: 600, color: colors.textMuted }}>Moyenne</th>
+                  <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 13, fontWeight: 600, color: colors.textMuted }}>Paiements</th>
+                </tr>
+              </thead>
+              <tbody>
+                {classeComparison.map((c) => (
+                  <tr key={c.classe} style={{ borderBottom: `1px solid ${colors.border}` }}>
+                    <td style={{ padding: "10px 16px", fontSize: 14, fontWeight: 500, color: colors.text }}>{c.classe}</td>
+                    <td style={{ padding: "10px 16px", textAlign: "center", fontSize: 14, color: colors.text }}>{c.totalEleves}</td>
+                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
+                      <span style={{
+                        padding: "2px 10px", borderRadius: 6, fontSize: 13, fontWeight: 500,
+                        color: c.tauxPresence >= 80 ? colors.success : c.tauxPresence >= 50 ? colors.warning : colors.danger,
+                        background: c.tauxPresence >= 80 ? colors.successBg : c.tauxPresence >= 50 ? colors.warningBg : colors.dangerBg,
+                      }}>
+                        {c.tauxPresence}%
+                      </span>
+                    </td>
+                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
+                      <span style={{
+                        fontWeight: 600, fontSize: 14,
+                        color: c.moyenneNotes >= 14 ? colors.success : c.moyenneNotes >= 10 ? colors.primary : c.moyenneNotes >= 8 ? colors.warning : colors.danger,
+                      }}>
+                        {c.moyenneNotes > 0 ? `${c.moyenneNotes}/20` : "-"}
+                      </span>
+                    </td>
+                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
+                        <div style={{ width: 60, height: 6, background: colors.border, borderRadius: 3, overflow: "hidden" }}>
+                          <div style={{
+                            width: `${c.tauxPaiement}%`, height: "100%",
+                            background: c.tauxPaiement >= 80 ? colors.success : c.tauxPaiement >= 50 ? colors.warning : colors.danger,
+                          }} />
+                        </div>
+                        <span style={{ fontSize: 12, color: colors.textMuted }}>{c.tauxPaiement}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

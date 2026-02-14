@@ -3,13 +3,14 @@ import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage, type TranslationKey } from "../context/LanguageContext";
+import NotificationCenter from "../modules/notifications/NotificationCenter";
 
 interface NavItem {
   to: string;
   labelKey: TranslationKey;
   icon: string;
   end?: boolean;
-  roles: ("admin" | "gestionnaire" | "prof")[];
+  roles: ("admin" | "gestionnaire" | "prof" | "eleve" | "parent")[];
 }
 
 const navItems: NavItem[] = [
@@ -22,8 +23,23 @@ const navItems: NavItem[] = [
   { to: "/stats", labelKey: "statistics", icon: "chart", roles: ["admin", "gestionnaire"] },
   { to: "/utilisateurs", labelKey: "users", icon: "settings", roles: ["admin", "gestionnaire"] },
   { to: "/messages", labelKey: "messages", icon: "message", roles: ["admin", "gestionnaire", "prof"] },
+  { to: "/evaluations", labelKey: "evaluations", icon: "grade", roles: ["admin", "gestionnaire", "prof"] },
+  { to: "/bulletins", labelKey: "bulletins", icon: "diploma", roles: ["admin", "gestionnaire"] },
+  { to: "/emploi-du-temps", labelKey: "schedule", icon: "book", roles: ["admin", "gestionnaire"] },
+  { to: "/notifications", labelKey: "notifications" as TranslationKey, icon: "bell", roles: ["admin", "gestionnaire", "prof", "eleve", "parent"] },
+  { to: "/notifications/config", labelKey: "notificationConfig" as TranslationKey, icon: "settings", roles: ["admin"] },
   { to: "/comptabilite", labelKey: "accounting", icon: "wallet", roles: ["admin"] },
   { to: "/corbeille", labelKey: "trash", icon: "trash", roles: ["admin", "gestionnaire"] },
+  // Eleve portal
+  { to: "/eleve", labelKey: "dashboard", icon: "dashboard", end: true, roles: ["eleve"] },
+  { to: "/eleve/notes", labelKey: "evaluations", icon: "grade", roles: ["eleve"] },
+  { to: "/eleve/presences", labelKey: "presences", icon: "check", roles: ["eleve"] },
+  { to: "/eleve/emploi-du-temps", labelKey: "schedule", icon: "book", roles: ["eleve"] },
+  { to: "/eleve/bulletins", labelKey: "bulletins", icon: "diploma", roles: ["eleve"] },
+  // Parent portal
+  { to: "/parent/notes", labelKey: "evaluations", icon: "grade", roles: ["parent"] },
+  { to: "/parent/bulletins", labelKey: "bulletins", icon: "diploma", roles: ["parent"] },
+  { to: "/parent/emploi-du-temps", labelKey: "schedule", icon: "book", roles: ["parent"] },
 ];
 
 const icons: Record<string, React.ReactNode> = {
@@ -35,8 +51,11 @@ const icons: Record<string, React.ReactNode> = {
   chart: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 16V9M7 16V5M12 16V11M17 16V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   settings: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 1V3M10 17V19M1 10H3M17 10H19M3.93 3.93L5.34 5.34M14.66 14.66L16.07 16.07M3.93 16.07L5.34 14.66M14.66 5.34L16.07 3.93" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   message: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M18 10C18 14.42 14.42 18 10 18C8.57 18 7.22 17.64 6.04 17L2 18L3 14C2.36 12.81 2 11.45 2 10C2 5.58 5.58 2 10 2C14.42 2 18 5.58 18 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  grade: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L12.5 7.5L18 8.5L14 12.5L15 18L10 15.5L5 18L6 12.5L2 8.5L7.5 7.5L10 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+  diploma: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M6 7H14M6 10H14M6 13H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   wallet: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M2 8H18" stroke="currentColor" strokeWidth="1.5"/><circle cx="14" cy="12" r="1" fill="currentColor"/></svg>,
   trash: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2.5 5H17.5M7.5 5V3.33C7.5 2.6 8.1 2 8.83 2H11.17C11.9 2 12.5 2.6 12.5 3.33V5M8.33 9.17V14.17M11.67 9.17V14.17M4.17 5L5 16.67C5 17.4 5.6 18 6.33 18H13.67C14.4 18 15 17.4 15 16.67L15.83 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  bell: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 7C15 5.67 14.47 4.4 13.54 3.46C12.6 2.53 11.33 2 10 2C8.67 2 7.4 2.53 6.46 3.46C5.53 4.4 5 5.67 5 7C5 12 2.5 13.5 2.5 13.5H17.5C17.5 13.5 15 12 15 7Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.45 17C11.22 17.38 10.88 17.65 10.49 17.81C10.1 17.97 9.67 17.97 9.28 17.81C8.89 17.65 8.55 17.38 8.32 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   menu: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
   close: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
   sun: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.5"/><path d="M10 1V3M10 17V19M1 10H3M17 10H19M4.22 4.22L5.64 5.64M14.36 14.36L15.78 15.78M4.22 15.78L5.64 14.36M14.36 5.64L15.78 4.22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
@@ -68,7 +87,7 @@ export default function AdminLayout() {
     if (storageKey) setProfMode(localStorage.getItem(storageKey) === "true");
   }, [user?.uid, storageKey]);
 
-  const actualRole = (user?.role === "admin" || user?.role === "gestionnaire") ? user.role : "prof";
+  const actualRole = user?.role === "eleve" ? "eleve" : user?.role === "parent" ? "parent" : (user?.role === "admin" || user?.role === "gestionnaire") ? user.role : "prof";
   const userRole = ((actualRole === "admin" || actualRole === "gestionnaire") && profMode) ? "prof" : actualRole;
   const isProf = userRole === "prof";
   const canSwitchMode = actualRole === "admin" || actualRole === "gestionnaire";
@@ -95,7 +114,7 @@ export default function AdminLayout() {
     navigate("/login");
   };
 
-  const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole as "admin" | "gestionnaire" | "prof"));
+  const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole as "admin" | "gestionnaire" | "prof" | "eleve" | "parent"));
   const sidebarWidth = 260;
 
   const accent = isProf ? themeColors.success : themeColors.primary;
@@ -139,6 +158,7 @@ export default function AdminLayout() {
             <span style={{ fontWeight: 600, color: colors.text, fontSize: 16 }}>EDUTRACK</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <NotificationCenter />
             <button onClick={toggleTheme} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 4 }}>
               {isDark ? icons.sun : icons.moon}
             </button>
