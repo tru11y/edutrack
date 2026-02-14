@@ -12,17 +12,18 @@ export const getNotificationConfig = functions
 
     try {
       const doc = await db.collection("notification_config").doc("global").get();
+      const defaultConfig = {
+        autoAbsenceNotif: true,
+        autoImpayeNotif: true,
+        inAppEnabled: true,
+        smsEnabled: false,
+        emailEnabled: false,
+        webhookUrls: [] as string[],
+      };
       if (!doc.exists) {
-        return {
-          success: true,
-          config: {
-            webhookUrls: { sms: "", email: "" },
-            channels: { in_app: true, sms: false, email: false },
-            autoNotifications: { absence: true, retard: false, impaye: true, bulletin: true },
-          },
-        };
+        return { success: true, config: defaultConfig };
       }
-      return { success: true, config: doc.data() };
+      return { success: true, config: { ...defaultConfig, ...doc.data() } };
     } catch (error) {
       handleError(error, "Erreur lors de la recuperation de la config.");
     }
