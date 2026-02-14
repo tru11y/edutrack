@@ -4,6 +4,8 @@ import { Timestamp } from "firebase/firestore";
 import { getAllPaiements, movePaiementToTrash } from "../modules/paiements/paiement.service";
 import { useTheme } from "../context/ThemeContext";
 import { useToast, ConfirmModal } from "../components/ui";
+import { exportPaiementsExcelSecure } from "../services/cloudFunctions";
+import { downloadBase64File } from "../utils/download";
 import type { Paiement } from "../modules/paiements/paiement.types";
 
 function toDate(val: unknown): Date | null {
@@ -26,6 +28,7 @@ export default function PaiementsList() {
   const toast = useToast();
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
   const [filterMois, setFilterMois] = useState("");
@@ -91,6 +94,22 @@ export default function PaiementsList() {
             <div><h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>Paiements</h1><p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{paiements.length} enregistrement{paiements.length > 1 ? "s" : ""}</p></div>
           </div>
           <div style={{ display: "flex", gap: 12 }}>
+            <button
+              onClick={async () => {
+                setExporting(true);
+                try {
+                  const res = await exportPaiementsExcelSecure({ mois: filterMois || undefined });
+                  downloadBase64File(res.data, res.filename);
+                  toast.success("Export telecharge");
+                } catch { toast.error("Erreur lors de l'export"); }
+                finally { setExporting(false); }
+              }}
+              disabled={exporting}
+              style={{ padding: "12px 20px", background: colors.bgSecondary, color: colors.textMuted, borderRadius: 10, border: "none", fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8, cursor: exporting ? "not-allowed" : "pointer", opacity: exporting ? 0.7 : 1 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M15.75 11.25V14.25C15.75 15.08 15.08 15.75 14.25 15.75H3.75C2.92 15.75 2.25 15.08 2.25 14.25V11.25M5.25 7.5L9 11.25L12.75 7.5M9 11.25V2.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              {exporting ? "Export..." : "Exporter"}
+            </button>
             <Link to="/corbeille" style={{ padding: "12px 20px", background: colors.bgSecondary, color: colors.textMuted, borderRadius: 10, textDecoration: "none", fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path d="M2.25 4.5H15.75M6.75 4.5V3C6.75 2.17 7.42 1.5 8.25 1.5H9.75C10.58 1.5 11.25 2.17 11.25 3V4.5M7.5 8.25V12.75M10.5 8.25V12.75M3.75 4.5L4.5 15C4.5 15.83 5.17 16.5 6 16.5H12C12.83 16.5 13.5 15.83 13.5 15L14.25 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

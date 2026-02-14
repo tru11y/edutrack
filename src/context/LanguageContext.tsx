@@ -106,6 +106,14 @@ const translations = {
     // Schedule
     schedule: "Emploi du temps",
     classes: "Classes",
+
+    // Notes / Evaluations
+    evaluations: "Evaluations",
+    bulletins: "Bulletins",
+
+    // Notifications
+    notifications: "Notifications",
+    notificationConfig: "Config. notifs",
   },
   en: {
     // Navigation
@@ -209,6 +217,14 @@ const translations = {
     // Schedule
     schedule: "Schedule",
     classes: "Classes",
+
+    // Notes / Evaluations
+    evaluations: "Evaluations",
+    bulletins: "Report Cards",
+
+    // Notifications
+    notifications: "Notifications",
+    notificationConfig: "Notif. config",
   },
 };
 

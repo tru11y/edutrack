@@ -46,6 +46,8 @@ export default function EmploiDuTemps() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+
   // Filtre par jour - par defaut le jour actuel
   const todayIndex = new Date().getDay();
   const defaultJour = todayIndex === 0 ? JOURS[0] : JOURS[todayIndex - 1] || JOURS[0];
@@ -152,9 +154,15 @@ export default function EmploiDuTemps() {
               <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{creneaux.length} creneau{creneaux.length > 1 ? "x" : ""}</p>
             </div>
           </div>
-          <button onClick={() => setShowForm(!showForm)} style={{ padding: "12px 20px", background: colors.primary, color: colors.bgCard, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
-            {showForm ? "Annuler" : "+ Creneau"}
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", background: colors.bgSecondary, borderRadius: 8, padding: 3 }}>
+              <button onClick={() => setViewMode("grid")} style={{ padding: "8px 14px", background: viewMode === "grid" ? colors.bgCard : "transparent", color: viewMode === "grid" ? colors.text : colors.textMuted, border: "none", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Grille</button>
+              <button onClick={() => setViewMode("list")} style={{ padding: "8px 14px", background: viewMode === "list" ? colors.bgCard : "transparent", color: viewMode === "list" ? colors.text : colors.textMuted, border: "none", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Liste</button>
+            </div>
+            <button onClick={() => setShowForm(!showForm)} style={{ padding: "12px 20px", background: colors.primary, color: colors.bgCard, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+              {showForm ? "Annuler" : "+ Creneau"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -217,18 +225,105 @@ export default function EmploiDuTemps() {
         </form>
       )}
 
-      <div style={{ display: "flex", gap: 4, marginBottom: 24, background: colors.bgSecondary, borderRadius: 12, padding: 4, overflowX: "auto" }}>
-        <button onClick={() => setFilterJour("")} style={{ padding: "10px 16px", background: !filterJour ? colors.bgCard : "transparent", border: !filterJour ? `1px solid ${colors.border}` : "1px solid transparent", borderRadius: 8, fontSize: 13, fontWeight: 500, color: !filterJour ? colors.text : colors.textMuted, cursor: "pointer", whiteSpace: "nowrap" }}>
-          Tous
-        </button>
-        {JOURS.map((j) => (
-          <button key={j} onClick={() => setFilterJour(j)} style={{ padding: "10px 16px", background: filterJour === j ? colors.bgCard : "transparent", border: filterJour === j ? `1px solid ${colors.border}` : "1px solid transparent", borderRadius: 8, fontSize: 13, fontWeight: 500, color: filterJour === j ? colors.text : colors.textMuted, cursor: "pointer", whiteSpace: "nowrap" }}>
-            {j.charAt(0).toUpperCase() + j.slice(1)}
+      {viewMode === "list" && (
+        <div style={{ display: "flex", gap: 4, marginBottom: 24, background: colors.bgSecondary, borderRadius: 12, padding: 4, overflowX: "auto" }}>
+          <button onClick={() => setFilterJour("")} style={{ padding: "10px 16px", background: !filterJour ? colors.bgCard : "transparent", border: !filterJour ? `1px solid ${colors.border}` : "1px solid transparent", borderRadius: 8, fontSize: 13, fontWeight: 500, color: !filterJour ? colors.text : colors.textMuted, cursor: "pointer", whiteSpace: "nowrap" }}>
+            Tous
           </button>
-        ))}
-      </div>
+          {JOURS.map((j) => (
+            <button key={j} onClick={() => setFilterJour(j)} style={{ padding: "10px 16px", background: filterJour === j ? colors.bgCard : "transparent", border: filterJour === j ? `1px solid ${colors.border}` : "1px solid transparent", borderRadius: 8, fontSize: 13, fontWeight: 500, color: filterJour === j ? colors.text : colors.textMuted, cursor: "pointer", whiteSpace: "nowrap" }}>
+              {j.charAt(0).toUpperCase() + j.slice(1)}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {filtered.length === 0 ? (
+      {viewMode === "grid" ? (
+        /* Grid view */
+        (() => {
+          const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7h to 19h
+          const creneauxByJour = JOURS.reduce((acc, jour) => {
+            acc[jour] = creneaux.filter((c) => c.jour === jour).sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
+            return acc;
+          }, {} as Record<string, Creneau[]>);
+
+          const timeToPos = (time: string) => {
+            const [h, m] = time.split(":").map(Number);
+            return ((h - 7) + m / 60) * 60; // 60px per hour
+          };
+
+          const gridColors = [
+            { bg: colors.primaryBg, border: colors.primary },
+            { bg: colors.successBg, border: colors.success },
+            { bg: colors.warningBg, border: colors.warning },
+            { bg: colors.infoBg, border: colors.info },
+            { bg: colors.dangerBg, border: colors.danger },
+          ];
+          const classeColorMap: Record<string, number> = {};
+          let colorIdx = 0;
+          creneaux.forEach((c) => {
+            if (!(c.classe in classeColorMap)) {
+              classeColorMap[c.classe] = colorIdx++ % gridColors.length;
+            }
+          });
+
+          return (
+            <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, overflow: "auto" }}>
+              <div style={{ display: "grid", gridTemplateColumns: `60px repeat(${JOURS.length}, 1fr)`, minWidth: 800 }}>
+                {/* Header */}
+                <div style={{ padding: "12px 8px", borderBottom: `1px solid ${colors.border}`, background: colors.bgSecondary }} />
+                {JOURS.map((j) => (
+                  <div key={j} style={{ padding: "12px 8px", borderBottom: `1px solid ${colors.border}`, borderLeft: `1px solid ${colors.border}`, background: colors.bgSecondary, textAlign: "center", fontSize: 13, fontWeight: 600, color: colors.text, textTransform: "capitalize" }}>
+                    {j}
+                  </div>
+                ))}
+
+                {/* Time rows */}
+                <div style={{ position: "relative" }}>
+                  {HOURS.map((h) => (
+                    <div key={h} style={{ height: 60, padding: "0 8px", display: "flex", alignItems: "flex-start", justifyContent: "center", borderBottom: `1px solid ${colors.border}`, fontSize: 11, color: colors.textMuted, paddingTop: 2 }}>
+                      {h}:00
+                    </div>
+                  ))}
+                </div>
+
+                {/* Day columns */}
+                {JOURS.map((jour) => (
+                  <div key={jour} style={{ position: "relative", borderLeft: `1px solid ${colors.border}` }}>
+                    {HOURS.map((h) => (
+                      <div key={h} style={{ height: 60, borderBottom: `1px solid ${colors.border}` }} />
+                    ))}
+                    {/* Creneaux overlay */}
+                    {creneauxByJour[jour].map((c) => {
+                      const top = timeToPos(c.heureDebut);
+                      const height = timeToPos(c.heureFin) - top;
+                      const ci = classeColorMap[c.classe] ?? 0;
+                      const gc = gridColors[ci];
+                      return (
+                        <div
+                          key={c.id}
+                          style={{
+                            position: "absolute", top, left: 2, right: 2,
+                            height: Math.max(height, 20),
+                            background: gc.bg, borderLeft: `3px solid ${gc.border}`,
+                            borderRadius: 6, padding: "4px 6px", overflow: "hidden",
+                            cursor: "pointer", fontSize: 11, lineHeight: 1.3,
+                          }}
+                          title={`${c.matiere} - ${c.classe}\n${c.heureDebut}-${c.heureFin}\n${getProfNom(c.professeurId)}`}
+                        >
+                          <div style={{ fontWeight: 600, color: gc.border, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.matiere}</div>
+                          {height > 30 && <div style={{ color: colors.textMuted, fontSize: 10 }}>{c.classe}</div>}
+                          {height > 45 && <div style={{ color: colors.textMuted, fontSize: 10 }}>{c.heureDebut}-{c.heureFin}</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()
+      ) : filtered.length === 0 ? (
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 60, textAlign: "center" }}>
           <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Aucun creneau{filterJour ? ` pour ${filterJour}` : ""}</p>
         </div>

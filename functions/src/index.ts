@@ -38,3 +38,40 @@ export {
   sendPaymentReportManual,
   configureReportEmail,
 } from "./modules/reports/scheduled";
+
+// Notes / Evaluations
+export { createEvaluation } from "./modules/notes/evaluations.create";
+export { updateEvaluation } from "./modules/notes/evaluations.update";
+export { deleteEvaluation } from "./modules/notes/evaluations.delete";
+export { getEvaluationsByClasse } from "./modules/notes/evaluations.list";
+export { createNote, createNotesBatch } from "./modules/notes/notes.create";
+export { updateNote } from "./modules/notes/notes.update";
+export { deleteNote } from "./modules/notes/notes.delete";
+export { getNotesByEvaluation, getNotesByEleve } from "./modules/notes/notes.list";
+export { calculateMoyennes } from "./modules/notes/moyennes.calculate";
+export { generateBulletin, generateBulletinsClasse } from "./modules/notes/bulletins.generate";
+
+// Advanced Stats
+export { getAdvancedStats } from "./modules/stats/advanced.stats";
+export { getClasseComparison } from "./modules/stats/classe.comparison";
+
+// Exports
+export { exportElevesExcel } from "./modules/exports/eleves.export";
+export { exportPresencesExcel } from "./modules/exports/presences.export";
+export { exportNotesExcel } from "./modules/exports/notes.export";
+export { exportPaiementsExcel } from "./modules/exports/paiements.export";
+
+// Notifications
+export { sendNotification } from "./modules/notifications/notifications.create";
+export { getNotifications } from "./modules/notifications/notifications.list";
+export { markNotificationRead } from "./modules/notifications/notifications.read";
+export { getNotificationConfig, updateNotificationConfig } from "./modules/notifications/notifications.config";
+export { triggerAbsenceNotification } from "./modules/notifications/triggers.absence";
+export { triggerImpayeNotification } from "./modules/notifications/triggers.impaye";
+export { sendBulkNotification } from "./modules/notifications/notifications.send.bulk";
+export { processNotificationQueue } from "./modules/notifications/queue.process";
+
+// Emploi du temps
+export { createCreneauBatch } from "./modules/emploi/creneaux.batch";
+export { checkScheduleConflicts } from "./modules/emploi/conflicts.check";
+export { getEmploiDuTempsClasse, getEmploiDuTempsProf } from "./modules/emploi/emploi.list";
