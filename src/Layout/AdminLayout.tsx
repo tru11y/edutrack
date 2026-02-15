@@ -46,6 +46,9 @@ const navItems: NavItem[] = [
   { to: "/parent/dashboard", labelKey: "dashboard", icon: "dashboard", end: true, roles: ["parent"] },
   { to: "/parent/notes", labelKey: "evaluations", icon: "grade", roles: ["parent"] },
   { to: "/parent/bulletins", labelKey: "bulletins", icon: "diploma", roles: ["parent"] },
+  { to: "/parent/presences", labelKey: "presences", icon: "check", roles: ["parent"] },
+  { to: "/parent/cahier", labelKey: "textbook", icon: "book", roles: ["parent"] },
+  { to: "/parent/paiements", labelKey: "payments", icon: "card", roles: ["parent"] },
   { to: "/parent/emploi-du-temps", labelKey: "schedule", icon: "book", roles: ["parent"] },
 ];
 

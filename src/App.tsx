@@ -50,6 +50,9 @@ const Matieres = lazy(() => import("./pages/Matieres"));
 const ImportEleves = lazy(() => import("./pages/ImportEleves"));
 const ProfDashboard = lazy(() => import("./pages/ProfDashboard"));
 const ParentDashboard = lazy(() => import("./modules/parent/ParentDashboard"));
+const ParentPresences = lazy(() => import("./modules/parent/ParentPresences"));
+const ParentCahier = lazy(() => import("./modules/parent/ParentCahier"));
+const ParentPaiement = lazy(() => import("./modules/parent/ParentPaiement"));
 const SchoolSettings = lazy(() => import("./pages/SchoolSettings"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -140,6 +143,9 @@ export default function App() {
                       <Route path="parent/notes" element={<ParentNotes />} />
                       <Route path="parent/bulletins" element={<ParentBulletins />} />
                       <Route path="parent/emploi-du-temps" element={<ParentEmploiDuTemps />} />
+                      <Route path="parent/presences" element={<ParentPresences />} />
+                      <Route path="parent/cahier" element={<ParentCahier />} />
+                      <Route path="parent/paiements" element={<ParentPaiement />} />
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
