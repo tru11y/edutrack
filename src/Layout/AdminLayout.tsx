@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage, type TranslationKey } from "../context/LanguageContext";
 import NotificationCenter from "../modules/notifications/NotificationCenter";
+import GlobalSearch from "../components/GlobalSearch";
 
 interface NavItem {
   to: string;
@@ -28,6 +29,11 @@ const navItems: NavItem[] = [
   { to: "/emploi-du-temps", labelKey: "schedule", icon: "book", roles: ["admin", "gestionnaire"] },
   { to: "/notifications", labelKey: "notifications" as TranslationKey, icon: "bell", roles: ["admin", "gestionnaire", "prof", "eleve", "parent"] },
   { to: "/notifications/config", labelKey: "notificationConfig" as TranslationKey, icon: "settings", roles: ["admin"] },
+  { to: "/discipline", labelKey: "discipline" as TranslationKey, icon: "shield", roles: ["admin", "gestionnaire", "prof"] },
+  { to: "/matieres", labelKey: "matieres" as TranslationKey, icon: "book", roles: ["admin", "gestionnaire"] },
+  { to: "/import-eleves", labelKey: "importEleves" as TranslationKey, icon: "upload", roles: ["admin", "gestionnaire"] },
+  { to: "/audit", labelKey: "auditLogs" as TranslationKey, icon: "settings", roles: ["admin"] },
+  { to: "/parametres", labelKey: "schoolSettings" as TranslationKey, icon: "settings", roles: ["admin"] },
   { to: "/comptabilite", labelKey: "accounting", icon: "wallet", roles: ["admin"] },
   { to: "/corbeille", labelKey: "trash", icon: "trash", roles: ["admin", "gestionnaire"] },
   // Eleve portal
@@ -37,6 +43,7 @@ const navItems: NavItem[] = [
   { to: "/eleve/emploi-du-temps", labelKey: "schedule", icon: "book", roles: ["eleve"] },
   { to: "/eleve/bulletins", labelKey: "bulletins", icon: "diploma", roles: ["eleve"] },
   // Parent portal
+  { to: "/parent/dashboard", labelKey: "dashboard", icon: "dashboard", end: true, roles: ["parent"] },
   { to: "/parent/notes", labelKey: "evaluations", icon: "grade", roles: ["parent"] },
   { to: "/parent/bulletins", labelKey: "bulletins", icon: "diploma", roles: ["parent"] },
   { to: "/parent/emploi-du-temps", labelKey: "schedule", icon: "book", roles: ["parent"] },
@@ -55,6 +62,8 @@ const icons: Record<string, React.ReactNode> = {
   diploma: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M6 7H14M6 10H14M6 13H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   wallet: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M2 8H18" stroke="currentColor" strokeWidth="1.5"/><circle cx="14" cy="12" r="1" fill="currentColor"/></svg>,
   trash: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2.5 5H17.5M7.5 5V3.33C7.5 2.6 8.1 2 8.83 2H11.17C11.9 2 12.5 2.6 12.5 3.33V5M8.33 9.17V14.17M11.67 9.17V14.17M4.17 5L5 16.67C5 17.4 5.6 18 6.33 18H13.67C14.4 18 15 17.4 15 16.67L15.83 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  shield: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L3 5V9.5C3 13.64 6.06 17.53 10 18.5C13.94 17.53 17 13.64 17 9.5V5L10 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+  upload: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M17 12.5V15.83C17 16.75 16.25 17.5 15.33 17.5H4.67C3.75 17.5 3 16.75 3 15.83V12.5M13.33 6.67L10 3.33M10 3.33L6.67 6.67M10 3.33V12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   bell: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 7C15 5.67 14.47 4.4 13.54 3.46C12.6 2.53 11.33 2 10 2C8.67 2 7.4 2.53 6.46 3.46C5.53 4.4 5 5.67 5 7C5 12 2.5 13.5 2.5 13.5H17.5C17.5 13.5 15 12 15 7Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.45 17C11.22 17.38 10.88 17.65 10.49 17.81C10.1 17.97 9.67 17.97 9.28 17.81C8.89 17.65 8.55 17.38 8.32 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   menu: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
   close: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
@@ -158,6 +167,7 @@ export default function AdminLayout() {
             <span style={{ fontWeight: 600, color: colors.text, fontSize: 16 }}>EDUTRACK</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <GlobalSearch />
             <NotificationCenter />
             <button onClick={toggleTheme} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 4 }}>
               {isDark ? icons.sun : icons.moon}

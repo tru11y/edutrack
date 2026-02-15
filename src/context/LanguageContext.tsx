@@ -114,6 +114,12 @@ const translations = {
     // Notifications
     notifications: "Notifications",
     notificationConfig: "Config. notifs",
+
+    // V3
+    discipline: "Discipline",
+    matieres: "Matieres",
+    importEleves: "Import eleves",
+    auditLogs: "Journal d'audit",
   },
   en: {
     // Navigation
@@ -225,6 +231,12 @@ const translations = {
     // Notifications
     notifications: "Notifications",
     notificationConfig: "Notif. config",
+
+    // V3
+    discipline: "Discipline",
+    matieres: "Subjects",
+    importEleves: "Import students",
+    auditLogs: "Audit logs",
   },
 };
 

@@ -71,6 +71,18 @@ export { triggerImpayeNotification } from "./modules/notifications/triggers.impa
 export { sendBulkNotification } from "./modules/notifications/notifications.send.bulk";
 export { processNotificationQueue } from "./modules/notifications/queue.process";
 
+// Discipline
+export { createDisciplineRecord } from "./modules/discipline/discipline.create";
+export { getDisciplineRecords } from "./modules/discipline/discipline.list";
+export { updateDisciplineRecord } from "./modules/discipline/discipline.update";
+export { deleteDisciplineRecord } from "./modules/discipline/discipline.delete";
+
+// Matieres
+export { getMatieres, createMatiere, updateMatiere, deleteMatiere } from "./modules/matieres/matieres.crud";
+
+// CSV Import
+export { importElevesCsv } from "./modules/imports/eleves.import";
+
 // Emploi du temps
 export { createCreneauBatch } from "./modules/emploi/creneaux.batch";
 export { checkScheduleConflicts } from "./modules/emploi/conflicts.check";
