@@ -120,6 +120,7 @@ const translations = {
     matieres: "Matieres",
     importEleves: "Import eleves",
     auditLogs: "Journal d'audit",
+    schoolSettings: "Parametres ecole",
   },
   en: {
     // Navigation
@@ -237,6 +238,7 @@ const translations = {
     matieres: "Subjects",
     importEleves: "Import students",
     auditLogs: "Audit logs",
+    schoolSettings: "School settings",
   },
 };
 
