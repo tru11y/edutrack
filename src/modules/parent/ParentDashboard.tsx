@@ -214,9 +214,11 @@ export default function ParentDashboard() {
 
       {/* Liens rapides */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginTop: 32 }}>
-        <QuickLink to="/parent/presences" label="Présences" desc="Historique des présences" colors={colors} />
-        <QuickLink to="/parent/cahier" label="Cahier de texte" desc="Cours et devoirs" colors={colors} />
-        <QuickLink to="/parent/paiements" label="Paiements" desc="Historique et reçus" colors={colors} />
+        <QuickLink to="/parent/notes" label="Notes" desc="Notes et evaluations" colors={colors} />
+        <QuickLink to="/parent/bulletins" label="Bulletins" desc="Bulletins scolaires" colors={colors} />
+        <QuickLink to="/parent/emploi-du-temps" label="Emploi du temps" desc="Planning des cours" colors={colors} />
+        <QuickLink to="/messages" label="Messages" desc="Communiquer avec l'ecole" colors={colors} />
+        <QuickLink to="/notifications" label="Notifications" desc="Alertes et informations" colors={colors} />
       </div>
     </div>
   );

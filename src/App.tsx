@@ -44,6 +44,13 @@ const ParentBulletins = lazy(() => import("./modules/parent/ParentBulletins"));
 const ParentEmploiDuTemps = lazy(() => import("./modules/parent/ParentEmploiDuTemps"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const NotificationConfigPage = lazy(() => import("./pages/NotificationConfigPage"));
+const Discipline = lazy(() => import("./pages/Discipline"));
+const AuditLogs = lazy(() => import("./pages/AuditLogs"));
+const Matieres = lazy(() => import("./pages/Matieres"));
+const ImportEleves = lazy(() => import("./pages/ImportEleves"));
+const ProfDashboard = lazy(() => import("./pages/ProfDashboard"));
+const ParentDashboard = lazy(() => import("./modules/parent/ParentDashboard"));
+const SchoolSettings = lazy(() => import("./pages/SchoolSettings"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -66,10 +73,10 @@ function ProfRedirect() {
     return <Navigate to="/eleve" replace />;
   }
   if (user?.role === "parent") {
-    return <Navigate to="/parent" replace />;
+    return <Navigate to="/parent/dashboard" replace />;
   }
   if (user?.role !== "admin" && user?.role !== "gestionnaire") {
-    return <Navigate to="/presences" replace />;
+    return <ProfDashboard />;
   }
   return <Dashboard />;
 }
@@ -116,6 +123,11 @@ export default function App() {
                       <Route path="bulletins" element={<AdminRoute><Bulletins /></AdminRoute>} />
                       <Route path="notifications" element={<Notifications />} />
                       <Route path="notifications/config" element={<AdminRoute><NotificationConfigPage /></AdminRoute>} />
+                      <Route path="discipline" element={<Discipline />} />
+                      <Route path="audit" element={<AdminRoute><AuditLogs /></AdminRoute>} />
+                      <Route path="matieres" element={<AdminRoute><Matieres /></AdminRoute>} />
+                      <Route path="import-eleves" element={<AdminRoute><ImportEleves /></AdminRoute>} />
+                      <Route path="parametres" element={<AdminRoute><SchoolSettings /></AdminRoute>} />
                       <Route path="corbeille" element={<AdminRoute><Corbeille /></AdminRoute>} />
                       {/* Student Portal */}
                       <Route path="eleve" element={<ElevePortalDashboard />} />
@@ -124,6 +136,7 @@ export default function App() {
                       <Route path="eleve/emploi-du-temps" element={<ElevePortalEmploiDuTemps />} />
                       <Route path="eleve/bulletins" element={<EleveBulletin />} />
                       {/* Parent Portal */}
+                      <Route path="parent/dashboard" element={<ParentDashboard />} />
                       <Route path="parent/notes" element={<ParentNotes />} />
                       <Route path="parent/bulletins" element={<ParentBulletins />} />
                       <Route path="parent/emploi-du-temps" element={<ParentEmploiDuTemps />} />

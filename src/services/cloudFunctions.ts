@@ -531,6 +531,114 @@ export function getEmploiDuTempsProfSecure(professeurId: string): Promise<{ succ
   return callFunction("getEmploiDuTempsProf", { professeurId });
 }
 
+// =====================
+// Discipline
+// =====================
+
+export interface DisciplineRecordResult {
+  id: string;
+  eleveId: string;
+  eleveNom: string;
+  elevePrenom: string;
+  classe: string;
+  type: string;
+  description: string;
+  motif: string;
+  sanction: string;
+  profId: string;
+  profNom: string;
+  isSystem: boolean;
+  coursId?: string;
+  coursDate?: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface CreateDisciplineParams {
+  eleveId: string;
+  eleveNom: string;
+  elevePrenom: string;
+  classe: string;
+  type: string;
+  description: string;
+  motif?: string;
+  sanction?: string;
+  coursId?: string;
+  coursDate?: string;
+}
+
+export function createDisciplineRecordSecure(params: CreateDisciplineParams): Promise<{ success: boolean; id: string; message: string }> {
+  return callFunction("createDisciplineRecord", params);
+}
+
+export function getDisciplineRecordsSecure(params: { classe?: string; eleveId?: string; type?: string; limit?: number } = {}): Promise<{ success: boolean; records: DisciplineRecordResult[] }> {
+  return callFunction("getDisciplineRecords", params);
+}
+
+export function updateDisciplineRecordSecure(params: { id: string; type?: string; description?: string; motif?: string; sanction?: string }): Promise<{ success: boolean; message: string }> {
+  return callFunction("updateDisciplineRecord", params);
+}
+
+export function deleteDisciplineRecordSecure(id: string): Promise<{ success: boolean; message: string }> {
+  return callFunction("deleteDisciplineRecord", { id });
+}
+
+// =====================
+// Matieres
+// =====================
+
+export interface MatiereResult {
+  id: string;
+  nom: string;
+  coefficient: number;
+  couleur: string;
+  createdAt: string | null;
+}
+
+export function getMatieresSecure(): Promise<{ success: boolean; matieres: MatiereResult[] }> {
+  return callFunction("getMatieres", undefined);
+}
+
+export function createMatiereSecure(params: { nom: string; coefficient?: number; couleur?: string }): Promise<{ success: boolean; id: string; message: string }> {
+  return callFunction("createMatiere", params);
+}
+
+export function updateMatiereSecure(params: { id: string; nom?: string; coefficient?: number; couleur?: string }): Promise<{ success: boolean; message: string }> {
+  return callFunction("updateMatiere", params);
+}
+
+export function deleteMatiereSecure(id: string): Promise<{ success: boolean; message: string }> {
+  return callFunction("deleteMatiere", { id });
+}
+
+// =====================
+// CSV Import
+// =====================
+
+export interface EleveImportRow {
+  nom: string;
+  prenom: string;
+  classe: string;
+  sexe?: string;
+  dateNaissance?: string;
+  telephone?: string;
+  adresse?: string;
+}
+
+export interface ImportResult {
+  success: boolean;
+  dryRun: boolean;
+  totalRows?: number;
+  validRows?: number;
+  imported?: number;
+  errors: Array<{ row: number; message: string }>;
+  message?: string;
+}
+
+export function importElevesCsvSecure(params: { rows: EleveImportRow[]; dryRun?: boolean }): Promise<ImportResult> {
+  return callFunction("importElevesCsv", params);
+}
+
 export function getCloudFunctionErrorMessage(error: unknown): string {
   if (error && typeof error === "object" && "message" in error) {
     const msg = (error as { message: string }).message;
