@@ -4,7 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs } from "firebase/firesto
 import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
-import { getNotesByEleveSecure, getCloudFunctionErrorMessage, type NoteResult } from "../../services/cloudFunctions";
+import { getNotesByEleveSecure, type NoteResult } from "../../services/cloudFunctions";
 
 interface EleveInfo {
   nom: string;

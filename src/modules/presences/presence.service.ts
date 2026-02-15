@@ -5,7 +5,6 @@ import {
   getDocs,
   collectionGroup,
   doc,
-  setDoc,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "../../services/firebase";
