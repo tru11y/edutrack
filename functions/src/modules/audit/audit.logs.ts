@@ -19,11 +19,35 @@ export const getAuditLogs = functions
         .limit(safeLimit)
         .get();
 
-      const logs = logsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp?.toDate?.()?.toISOString() || null,
-      }));
+      // Resolve user names for performedBy UIDs
+      const uidSet = new Set<string>();
+      for (const d of logsSnapshot.docs) {
+        const uid = d.data().performedBy;
+        if (uid) uidSet.add(uid);
+      }
+
+      const userNames: Record<string, string> = {};
+      const uids = [...uidSet];
+      // Firestore in-query limit is 30
+      for (let i = 0; i < uids.length; i += 30) {
+        const batch = uids.slice(i, i + 30);
+        const usersSnap = await db.collection("users").where("__name__", "in", batch).get();
+        for (const u of usersSnap.docs) {
+          const d = u.data();
+          userNames[u.id] = `${d.prenom || ""} ${d.nom || ""}`.trim() || d.email || u.id;
+        }
+      }
+
+      const logs = logsSnapshot.docs.map((d) => {
+        const data = d.data();
+        const uid = data.performedBy || "";
+        return {
+          id: d.id,
+          ...data,
+          performedByName: data.performedByName || userNames[uid] || uid,
+          timestamp: data.timestamp?.toDate?.()?.toISOString() || null,
+        };
+      });
 
       return { success: true, logs };
     } catch (error) {

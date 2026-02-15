@@ -91,8 +91,11 @@ export const createPaiement = functions
         action: "PAIEMENT_CREATED",
         paiementId: paiementRef.id,
         eleveId: data.eleveId,
+        eleveNom: `${eleveData?.prenom || ""} ${eleveData?.nom || ""}`.trim(),
         montant: data.montantTotal,
+        mois: data.mois,
         performedBy: context.auth!.uid,
+        performedByName: createdByName,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 

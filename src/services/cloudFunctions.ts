@@ -49,7 +49,11 @@ export interface AuditLog {
   action: string;
   targetUserId?: string;
   targetEmail?: string;
+  eleveNom?: string;
+  montant?: number;
+  mois?: string;
   performedBy: string;
+  performedByName?: string;
   timestamp: string;
 }
 
