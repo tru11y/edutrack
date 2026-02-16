@@ -450,8 +450,8 @@ export default function EmploiDuTemps() {
                   <td style={{ padding: "14px 20px", fontWeight: 500, color: colors.text, fontSize: 14, textTransform: "capitalize" }}>{c.jour}</td>
                   <td style={{ padding: "14px 20px", color: colors.textMuted, fontSize: 14 }}>{c.heureDebut} - {c.heureFin}</td>
                   <td style={{ padding: "14px 20px", fontWeight: 500, color: colors.text, fontSize: 14 }}>{c.classe}</td>
-                  <td style={{ padding: "14px 20px", color: colors.text, fontSize: 14 }}>{c.matiere}</td>
-                  <td style={{ padding: "14px 20px", color: colors.text, fontSize: 14 }}>{getProfNom(c.professeurId)}</td>
+                  <td style={{ padding: "14px 20px", color: colors.text, fontSize: 14, maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.matiere}</td>
+                  <td style={{ padding: "14px 20px", color: colors.text, fontSize: 14, maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{getProfNom(c.professeurId)}</td>
                   <td style={{ padding: "14px 20px" }}>
                     <span style={{ padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 500, background: c.type === "soir" ? colors.primaryBg : colors.infoBg, color: c.type === "soir" ? colors.primary : colors.info }}>
                       {c.type === "soir" ? "Soir" : "Renforcement"}

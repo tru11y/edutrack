@@ -202,7 +202,7 @@ export default function Dashboard() {
                 {card.icon}
               </div>
             </div>
-            <p style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 4px" }}>
+            <p style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {card.value}
             </p>
             <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>
@@ -237,11 +237,11 @@ export default function Dashboard() {
                   textDecoration: "none", border: `1px solid ${colors.border}`,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: colors.text }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: colors.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {student.prenom} {student.nom}
                   </span>
-                  <span style={{ fontSize: 12, color: colors.textMuted }}>{student.classe}</span>
+                  <span style={{ fontSize: 12, color: colors.textMuted, flexShrink: 0 }}>{student.classe}</span>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
                   {student.risks.map((risk, i) => (

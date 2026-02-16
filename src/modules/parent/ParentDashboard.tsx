@@ -156,7 +156,7 @@ export default function ParentDashboard() {
                     {enfant.prenom[0]}{enfant.nom[0]}
                   </div>
                   <div>
-                    <p style={{ fontSize: 16, fontWeight: 600, color: colors.text }}>
+                    <p style={{ fontSize: 16, fontWeight: 600, color: colors.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
                       {enfant.prenom} {enfant.nom}
                     </p>
                     <p style={{ fontSize: 13, color: colors.textMuted }}>Classe de {enfant.classe}</p>

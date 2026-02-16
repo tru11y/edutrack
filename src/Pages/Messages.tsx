@@ -319,7 +319,7 @@ export default function Messages() {
                       </div>
                     )}
                     {message.contenu && (
-                      <p style={{ margin: 0, fontSize: 14, color: isMe ? colors.onGradient : colors.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{message.contenu}</p>
+                      <p style={{ margin: 0, fontSize: 14, color: isMe ? colors.onGradient : colors.text, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word", overflowWrap: "break-word" }}>{message.contenu}</p>
                     )}
                     {/* Attachments */}
                     {message.attachments && message.attachments.length > 0 && (
@@ -339,7 +339,7 @@ export default function Messages() {
                             }}
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05L12.25 20.24C10.28 22.21 7.07 22.21 5.1 20.24C3.13 18.27 3.13 15.06 5.1 13.09L14.29 3.9C15.58 2.61 17.67 2.61 18.96 3.9C20.25 5.19 20.25 7.28 18.96 8.57L9.76 17.76C9.12 18.41 8.07 18.41 7.42 17.76C6.78 17.12 6.78 16.07 7.42 15.42L15.95 6.9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                            {att.name}
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 150 }}>{att.name}</span>
                           </a>
                         ))}
                       </div>

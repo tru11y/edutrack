@@ -1,32 +1,30 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 
 export default function PageTransition({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const [displayChildren, setDisplayChildren] = useState(children);
   const [transitionStage, setTransitionStage] = useState<"in" | "out">("in");
+  const prevPathRef = useRef(location.pathname);
 
   useEffect(() => {
-    if (children !== displayChildren) {
+    if (location.pathname !== prevPathRef.current) {
       setTransitionStage("out");
+      const timer = setTimeout(() => {
+        prevPathRef.current = location.pathname;
+        setTransitionStage("in");
+      }, 150);
+      return () => clearTimeout(timer);
     }
-  }, [children, displayChildren]);
+  }, [location.pathname]);
 
   return (
     <>
       <div
-        key={location.pathname}
         style={{
           animation: transitionStage === "in" ? "pageFadeIn 0.2s ease-out" : "pageFadeOut 0.15s ease-in",
         }}
-        onAnimationEnd={() => {
-          if (transitionStage === "out") {
-            setDisplayChildren(children);
-            setTransitionStage("in");
-          }
-        }}
       >
-        {displayChildren}
+        {children}
       </div>
       <style>{`
         @keyframes pageFadeIn {
