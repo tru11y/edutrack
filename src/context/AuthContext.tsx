@@ -40,6 +40,7 @@ export interface AppUser {
   isBanned?: boolean;
   nom?: string;
   prenom?: string;
+  permissions?: string[];
 }
 
 export interface OnlineUser {

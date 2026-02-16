@@ -30,3 +30,5 @@ export async function verifyProfOrAdmin(uid: string): Promise<boolean> {
   const role = snap.data()?.role;
   return role === "admin" || role === "prof";
 }
+
+export { verifyHasPermission } from "./permissions";

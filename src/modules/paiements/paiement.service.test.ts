@@ -1,12 +1,5 @@
-import { enregistrerVersement } from "./paiement.service";
-import { calculerPaiement } from "./paiement.logic";
+import { unbanEleve, unbanEleveIfFullyPaid } from "./paiement.service";
 import { updateEleveSystem } from "../eleves/eleve.service";
-import { updateDoc } from "firebase/firestore";
-import type { Paiement } from "./paiement.types";
-
-jest.mock("./paiement.logic", () => ({
-  calculerPaiement: jest.fn(),
-}));
 
 jest.mock("../eleves/eleve.service", () => ({
   updateEleveSystem: jest.fn(),
@@ -16,33 +9,53 @@ jest.mock("firebase/firestore", () => ({
   doc: jest.fn(),
   updateDoc: jest.fn(),
   collection: jest.fn(),
+  getDocs: jest.fn(),
+  getDoc: jest.fn(),
+  addDoc: jest.fn(),
+  deleteDoc: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn(),
+  serverTimestamp: jest.fn(),
 }));
 
-describe("enregistrerVersement", () => {
-  it("ajoute un versement et met à jour le statut", async () => {
-    (calculerPaiement as jest.Mock).mockReturnValue({
-      statut: "paye",
-      montantRestant: 0,
+jest.mock("../../services/firebase", () => ({
+  db: {},
+}));
+
+describe("paiement.service", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("unbanEleve", () => {
+    it("should call updateEleveSystem to remove ban", async () => {
+      await unbanEleve("e1");
+      expect(updateEleveSystem).toHaveBeenCalledWith("e1", {
+        isBanned: false,
+        banReason: null,
+        banDate: null,
+      });
+    });
+  });
+
+  describe("unbanEleveIfFullyPaid", () => {
+    it("should unban if montantRestant is 0", async () => {
+      await unbanEleveIfFullyPaid("e1", 0);
+      expect(updateEleveSystem).toHaveBeenCalledWith("e1", {
+        isBanned: false,
+        banReason: null,
+        banDate: null,
+      });
     });
 
-    const fakePaiement: Partial<Paiement> = {
-      id: "p1",
-      eleveId: "e1",
-      mois: "2026-01",
-      montantTotal: 10000,
-      montantPaye: 4000,
-      montantRestant: 6000,
-      statut: "partiel",
-      versements: [],
-    };
+    it("should unban if montantRestant is negative", async () => {
+      await unbanEleveIfFullyPaid("e1", -100);
+      expect(updateEleveSystem).toHaveBeenCalled();
+    });
 
-    await enregistrerVersement(fakePaiement, 6000, "especes");
-
-    expect(updateDoc).toHaveBeenCalled();
-    expect(updateEleveSystem).toHaveBeenCalledWith("e1", {
-      isBanned: false,
-      banReason: null,
-      banDate: null,
+    it("should not unban if montantRestant is positive", async () => {
+      await unbanEleveIfFullyPaid("e1", 5000);
+      expect(updateEleveSystem).not.toHaveBeenCalled();
     });
   });
 });

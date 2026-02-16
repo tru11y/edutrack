@@ -1,4 +1,4 @@
-const CACHE_NAME = "edutrack-v3";
+const CACHE_NAME = "edutrack-v4";
 const STATIC_ASSETS = ["/", "/index.html"];
 
 self.addEventListener("install", (event) => {
@@ -39,6 +39,17 @@ self.addEventListener("fetch", (event) => {
         }).catch(() => cached);
 
         return cached || fetchPromise;
+      })
+    );
+  }
+});
+
+// Background Sync for offline queue
+self.addEventListener("sync", (event) => {
+  if (event.tag === "edutrack-offline-sync") {
+    event.waitUntil(
+      self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => client.postMessage({ type: "RETRY_QUEUE" }));
       })
     );
   }

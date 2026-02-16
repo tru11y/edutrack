@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { sendPushToUser } from "../../helpers/push";
 
 export const triggerAbsenceNotification = functions
   .region("europe-west1")
@@ -41,6 +42,16 @@ export const triggerAbsenceNotification = functions
       }
 
       await batch.commit();
+
+      // Send push notifications
+      for (const parentDoc of parentUsers) {
+        await sendPushToUser(
+          parentDoc.id,
+          "Absence signalee",
+          `Votre enfant a ete marque absent le ${data.date} (${data.classe}).`
+        );
+      }
+
       return { success: true, count: parentUsers.length };
     } catch (error) {
       handleError(error, "Erreur lors de l'envoi des notifications d'absence.");

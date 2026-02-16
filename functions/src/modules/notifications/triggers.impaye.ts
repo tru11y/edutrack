@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { sendPushToUser } from "../../helpers/push";
 
 export const triggerImpayeNotification = functions
   .region("europe-west1")
@@ -40,6 +41,16 @@ export const triggerImpayeNotification = functions
       }
 
       await batch.commit();
+
+      // Send push notifications
+      for (const parentDoc of parentUsers) {
+        await sendPushToUser(
+          parentDoc.id,
+          "Paiement en retard",
+          `Un paiement de ${data.montantRestant.toLocaleString()} FCFA est en attente pour le mois ${data.mois}.`
+        );
+      }
+
       return { success: true, count: parentUsers.length };
     } catch (error) {
       handleError(error, "Erreur lors de l'envoi des notifications d'impaye.");

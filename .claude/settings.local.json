@@ -26,7 +26,19 @@
       "Bash(find:*)",
       "Bash(firebase functions:list:*)",
       "Bash(firebase functions:log:*)",
-      "Bash(npx vite build)"
+      "Bash(npx vite build)",
+      "Bash(npx firebase functions:list:*)",
+      "Bash(git status:*)",
+      "Bash(npm run functions:build:*)",
+      "Bash(npm run:*)",
+      "Bash(tsc:*)",
+      "Bash(xargs:*)",
+      "Bash(git log:*)",
+      "Bash(ls:*)",
+      "Bash(test:*)",
+      "Bash(grep:*)",
+      "Bash(npx jest --forceExit --detectOpenHandles)",
+      "Bash(npx jest:*)"
     ]
   }
 }

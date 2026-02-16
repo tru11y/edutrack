@@ -4,6 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs } from "firebase/firesto
 import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { CircularProgress } from "../../components/charts";
 
 interface Enfant {
   id: string;
@@ -177,16 +178,18 @@ export default function ParentDashboard() {
 
               {/* Stats */}
               <div style={{ padding: 20 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 20 }}>
-                  <MiniStat
-                    label="Présence"
-                    value={`${enfant.tauxPresence}%`}
+                <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 20, alignItems: "center", marginBottom: 20 }}>
+                  <CircularProgress
+                    percentage={enfant.tauxPresence}
+                    size={100}
                     color={enfant.tauxPresence >= 80 ? colors.success : enfant.tauxPresence >= 60 ? colors.warning : colors.danger}
-                    colors={colors}
+                    label="Presence"
                   />
-                  <MiniStat label="Présent" value={enfant.presences} color={colors.success} colors={colors} />
-                  <MiniStat label="Absences" value={enfant.absences} color={colors.danger} colors={colors} />
-                  <MiniStat label="Retards" value={enfant.retards} color={colors.warning} colors={colors} />
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+                    <MiniStat label="Present" value={enfant.presences} color={colors.success} colors={colors} />
+                    <MiniStat label="Absences" value={enfant.absences} color={colors.danger} colors={colors} />
+                    <MiniStat label="Retards" value={enfant.retards} color={colors.warning} colors={colors} />
+                  </div>
                 </div>
 
                 {/* Alerte paiement */}
