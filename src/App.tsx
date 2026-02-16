@@ -3,6 +3,7 @@ import React, { Suspense, lazy, useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { LanguageProvider } from "./context/LanguageContext";
+import { SchoolProvider } from "./context/SchoolContext";
 import { ToastProvider } from "./components/ui/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PageLoader from "./components/PageLoader";
@@ -126,6 +127,7 @@ export default function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
+            <SchoolProvider>
             <ToastProvider>
               <BrowserRouter>
                 <OnboardingProvider>
@@ -197,6 +199,7 @@ export default function App() {
                 </OnboardingProvider>
               </BrowserRouter>
             </ToastProvider>
+            </SchoolProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

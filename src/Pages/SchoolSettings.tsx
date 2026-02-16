@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useTheme } from "../context/ThemeContext";
+import { useSchool, type SchoolConfig } from "../context/SchoolContext";
 import { useToast } from "../components/ui";
 
 const COLOR_PRESETS = [
@@ -15,48 +16,17 @@ const COLOR_PRESETS = [
   { label: "Cyan", value: "#06b6d4" },
 ];
 
-interface SchoolConfig {
-  schoolName: string;
-  schoolLogo: string;
-  primaryColor: string;
-  anneeScolaire: string;
-  adresse: string;
-  telephone: string;
-  email: string;
-}
-
-const DEFAULT_CONFIG: SchoolConfig = {
-  schoolName: "EduTrack",
-  schoolLogo: "",
-  primaryColor: "#6366f1",
-  anneeScolaire: "2025-2026",
-  adresse: "",
-  telephone: "",
-  email: "",
-};
-
 export default function SchoolSettings() {
   const { colors } = useTheme();
+  const { school, loading } = useSchool();
   const toast = useToast();
-  const [config, setConfig] = useState<SchoolConfig>(DEFAULT_CONFIG);
-  const [loading, setLoading] = useState(true);
+  const [config, setConfig] = useState<SchoolConfig>(school);
   const [saving, setSaving] = useState(false);
 
+  // Sync from context when it loads/updates
   useEffect(() => {
-    const load = async () => {
-      try {
-        const snap = await getDoc(doc(db, "config", "school"));
-        if (snap.exists()) {
-          setConfig({ ...DEFAULT_CONFIG, ...snap.data() } as SchoolConfig);
-        }
-      } catch {
-        // use defaults
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    setConfig(school);
+  }, [school]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -64,7 +34,7 @@ export default function SchoolSettings() {
       await setDoc(doc(db, "config", "school"), config, { merge: true });
       toast.success("Parametres de l'ecole enregistres.");
     } catch {
-      toast.error("Erreur lors de la sauvegarde.");
+      toast.error("Erreur lors de la sauvegarde. Verifiez vos permissions.");
     } finally {
       setSaving(false);
     }
@@ -79,6 +49,7 @@ export default function SchoolSettings() {
     color: colors.text,
     fontSize: 14,
     outline: "none",
+    boxSizing: "border-box" as const,
   };
 
   const btnPrimary = {
@@ -185,23 +156,27 @@ export default function SchoolSettings() {
           </div>
 
           {/* Preview */}
-          {config.schoolLogo && (
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={{ fontSize: 13, color: colors.textSecondary, display: "block", marginBottom: 10, fontWeight: 600 }}>Apercu du logo</label>
-              <div style={{ display: "flex", alignItems: "center", gap: 16, padding: 16, background: colors.bg, borderRadius: 12 }}>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label style={{ fontSize: 13, color: colors.textSecondary, display: "block", marginBottom: 10, fontWeight: 600 }}>Apercu</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, padding: 16, background: colors.bg, borderRadius: 12 }}>
+              {config.schoolLogo ? (
                 <img
                   src={config.schoolLogo}
                   alt="Logo"
                   style={{ width: 60, height: 60, objectFit: "contain", borderRadius: 8 }}
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                 />
-                <div>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: config.primaryColor, margin: 0 }}>{config.schoolName}</p>
-                  <p style={{ fontSize: 12, color: colors.textMuted, margin: "2px 0 0" }}>{config.anneeScolaire}</p>
+              ) : (
+                <div style={{ width: 60, height: 60, borderRadius: 8, background: config.primaryColor, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ color: "#fff", fontWeight: 700, fontSize: 24 }}>{config.schoolName?.[0]?.toUpperCase() || "E"}</span>
                 </div>
+              )}
+              <div>
+                <p style={{ fontSize: 18, fontWeight: 700, color: config.primaryColor, margin: 0 }}>{config.schoolName || "EduTrack"}</p>
+                <p style={{ fontSize: 12, color: colors.textMuted, margin: "2px 0 0" }}>{config.anneeScolaire}</p>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>

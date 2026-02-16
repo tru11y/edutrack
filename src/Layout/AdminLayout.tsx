@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage, type TranslationKey } from "../context/LanguageContext";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useSchool } from "../context/SchoolContext";
 import NotificationCenter from "../modules/notifications/NotificationCenter";
 import GlobalSearch from "../components/GlobalSearch";
 import Breadcrumb from "../components/Breadcrumb";
@@ -88,6 +89,7 @@ export default function AdminLayout() {
   const { logout, user, onlineUsers } = useAuth();
   const { isDark, toggleTheme, colors: themeColors } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const { school } = useSchool();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -193,10 +195,14 @@ export default function AdminLayout() {
             <button onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 4 }}>
               {icons.menu}
             </button>
-            <div style={{ width: 32, height: 32, background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: themeColors.onGradient, fontWeight: 700, fontSize: 14 }}>E</span>
-            </div>
-            <span style={{ fontWeight: 600, color: colors.text, fontSize: 16 }}>EDUTRACK</span>
+            {school.schoolLogo ? (
+              <img src={school.schoolLogo} alt="" style={{ width: 32, height: 32, objectFit: "contain", borderRadius: 8 }} />
+            ) : (
+              <div style={{ width: 32, height: 32, background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ color: themeColors.onGradient, fontWeight: 700, fontSize: 14 }}>{school.schoolName?.[0]?.toUpperCase() || "E"}</span>
+              </div>
+            )}
+            <span style={{ fontWeight: 600, color: colors.text, fontSize: 16 }}>{school.schoolName || "EDUTRACK"}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <GlobalSearch />
@@ -224,11 +230,15 @@ export default function AdminLayout() {
         <div style={{ padding: "20px", borderBottom: `1px solid ${colors.border}` }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 42, height: 42, background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ color: themeColors.onGradient, fontWeight: 700, fontSize: 18 }}>E</span>
-              </div>
+              {school.schoolLogo ? (
+                <img src={school.schoolLogo} alt="" style={{ width: 42, height: 42, objectFit: "contain", borderRadius: 12 }} />
+              ) : (
+                <div style={{ width: 42, height: 42, background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ color: themeColors.onGradient, fontWeight: 700, fontSize: 18 }}>{school.schoolName?.[0]?.toUpperCase() || "E"}</span>
+                </div>
+              )}
               <div>
-                <h1 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>EDUTRACK</h1>
+                <h1 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{school.schoolName || "EDUTRACK"}</h1>
                 <p style={{ fontSize: 11, color: colors.textMuted, margin: 0 }}>{isProf ? t("professorSpace") : t("schoolManagement")}</p>
               </div>
             </div>

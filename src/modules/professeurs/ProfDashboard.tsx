@@ -80,7 +80,7 @@ export default function ProfesseurDashboard() {
 
   return (
     <div style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: colors.text, marginBottom: 24 }}>
+      <h1 style={{ fontSize: 24, fontWeight: 700, color: colors.text, marginBottom: 24, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         Bonjour {prof.prenom} {prof.nom}
       </h1>
 
@@ -118,7 +118,7 @@ export default function ProfesseurDashboard() {
               key={c.id}
               style={{ background: colors.bgCard, borderRadius: 12, border: `1px solid ${colors.border}`, padding: 16 }}
             >
-              <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, marginBottom: 4 }}>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {c.matiere} — {c.classe}
               </h2>
               <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 12 }}>

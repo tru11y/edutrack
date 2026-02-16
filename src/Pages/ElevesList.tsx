@@ -260,9 +260,9 @@ export default function ElevesList() {
                         {eleve.prenom[0]}{eleve.nom[0]}
                       </div>
                       <div>
-                        <p style={{ margin: 0, fontWeight: 500, color: colors.text }}>{eleve.prenom} {eleve.nom}</p>
+                        <p style={{ margin: 0, fontWeight: 500, color: colors.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>{eleve.prenom} {eleve.nom}</p>
                         {eleve.parents && eleve.parents.length > 0 && (
-                          <p style={{ margin: 0, fontSize: 12, color: colors.textLight }}>
+                          <p style={{ margin: 0, fontSize: 12, color: colors.textLight, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
                             {eleve.parents[0].nom} - {eleve.parents[0].telephone}
                           </p>
                         )}

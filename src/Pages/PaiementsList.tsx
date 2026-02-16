@@ -170,13 +170,14 @@ export default function PaiementsList() {
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 60, textAlign: "center" }}><p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{paiements.length === 0 ? "Aucun paiement" : "Aucun paiement trouve"}</p></div>
       ) : (
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
             <thead><tr style={{ background: colors.bg }}><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Ref</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Eleve</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Mois</th><th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Date</th><th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Montant</th><th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Paye</th><th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Statut</th><th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase" }}>Actions</th></tr></thead>
             <tbody>
               {filtered.map((p) => (
                 <tr key={p.id} style={{ borderTop: `1px solid ${colors.border}` }}>
-                  <td style={{ padding: "16px 20px" }}><span style={{ fontSize: 12, fontFamily: "monospace", color: colors.textMuted }}>{p.reference || "—"}</span></td>
-                  <td style={{ padding: "16px 20px" }}><p style={{ margin: 0, fontWeight: 500, color: colors.text }}>{p.eleveNom}</p></td>
+                  <td style={{ padding: "16px 20px", maxWidth: 100 }}><span style={{ fontSize: 12, fontFamily: "monospace", color: colors.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{p.reference || "—"}</span></td>
+                  <td style={{ padding: "16px 20px", maxWidth: 180 }}><p style={{ margin: 0, fontWeight: 500, color: colors.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.eleveNom}</p></td>
                   <td style={{ padding: "16px 20px", color: colors.textMuted, fontSize: 14 }}>{new Date(p.mois + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</td>
                   <td style={{ padding: "16px 20px", color: colors.text, fontSize: 14 }}>{formatDate(p.datePaiement)}</td>
                   <td style={{ padding: "16px 20px", textAlign: "right", fontWeight: 500, color: colors.text }}>{(p.montantTotal || 0).toLocaleString()} FCFA</td>
@@ -192,6 +193,7 @@ export default function PaiementsList() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
