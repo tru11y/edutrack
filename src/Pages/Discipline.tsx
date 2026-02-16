@@ -174,7 +174,7 @@ export default function Discipline() {
 
       {/* Filters */}
       <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
-        <ClassSelect value={filterClasse} onChange={setFilterClasse} allLabel="Toutes les classes" classes={classes} colors={colors} />
+        <ClassSelect value={filterClasse} onChange={setFilterClasse} allLabel="Toutes les classes" classes={classes} />
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
@@ -300,7 +300,7 @@ export default function Discipline() {
 
       <ConfirmModal
         isOpen={confirmState.isOpen}
-        onClose={() => setConfirmState((p) => ({ ...p, isOpen: false }))}
+        onCancel={() => setConfirmState((p) => ({ ...p, isOpen: false }))}
         onConfirm={confirmState.onConfirm}
         title={confirmState.title}
         message={confirmState.message}

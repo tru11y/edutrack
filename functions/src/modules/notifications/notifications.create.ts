@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
+import { sendPushToUser } from "../../helpers/push";
 
 interface SendNotificationData {
   type: "absence" | "retard" | "impaye" | "bulletin" | "general";
@@ -38,6 +39,9 @@ export const sendNotification = functions
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         readAt: null,
       });
+
+      // Also send push notification
+      await sendPushToUser(data.recipientId, data.title, data.message);
 
       return { success: true, id: ref.id, message: "Notification envoyee." };
     } catch (error) {

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { LanguageProvider } from "./context/LanguageContext";
@@ -7,6 +7,10 @@ import { ToastProvider } from "./components/ui/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PageLoader from "./components/PageLoader";
 import MessageNotificationContainer from "./components/MessageNotification";
+import SkipToContent from "./components/SkipToContent";
+import OfflineBanner from "./components/OfflineBanner";
+import { retryQueue } from "./services/cloudFunctions";
+import { requestPushPermission, saveFCMToken, onForegroundMessage } from "./services/pushNotifications";
 import { OnboardingProvider } from "./components/onboarding/OnboardingProvider";
 
 const AdminLayout = lazy(() => import("./Layout/AdminLayout"));
@@ -54,6 +58,38 @@ const ParentPresences = lazy(() => import("./modules/parent/ParentPresences"));
 const ParentCahier = lazy(() => import("./modules/parent/ParentCahier"));
 const ParentPaiement = lazy(() => import("./modules/parent/ParentPaiement"));
 const SchoolSettings = lazy(() => import("./pages/SchoolSettings"));
+const ClassPromotion = lazy(() => import("./pages/ClassPromotion"));
+const Archives = lazy(() => import("./pages/Archives"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const PermissionManagement = lazy(() => import("./pages/PermissionManagement"));
+
+function OnlineQueueRetry() {
+  useEffect(() => {
+    const handleOnline = () => {
+      retryQueue().catch(() => {});
+    };
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, []);
+  return null;
+}
+
+function PushNotificationInit() {
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!user) return;
+    const pushEnabled = localStorage.getItem("edutrack_push_enabled");
+    if (pushEnabled === "false") return;
+    requestPushPermission().then((granted) => {
+      if (granted) saveFCMToken();
+    });
+    const unsub = onForegroundMessage(() => {
+      // Toast handled by NotificationCenter
+    });
+    return unsub;
+  }, [user]);
+  return null;
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -93,6 +129,10 @@ export default function App() {
             <ToastProvider>
               <BrowserRouter>
                 <OnboardingProvider>
+                <SkipToContent />
+                <OfflineBanner />
+                <OnlineQueueRetry />
+                <PushNotificationInit />
                 <MessageNotificationContainer />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
@@ -132,6 +172,10 @@ export default function App() {
                       <Route path="import-eleves" element={<AdminRoute><ImportEleves /></AdminRoute>} />
                       <Route path="parametres" element={<AdminRoute><SchoolSettings /></AdminRoute>} />
                       <Route path="corbeille" element={<AdminRoute><Corbeille /></AdminRoute>} />
+                      <Route path="classes/promotion" element={<AdminRoute><ClassPromotion /></AdminRoute>} />
+                      <Route path="archives" element={<AdminRoute><Archives /></AdminRoute>} />
+                      <Route path="analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
+                      <Route path="admin/permissions" element={<AdminRoute><PermissionManagement /></AdminRoute>} />
                       {/* Student Portal */}
                       <Route path="eleve" element={<ElevePortalDashboard />} />
                       <Route path="eleve/notes" element={<EleveNotes />} />

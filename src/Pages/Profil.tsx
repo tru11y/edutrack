@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useOnboarding } from "../components/onboarding/OnboardingProvider";
+import { requestPushPermission, saveFCMToken, removeFCMToken } from "../services/pushNotifications";
 
 interface UserProfile { nom?: string; prenom?: string; email?: string; telephone?: string; role?: string; }
 
@@ -111,6 +112,39 @@ export default function Profil() {
           ) : (
             <div><p style={{ fontSize: 14, color: colors.textMuted, marginBottom: 20 }}>Modifiez votre mot de passe pour renforcer la securite.</p><button onClick={() => setShowPasswordForm(true)} style={{ padding: "12px 24px", background: colors.bgSecondary, color: colors.textSecondary, border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Changer le mot de passe</button></div>
           )}
+        </div>
+
+        {/* Push Notifications */}
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: colors.text, margin: "0 0 12px" }}>{t("pushNotifications")}</h2>
+          <p style={{ fontSize: 14, color: colors.textMuted, marginBottom: 16 }}>
+            {language === "en" ? "Receive instant notifications in your browser." : "Recevez des notifications instantanees dans votre navigateur."}
+          </p>
+          <div style={{ display: "flex", gap: 12 }}>
+            <button
+              onClick={async () => {
+                const granted = await requestPushPermission();
+                if (granted) {
+                  await saveFCMToken();
+                  localStorage.setItem("edutrack_push_enabled", "true");
+                  setMessage({ type: "success", text: t("enablePush") });
+                }
+              }}
+              style={{ padding: "12px 24px", background: colors.success, color: colors.onGradient, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+            >
+              {t("enablePush")}
+            </button>
+            <button
+              onClick={async () => {
+                await removeFCMToken();
+                localStorage.setItem("edutrack_push_enabled", "false");
+                setMessage({ type: "success", text: t("disablePush") });
+              }}
+              style={{ padding: "12px 24px", background: colors.bgSecondary, color: colors.textMuted, border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+            >
+              {t("disablePush")}
+            </button>
+          </div>
         </div>
 
         {/* Onboarding tour restart */}

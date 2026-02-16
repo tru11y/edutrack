@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useTheme } from "../context/ThemeContext";
 import { useToast, ConfirmModal } from "../components/ui";
 import { getCreneaux, createCreneau, deleteCreneau } from "../modules/emploi-du-temps/emploi.service";
+import { updateCreneauSecure } from "../services/cloudFunctions";
 import { getAllProfesseurs } from "../modules/professeurs/professeur.service";
 import { JOURS } from "../constants";
 import type { Creneau } from "../modules/emploi-du-temps/emploi.types";
@@ -47,6 +48,96 @@ export default function EmploiDuTemps() {
   const [saving, setSaving] = useState(false);
 
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+
+  // Drag & Drop state
+  const [draggedCreneau, setDraggedCreneau] = useState<Creneau | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ jour: Jour; hour: number } | null>(null);
+  const [dragConflict, setDragConflict] = useState(false);
+  const [showDragConfirm, setShowDragConfirm] = useState(false);
+  const [pendingDrop, setPendingDrop] = useState<{ creneau: Creneau; jour: Jour; heureDebut: string; heureFin: string } | null>(null);
+
+  // Matiere color map
+  const matiereColorMap: Record<string, string> = {};
+  matieres.forEach((m, i) => {
+    const matColors = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899", "#14b8a6"];
+    matiereColorMap[m.nom] = matColors[i % matColors.length];
+  });
+
+  const checkDragConflicts = useCallback((jour: string, heureDebut: string, heureFin: string, excludeId?: string) => {
+    const timeToMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+    const s1 = timeToMin(heureDebut), e1 = timeToMin(heureFin);
+    return creneaux.some((c) => {
+      if (c.id === excludeId || c.jour !== jour) return false;
+      const s2 = timeToMin(c.heureDebut), e2 = timeToMin(c.heureFin);
+      return s1 < e2 && s2 < e1 && (c.professeurId === draggedCreneau?.professeurId || c.classe === draggedCreneau?.classe);
+    });
+  }, [creneaux, draggedCreneau]);
+
+  const handleDragStart = (e: React.DragEvent, creneau: Creneau) => {
+    setDraggedCreneau(creneau);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, jour: Jour, hour: number) => {
+    e.preventDefault();
+    if (!draggedCreneau) return;
+    setDropTarget({ jour, hour });
+    const duration = (() => {
+      const [h1, m1] = draggedCreneau.heureDebut.split(":").map(Number);
+      const [h2, m2] = draggedCreneau.heureFin.split(":").map(Number);
+      return (h2 * 60 + m2) - (h1 * 60 + m1);
+    })();
+    const newStart = `${String(hour).padStart(2, "0")}:00`;
+    const endH = hour + Math.floor(duration / 60);
+    const endM = duration % 60;
+    const newEnd = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+    setDragConflict(checkDragConflicts(jour, newStart, newEnd, draggedCreneau.id));
+  };
+
+  const handleDrop = async (e: React.DragEvent, jour: Jour, hour: number) => {
+    e.preventDefault();
+    if (!draggedCreneau?.id) return;
+    const duration = (() => {
+      const [h1, m1] = draggedCreneau.heureDebut.split(":").map(Number);
+      const [h2, m2] = draggedCreneau.heureFin.split(":").map(Number);
+      return (h2 * 60 + m2) - (h1 * 60 + m1);
+    })();
+    const newStart = `${String(hour).padStart(2, "0")}:00`;
+    const endH = hour + Math.floor(duration / 60);
+    const endM = duration % 60;
+    const newEnd = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+
+    if (checkDragConflicts(jour, newStart, newEnd, draggedCreneau.id)) {
+      setPendingDrop({ creneau: draggedCreneau, jour, heureDebut: newStart, heureFin: newEnd });
+      setShowDragConfirm(true);
+    } else {
+      await executeDrop(draggedCreneau, jour, newStart, newEnd);
+    }
+    setDraggedCreneau(null);
+    setDropTarget(null);
+    setDragConflict(false);
+  };
+
+  const executeDrop = async (creneau: Creneau, jour: Jour, heureDebut: string, heureFin: string) => {
+    if (!creneau.id) return;
+    try {
+      const result = await updateCreneauSecure({ id: creneau.id, jour, heureDebut, heureFin });
+      if (result.success) {
+        toast.success("Creneau deplace");
+        await loadData();
+      } else {
+        toast.error(result.message || "Conflit detecte");
+      }
+    } catch {
+      toast.error("Erreur lors du deplacement");
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedCreneau(null);
+    setDropTarget(null);
+    setDragConflict(false);
+  };
 
   // Filtre par jour - par defaut le jour actuel
   const todayIndex = new Date().getDay();
@@ -287,31 +378,47 @@ export default function EmploiDuTemps() {
                   ))}
                 </div>
 
-                {/* Day columns */}
+                {/* Day columns with drag & drop */}
                 {JOURS.map((jour) => (
                   <div key={jour} style={{ position: "relative", borderLeft: `1px solid ${colors.border}` }}>
                     {HOURS.map((h) => (
-                      <div key={h} style={{ height: 60, borderBottom: `1px solid ${colors.border}` }} />
+                      <div
+                        key={h}
+                        style={{
+                          height: 60, borderBottom: `1px solid ${colors.border}`,
+                          background: dropTarget?.jour === jour && dropTarget?.hour === h
+                            ? (dragConflict ? `${colors.danger}20` : `${colors.primary}15`)
+                            : "transparent",
+                          transition: "background 0.15s",
+                        }}
+                        onDragOver={(e) => handleDragOver(e, jour, h)}
+                        onDrop={(e) => handleDrop(e, jour, h)}
+                      />
                     ))}
                     {/* Creneaux overlay */}
                     {creneauxByJour[jour].map((c) => {
                       const top = timeToPos(c.heureDebut);
                       const height = timeToPos(c.heureFin) - top;
-                      const ci = classeColorMap[c.classe] ?? 0;
-                      const gc = gridColors[ci];
+                      const mColor = matiereColorMap[c.matiere] || colors.primary;
+                      const isDragging = draggedCreneau?.id === c.id;
                       return (
                         <div
                           key={c.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, c)}
+                          onDragEnd={handleDragEnd}
                           style={{
                             position: "absolute", top, left: 2, right: 2,
                             height: Math.max(height, 20),
-                            background: gc.bg, borderLeft: `3px solid ${gc.border}`,
+                            background: `${mColor}18`, borderLeft: `3px solid ${mColor}`,
                             borderRadius: 6, padding: "4px 6px", overflow: "hidden",
-                            cursor: "pointer", fontSize: 11, lineHeight: 1.3,
+                            cursor: "grab", fontSize: 11, lineHeight: 1.3,
+                            opacity: isDragging ? 0.4 : 1,
+                            transition: "opacity 0.2s",
                           }}
-                          title={`${c.matiere} - ${c.classe}\n${c.heureDebut}-${c.heureFin}\n${getProfNom(c.professeurId)}`}
+                          title={`${c.matiere} - ${c.classe}\n${c.heureDebut}-${c.heureFin}\n${getProfNom(c.professeurId)}\n(Glisser pour deplacer)`}
                         >
-                          <div style={{ fontWeight: 600, color: gc.border, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.matiere}</div>
+                          <div style={{ fontWeight: 600, color: mColor, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.matiere}</div>
                           {height > 30 && <div style={{ color: colors.textMuted, fontSize: 10 }}>{c.classe}</div>}
                           {height > 45 && <div style={{ color: colors.textMuted, fontSize: 10 }}>{c.heureDebut}-{c.heureFin}</div>}
                         </div>
@@ -369,6 +476,22 @@ export default function EmploiDuTemps() {
         variant={confirmState.variant}
         onConfirm={confirmState.onConfirm}
         onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
+
+      {/* Drag conflict confirmation */}
+      <ConfirmModal
+        isOpen={showDragConfirm}
+        title="Conflit detecte"
+        message="Un conflit a ete detecte (meme prof ou meme classe). Voulez-vous quand meme deplacer ce creneau ?"
+        variant="warning"
+        onConfirm={async () => {
+          setShowDragConfirm(false);
+          if (pendingDrop) {
+            await executeDrop(pendingDrop.creneau, pendingDrop.jour, pendingDrop.heureDebut, pendingDrop.heureFin);
+            setPendingDrop(null);
+          }
+        }}
+        onCancel={() => { setShowDragConfirm(false); setPendingDrop(null); }}
       />
     </div>
   );

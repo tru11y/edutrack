@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { Timestamp } from "firebase/firestore";
 import { getAllPaiements, movePaiementToTrash } from "../modules/paiements/paiement.service";
 import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useToast, ConfirmModal } from "../components/ui";
 import { exportPaiementsExcelSecure } from "../services/cloudFunctions";
 import { downloadBase64File } from "../utils/download";
+import { exportToCSV } from "../utils/csvExport";
 import type { Paiement } from "../modules/paiements/paiement.types";
 
 function toDate(val: unknown): Date | null {
@@ -25,6 +27,7 @@ function formatDate(val: unknown): string {
 
 export default function PaiementsList() {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const toast = useToast();
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,6 +112,20 @@ export default function PaiementsList() {
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M15.75 11.25V14.25C15.75 15.08 15.08 15.75 14.25 15.75H3.75C2.92 15.75 2.25 15.08 2.25 14.25V11.25M5.25 7.5L9 11.25L12.75 7.5M9 11.25V2.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {exporting ? "Export..." : "Exporter"}
+            </button>
+            <button
+              onClick={() => exportToCSV(filtered, [
+                { header: "Eleve", accessor: (r) => r.eleveNom || "" },
+                { header: "Mois", accessor: (r) => r.mois },
+                { header: "Montant Total", accessor: (r) => r.montantTotal },
+                { header: "Montant Paye", accessor: (r) => r.montantPaye },
+                { header: "Reste", accessor: (r) => r.montantTotal - r.montantPaye },
+                { header: "Statut", accessor: (r) => r.montantPaye >= r.montantTotal ? "Paye" : r.montantPaye > 0 ? "Partiel" : "Impaye" },
+              ], `paiements_${filterMois || "tous"}.csv`)}
+              style={{ padding: "12px 20px", background: colors.bgSecondary, color: colors.textMuted, borderRadius: 10, border: "none", fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M15.75 11.25V14.25C15.75 15.08 15.08 15.75 14.25 15.75H3.75C2.92 15.75 2.25 15.08 2.25 14.25V11.25M5.25 7.5L9 11.25L12.75 7.5M9 11.25V2.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              {t("exportCSV")}
             </button>
             <Link to="/corbeille" style={{ padding: "12px 20px", background: colors.bgSecondary, color: colors.textMuted, borderRadius: 10, textDecoration: "none", fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">

@@ -136,6 +136,15 @@ export const generateBulletin = functions
       let bulletinId: string;
       if (!existing.empty) {
         bulletinId = existing.docs[0].id;
+        // Snapshot current version before updating
+        const currentData = existing.docs[0].data();
+        const versionsSnap = await db.collection("bulletins").doc(bulletinId).collection("versions").get();
+        await db.collection("bulletins").doc(bulletinId).collection("versions").add({
+          data: currentData,
+          versionNumber: versionsSnap.size + 1,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdBy: context.auth!.uid,
+        });
         await db.collection("bulletins").doc(bulletinId).update(bulletinData);
       } else {
         const ref = await db.collection("bulletins").add(bulletinData);
@@ -208,6 +217,15 @@ export const generateBulletinsClasse = functions
           .get();
 
         if (!existing.empty) {
+          // Snapshot current version
+          const currentData = existing.docs[0].data();
+          const versionsSnap = await existing.docs[0].ref.collection("versions").get();
+          await existing.docs[0].ref.collection("versions").add({
+            data: currentData,
+            versionNumber: versionsSnap.size + 1,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdBy: context.auth!.uid,
+          });
           batch.update(existing.docs[0].ref, bulletin.data);
         } else {
           const ref = db.collection("bulletins").doc();

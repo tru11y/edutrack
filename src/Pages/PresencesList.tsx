@@ -4,8 +4,10 @@ import { getAllPresences } from "../modules/presences/presence.service";
 import { getAllEleves } from "../modules/eleves/eleve.service";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import { exportPresencesExcelSecure } from "../services/cloudFunctions";
 import { downloadBase64File } from "../utils/download";
+import { exportToCSV } from "../utils/csvExport";
 import type { PresenceCoursPayload } from "../modules/presences/presence.types";
 import type { Eleve } from "../modules/eleves/eleve.types";
 import Modal from "../components/ui/Modal";
@@ -21,6 +23,7 @@ interface PresenceDoc extends PresenceCoursPayload { id: string; }
 export default function PresencesList() {
   useAuth();
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [presences, setPresences] = useState<PresenceDoc[]>([]);
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,6 +115,24 @@ export default function PresencesList() {
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M15.75 11.25V14.25C15.75 15.08 15.08 15.75 14.25 15.75H3.75C2.92 15.75 2.25 15.08 2.25 14.25V11.25M5.25 7.5L9 11.25L12.75 7.5M9 11.25V2.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             {exporting ? "Export..." : "Exporter"}
+          </button>
+          <button
+            onClick={() => {
+              const rows = filtered.flatMap((p) =>
+                p.presences.map((pr) => ({ classe: p.classe, date: p.date, eleve: getEleveName(pr.eleveId), statut: pr.statut, minutesRetard: pr.minutesRetard }))
+              );
+              exportToCSV(rows, [
+                { header: "Classe", accessor: (r) => r.classe },
+                { header: "Date", accessor: (r) => r.date },
+                { header: "Eleve", accessor: (r) => r.eleve },
+                { header: "Statut", accessor: (r) => r.statut },
+                { header: "Minutes Retard", accessor: (r) => r.minutesRetard ?? "" },
+              ], "presences.csv");
+            }}
+            style={{ padding: "12px 20px", background: colors.bgSecondary, color: colors.textMuted, borderRadius: 10, border: "none", fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M15.75 11.25V14.25C15.75 15.08 15.08 15.75 14.25 15.75H3.75C2.92 15.75 2.25 15.08 2.25 14.25V11.25M5.25 7.5L9 11.25L12.75 7.5M9 11.25V2.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            {t("exportCSV")}
           </button>
           <Link
             to="/presences/appel"

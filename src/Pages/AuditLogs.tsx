@@ -42,6 +42,8 @@ export default function AuditLogs() {
       return (
         l.action.toLowerCase().includes(q) ||
         (l.targetEmail || "").toLowerCase().includes(q) ||
+        (l.performedByName || "").toLowerCase().includes(q) ||
+        (l.eleveNom || "").toLowerCase().includes(q) ||
         l.performedBy.toLowerCase().includes(q)
       );
     }
@@ -115,8 +117,12 @@ export default function AuditLogs() {
                       {l.action}
                     </span>
                   </td>
-                  <td style={{ padding: 12, color: colors.text, fontSize: 13 }}>{l.targetEmail || l.targetUserId || "-"}</td>
-                  <td style={{ padding: 12, color: colors.textMuted, fontSize: 13 }}>{l.performedBy}</td>
+                  <td style={{ padding: 12, color: colors.text, fontSize: 13 }}>
+                    {l.eleveNom
+                      ? `${l.eleveNom}${l.mois ? ` (${l.mois})` : ""}${l.montant != null ? ` — ${l.montant} FCFA` : ""}`
+                      : l.targetEmail || l.targetUserId || "-"}
+                  </td>
+                  <td style={{ padding: 12, color: colors.textMuted, fontSize: 13 }}>{l.performedByName || l.performedBy}</td>
                 </tr>
               );
             })}

@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage, type TranslationKey } from "../context/LanguageContext";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import NotificationCenter from "../modules/notifications/NotificationCenter";
 import GlobalSearch from "../components/GlobalSearch";
+import Breadcrumb from "../components/Breadcrumb";
+import PageTransition from "../components/PageTransition";
 
 interface NavItem {
   to: string;
@@ -34,7 +39,11 @@ const navItems: NavItem[] = [
   { to: "/import-eleves", labelKey: "importEleves" as TranslationKey, icon: "upload", roles: ["admin", "gestionnaire"] },
   { to: "/audit", labelKey: "auditLogs" as TranslationKey, icon: "settings", roles: ["admin"] },
   { to: "/parametres", labelKey: "schoolSettings" as TranslationKey, icon: "settings", roles: ["admin"] },
+  { to: "/admin/permissions", labelKey: "permissions" as TranslationKey, icon: "settings", roles: ["admin"] },
   { to: "/comptabilite", labelKey: "accounting", icon: "wallet", roles: ["admin"] },
+  { to: "/classes/promotion", labelKey: "promotion" as TranslationKey, icon: "users", roles: ["admin"] },
+  { to: "/archives", labelKey: "archives" as TranslationKey, icon: "book", roles: ["admin"] },
+  { to: "/analytics", labelKey: "analytics" as TranslationKey, icon: "chart", roles: ["admin", "gestionnaire"] },
   { to: "/corbeille", labelKey: "trash", icon: "trash", roles: ["admin", "gestionnaire"] },
   // Eleve portal
   { to: "/eleve", labelKey: "dashboard", icon: "dashboard", end: true, roles: ["eleve"] },
@@ -84,6 +93,9 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showOnlineUsers, setShowOnlineUsers] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useKeyboardShortcuts();
 
   const storageKey = user?.uid ? `profMode_${user.uid}` : null;
   const [profMode, setProfMode] = useState(() => {
@@ -120,6 +132,23 @@ export default function AdminLayout() {
   useEffect(() => {
     if (isMobile) setSidebarOpen(false);
   }, [location.pathname, isMobile]);
+
+  // Unread messages listener
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(collection(db, "messages"));
+    const unsub = onSnapshot(q, (snap) => {
+      const msgs = snap.docs.map((d) => d.data());
+      const readKey = `messages_read_${user.uid}`;
+      const lastRead = parseInt(localStorage.getItem(readKey) || "0", 10);
+      const unread = msgs.filter((m) => {
+        const ts = m.createdAt?.toMillis?.() || 0;
+        return ts > lastRead && m.auteurId !== user.uid;
+      }).length;
+      setUnreadMessages(unread);
+    }, () => {});
+    return () => unsub();
+  }, [user?.uid]);
 
   const handleLogout = async () => {
     await logout();
@@ -256,16 +285,21 @@ export default function AdminLayout() {
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1, padding: "20px 12px", overflowY: "auto" }}>
+        <nav aria-label="Navigation principale" style={{ flex: 1, padding: "20px 12px", overflowY: "auto" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {filteredNavItems.map((item) => (
               <NavLink key={item.to} to={item.to} end={item.end} data-tour={item.labelKey} style={({ isActive }) => ({
                 display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10,
                 fontSize: 14, fontWeight: 500, color: isActive ? colors.accent : colors.textMuted,
                 background: isActive ? colors.accentBg : "transparent", textDecoration: "none", transition: "all 0.15s"
-              })}>
+              })} aria-current={location.pathname === item.to || (item.end && location.pathname === item.to) ? "page" : undefined}>
                 <span style={{ display: "flex", alignItems: "center" }}>{icons[item.icon]}</span>
-                {t(item.labelKey)}
+                <span style={{ flex: 1 }}>{t(item.labelKey)}</span>
+                {item.labelKey === "messages" && unreadMessages > 0 && (
+                  <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: colors.danger, color: "#fff", fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                    {unreadMessages > 99 ? "99+" : unreadMessages}
+                  </span>
+                )}
               </NavLink>
             ))}
           </div>
@@ -298,9 +332,12 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main */}
-      <main style={{ flex: 1, marginLeft: isMobile ? 0 : sidebarWidth, marginTop: isMobile ? 60 : 0, minHeight: isMobile ? "calc(100vh - 60px)" : "100vh", transition: "margin-left 0.3s ease-in-out" }}>
+      <main id="main-content" style={{ flex: 1, marginLeft: isMobile ? 0 : sidebarWidth, marginTop: isMobile ? 60 : 0, minHeight: isMobile ? "calc(100vh - 60px)" : "100vh", transition: "margin-left 0.3s ease-in-out" }}>
         <div style={{ padding: isMobile ? 16 : 32, maxWidth: 1400, margin: "0 auto" }}>
-          <Outlet />
+          <Breadcrumb />
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
         </div>
       </main>
     </div>

@@ -1,36 +1,56 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
+import { cacheData, getCachedData } from "../utils/offlineCache";
+import { useDashboardWidgets } from "../hooks/useDashboardWidgets";
+import DashboardWidgetConfig from "../components/DashboardWidgetConfig";
+import { CircularProgress, LineChart, BarChart } from "../components/charts";
 import {
   getAdminDashboardStatsSecure,
   getAdvancedStatsSecure,
   getClasseComparisonSecure,
+  getAtRiskStudentsSecure,
   getCloudFunctionErrorMessage,
   type AdminDashboardStats,
   type AdvancedStatsResult,
   type ClasseComparisonItem,
+  type AtRiskStudent,
 } from "../services/cloudFunctions";
 
 export default function Dashboard() {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [advancedStats, setAdvancedStats] = useState<AdvancedStatsResult | null>(null);
   const [classeComparison, setClasseComparison] = useState<ClasseComparisonItem[]>([]);
+  const [atRiskStudents, setAtRiskStudents] = useState<AtRiskStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showWidgetConfig, setShowWidgetConfig] = useState(false);
+  const { widgets, toggleWidget, reorderWidgets, resetToDefault, isVisible } = useDashboardWidgets();
 
   useEffect(() => {
+    // Load cached data immediately for instant display
+    const cached = getCachedData<AdminDashboardStats>("dashboard_stats");
+    if (cached) {
+      setStats(cached);
+      setLoading(false);
+    }
+
     getAdminDashboardStatsSecure()
       .then((res) => {
         setStats(res.stats);
+        cacheData("dashboard_stats", res.stats);
       })
       .catch((err) => {
-        setError(getCloudFunctionErrorMessage(err));
+        if (!cached) setError(getCloudFunctionErrorMessage(err));
       })
       .finally(() => setLoading(false));
 
     getAdvancedStatsSecure().then(setAdvancedStats).catch(() => {});
     getClasseComparisonSecure().then((res) => setClasseComparison(res.classes || [])).catch(() => {});
+    getAtRiskStudentsSecure().then((res) => setAtRiskStudents(res.students || [])).catch(() => {});
   }, []);
 
   if (loading) {
@@ -126,17 +146,40 @@ export default function Dashboard() {
   return (
     <div>
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>
-          Tableau de bord
-        </h1>
-        <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>
-          Bienvenue sur EduTrack - Vue d'ensemble de votre etablissement
-        </p>
+      <div style={{ marginBottom: 32, display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>
+            Tableau de bord
+          </h1>
+          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>
+            Bienvenue sur EduTrack - Vue d'ensemble de votre etablissement
+          </p>
+        </div>
+        <button
+          onClick={() => setShowWidgetConfig(true)}
+          style={{
+            padding: "10px 16px", background: colors.bgSecondary, border: `1px solid ${colors.border}`,
+            borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
+            fontSize: 13, fontWeight: 500, color: colors.textMuted,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 1V3M10 17V19M1 10H3M17 10H19M4.22 4.22L5.64 5.64M14.36 14.36L15.78 15.78M4.22 15.78L5.64 14.36M14.36 5.64L15.78 4.22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          {t("widgetConfig")}
+        </button>
       </div>
 
+      {showWidgetConfig && (
+        <DashboardWidgetConfig
+          widgets={widgets}
+          onToggle={toggleWidget}
+          onReorder={reorderWidgets}
+          onReset={resetToDefault}
+          onClose={() => setShowWidgetConfig(false)}
+        />
+      )}
+
       {/* Stats Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
+      {isVisible("stats") && <div aria-live="polite" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
         {cards.map((card) => (
           <Link
             key={card.title}
@@ -167,10 +210,61 @@ export default function Dashboard() {
             </p>
           </Link>
         ))}
-      </div>
+      </div>}
+
+      {/* At-Risk Students */}
+      {isVisible("atRisk") && atRiskStudents.length > 0 && (
+        <div style={{ background: colors.dangerBg, borderRadius: 16, border: `1px solid ${colors.danger}40`, padding: 24, marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.danger, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18C1.36 18.78 1.93 19.74 2.83 19.74H21.17C22.07 19.74 22.64 18.78 22.18 18L13.71 3.86C13.25 3.09 12.75 3.09 12.29 3.86H10.29Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {t("atRiskStudents")} ({atRiskStudents.length})
+            </h2>
+            <Link to="/eleves" style={{ fontSize: 13, color: colors.danger, textDecoration: "none", fontWeight: 500 }}>
+              Voir tous →
+            </Link>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {atRiskStudents.slice(0, 5).map((student) => (
+              <Link
+                key={student.eleveId}
+                to={`/eleves/${student.eleveId}`}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 14px", background: colors.bgCard, borderRadius: 10,
+                  textDecoration: "none", border: `1px solid ${colors.border}`,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: colors.text }}>
+                    {student.prenom} {student.nom}
+                  </span>
+                  <span style={{ fontSize: 12, color: colors.textMuted }}>{student.classe}</span>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {student.risks.map((risk, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 6,
+                        background: risk.severity === "danger" ? colors.dangerBg : colors.warningBg,
+                        color: risk.severity === "danger" ? colors.danger : colors.warning,
+                      }}
+                    >
+                      {risk.type === "absence" ? t("riskAbsence") : risk.type === "payment" ? t("riskPayment") : t("riskGrades")}
+                    </span>
+                  ))}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Financial Overview */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, marginBottom: 24 }}>
+      {isVisible("finances") && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, marginBottom: 24 }}>
         {/* Taux de recouvrement */}
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
@@ -251,10 +345,10 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Quick Actions */}
-      <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
+      {isVisible("quickActions") && <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
         <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
           Actions rapides
         </h2>
@@ -322,84 +416,45 @@ export default function Dashboard() {
             Comptabilite
           </Link>
         </div>
-      </div>
+      </div>}
 
-      {/* Trends - Presences over 6 months */}
-      {advancedStats && (
+      {/* Trends - Presences & Payments using Chart components */}
+      {isVisible("trends") && advancedStats && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: 24, marginTop: 24 }}>
           <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
               Tendances presences (6 mois)
             </h2>
-            <div style={{ display: "flex", gap: 8, height: 160, alignItems: "flex-end" }}>
-              {advancedStats.months.map((month) => {
-                const data = advancedStats.presencesByMonth[month];
-                const total = data.present + data.absent + data.retard;
-                const maxH = 140;
-                const barH = total > 0 ? maxH : 4;
-                const presentH = total > 0 ? (data.present / total) * barH : 0;
-                const retardH = total > 0 ? (data.retard / total) * barH : 0;
-                const absentH = total > 0 ? (data.absent / total) * barH : 0;
-                return (
-                  <div key={month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <div style={{ display: "flex", flexDirection: "column", height: maxH, justifyContent: "flex-end", width: "100%" }}>
-                      <div style={{ height: absentH, background: colors.danger, borderRadius: "4px 4px 0 0" }} />
-                      <div style={{ height: retardH, background: colors.warning }} />
-                      <div style={{ height: presentH, background: colors.success, borderRadius: absentH + retardH > 0 ? 0 : "4px 4px 0 0" }} />
-                    </div>
-                    <span style={{ fontSize: 10, color: colors.textMuted }}>{month.slice(5)}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ display: "flex", gap: 16, marginTop: 12, justifyContent: "center" }}>
-              <span style={{ fontSize: 11, color: colors.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.success }} /> Presents
-              </span>
-              <span style={{ fontSize: 11, color: colors.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.warning }} /> Retards
-              </span>
-              <span style={{ fontSize: 11, color: colors.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.danger }} /> Absents
-              </span>
-            </div>
+            <BarChart
+              labels={advancedStats.months.map((m) => m.slice(5))}
+              datasets={[
+                { label: "Presents", data: advancedStats.months.map((m) => advancedStats.presencesByMonth[m].present), color: colors.success },
+                { label: "Retards", data: advancedStats.months.map((m) => advancedStats.presencesByMonth[m].retard), color: colors.warning },
+                { label: "Absents", data: advancedStats.months.map((m) => advancedStats.presencesByMonth[m].absent), color: colors.danger },
+              ]}
+              stacked
+              height={220}
+            />
           </div>
 
           <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
               Tendances paiements (6 mois)
             </h2>
-            <div style={{ display: "flex", gap: 8, height: 160, alignItems: "flex-end" }}>
-              {advancedStats.months.map((month) => {
-                const data = advancedStats.paiementsByMonth[month];
-                const maxVal = Math.max(...advancedStats.months.map((m) => advancedStats.paiementsByMonth[m].total || 1));
-                const totalH = maxVal > 0 ? (data.total / maxVal) * 140 : 4;
-                const payeH = data.total > 0 ? (data.paye / data.total) * totalH : 0;
-                return (
-                  <div key={month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <div style={{ display: "flex", flexDirection: "column", height: 140, justifyContent: "flex-end", width: "100%" }}>
-                      <div style={{ height: totalH - payeH, background: colors.border, borderRadius: "4px 4px 0 0" }} />
-                      <div style={{ height: payeH, background: colors.success }} />
-                    </div>
-                    <span style={{ fontSize: 10, color: colors.textMuted }}>{month.slice(5)}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ display: "flex", gap: 16, marginTop: 12, justifyContent: "center" }}>
-              <span style={{ fontSize: 11, color: colors.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.success }} /> Paye
-              </span>
-              <span style={{ fontSize: 11, color: colors.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.border }} /> Restant
-              </span>
-            </div>
+            <LineChart
+              labels={advancedStats.months.map((m) => m.slice(5))}
+              datasets={[
+                { label: "Total", data: advancedStats.months.map((m) => advancedStats.paiementsByMonth[m].total), color: colors.border },
+                { label: "Paye", data: advancedStats.months.map((m) => advancedStats.paiementsByMonth[m].paye), color: colors.success },
+              ]}
+              height={220}
+            />
           </div>
         </div>
       )}
 
       {/* Classe Comparison */}
-      {classeComparison.length > 0 && (
+      {isVisible("classeComparison") && classeComparison.length > 0 && (
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginTop: 24 }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
             Comparaison des classes

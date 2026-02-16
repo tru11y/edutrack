@@ -6,7 +6,7 @@ export default {
   roots: ["<rootDir>/src"],
 
   testMatch: [
-    "**/?(*.)+(spec|test).ts",
+    "**/?(*.)+(spec|test).ts?(x)",
   ],
 
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],

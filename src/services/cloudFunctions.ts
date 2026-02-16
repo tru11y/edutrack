@@ -1,11 +1,33 @@
 import { httpsCallable } from "firebase/functions";
 import { functions, ensureAuth } from "./firebase";
+import { enqueueOperation, processQueue } from "../utils/offlineQueue";
 
 async function callFunction<T, R>(name: string, data?: T): Promise<R> {
   await ensureAuth();
   const fn = httpsCallable<T, R>(functions, name);
-  const result = await fn(data as T);
-  return result.data;
+  try {
+    const result = await fn(data as T);
+    return result.data;
+  } catch (error: unknown) {
+    const isNetworkError =
+      error instanceof Error &&
+      (error.message.includes("Failed to fetch") ||
+        error.message.includes("NetworkError") ||
+        error.message.includes("network"));
+    if (isNetworkError && !navigator.onLine) {
+      enqueueOperation(name, data);
+      throw new Error("OFFLINE_QUEUED");
+    }
+    throw error;
+  }
+}
+
+export async function retryQueue(): Promise<{ processed: number; failed: number }> {
+  return processQueue(async (fnName, fnData) => {
+    await ensureAuth();
+    const fn = httpsCallable(functions, fnName);
+    await fn(fnData);
+  });
 }
 
 export interface CreateUserParams {
@@ -384,6 +406,33 @@ export function generateBulletinsClasseSecure(params: {
 }
 
 // =====================
+// Bulletin Versions
+// =====================
+
+export interface BulletinVersion {
+  id: string;
+  data: BulletinResult;
+  versionNumber: number;
+  createdAt: string | null;
+  createdBy: string;
+}
+
+export function getBulletinVersionsSecure(bulletinId: string): Promise<{ success: boolean; versions: BulletinVersion[] }> {
+  return callFunction("getBulletinVersions", { bulletinId });
+}
+
+export interface VersionDiff {
+  matiere: string;
+  noteA: number | null;
+  noteB: number | null;
+  change: number | null;
+}
+
+export function compareBulletinVersionsSecure(bulletinId: string, versionA: string, versionB: string): Promise<{ success: boolean; diff: VersionDiff[]; moyenneA: number | null; moyenneB: number | null }> {
+  return callFunction("compareBulletinVersions", { bulletinId, versionA, versionB });
+}
+
+// =====================
 // Advanced Stats
 // =====================
 
@@ -641,6 +690,138 @@ export interface ImportResult {
 
 export function importElevesCsvSecure(params: { rows: EleveImportRow[]; dryRun?: boolean }): Promise<ImportResult> {
   return callFunction("importElevesCsv", params);
+}
+
+// =====================
+// At-Risk Students
+// =====================
+
+export interface AtRiskStudent {
+  eleveId: string;
+  nom: string;
+  prenom: string;
+  classe: string;
+  risks: Array<{
+    type: "absence" | "payment" | "grades";
+    severity: "warning" | "danger";
+    detail: string;
+  }>;
+}
+
+export function getAtRiskStudentsSecure(): Promise<{ success: boolean; students: AtRiskStudent[] }> {
+  return callFunction("getAtRiskStudents", undefined);
+}
+
+// =====================
+// Creneau Update
+// =====================
+
+export interface UpdateCreneauParams {
+  id: string;
+  jour?: string;
+  heureDebut?: string;
+  heureFin?: string;
+  matiere?: string;
+  professeurId?: string;
+  professeurNom?: string;
+  classe?: string;
+  salle?: string;
+}
+
+export function updateCreneauSecure(params: UpdateCreneauParams): Promise<{ success: boolean; conflicts?: string[]; message: string }> {
+  return callFunction("updateCreneau", params);
+}
+
+// =====================
+// Class Promotion
+// =====================
+
+export interface PromoteClasseParams {
+  sourceClasse: string;
+  targetClasse: string;
+  anneeScolaire: string;
+}
+
+export function promoteClasseSecure(params: PromoteClasseParams): Promise<{ success: boolean; count: number; message: string }> {
+  return callFunction("promoteClasse", params);
+}
+
+// =====================
+// Archive
+// =====================
+
+export interface ArchiveParams {
+  anneeScolaire: string;
+  deleteOriginals?: boolean;
+}
+
+export function archiveAnneeScolaireSecure(params: ArchiveParams): Promise<{ success: boolean; stats: Record<string, number>; message: string }> {
+  return callFunction("archiveAnneeScolaire", params);
+}
+
+// =====================
+// Analytics Reports
+// =====================
+
+export type AnalyticsReportType = "attendance" | "grades" | "payments" | "comprehensive";
+
+export interface AnalyticsReportParams {
+  type: AnalyticsReportType;
+  dateStart?: string;
+  dateEnd?: string;
+  classe?: string;
+  matiere?: string;
+}
+
+export interface AnalyticsAttendance {
+  totalPresences: number;
+  totalAbsences: number;
+  totalRetards: number;
+  tauxPresence: number;
+  byClasse: Record<string, { present: number; absent: number; retard: number; taux: number }>;
+}
+
+export interface AnalyticsGrades {
+  moyenneGenerale: number;
+  tauxReussite: number;
+  byMatiere: Record<string, { moyenne: number; min: number; max: number; totalNotes: number; tauxReussite: number }>;
+}
+
+export interface AnalyticsPayments {
+  totalAttendu: number;
+  totalPaye: number;
+  tauxRecouvrement: number;
+  impayes: number;
+}
+
+export interface AnalyticsCorrelation {
+  classe: string;
+  tauxPresence: number;
+  moyenneNotes: number;
+}
+
+export interface AnalyticsReport {
+  type: AnalyticsReportType;
+  attendance?: AnalyticsAttendance;
+  grades?: AnalyticsGrades;
+  payments?: AnalyticsPayments;
+  correlations?: AnalyticsCorrelation[];
+}
+
+export function getAnalyticsReportSecure(params: AnalyticsReportParams): Promise<{ success: boolean; report: AnalyticsReport }> {
+  return callFunction("getAnalyticsReport", params);
+}
+
+// =====================
+// Permissions
+// =====================
+
+export function getUserPermissionsSecure(userId: string): Promise<{ success: boolean; permissions: string[]; role: string }> {
+  return callFunction("getUserPermissions", { userId });
+}
+
+export function updateUserPermissionsSecure(userId: string, permissions: string[]): Promise<{ success: boolean; message: string }> {
+  return callFunction("updateUserPermissions", { userId, permissions });
 }
 
 export function getCloudFunctionErrorMessage(error: unknown): string {

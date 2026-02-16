@@ -6,6 +6,7 @@
 export { createUser } from "./modules/users/users.create";
 export { deleteUser } from "./modules/users/users.delete";
 export { toggleUserStatus } from "./modules/users/users.toggle";
+export { getUserPermissionsFunction as getUserPermissions, updateUserPermissions } from "./modules/users/users.permissions";
 
 // Paiements
 export { createPaiement } from "./modules/paiements/paiements.create";
@@ -50,6 +51,7 @@ export { deleteNote } from "./modules/notes/notes.delete";
 export { getNotesByEvaluation, getNotesByEleve } from "./modules/notes/notes.list";
 export { calculateMoyennes } from "./modules/notes/moyennes.calculate";
 export { generateBulletin, generateBulletinsClasse } from "./modules/notes/bulletins.generate";
+export { getBulletinVersions, compareBulletinVersions } from "./modules/notes/bulletins.versions";
 
 // Advanced Stats
 export { getAdvancedStats } from "./modules/stats/advanced.stats";
@@ -85,5 +87,16 @@ export { importElevesCsv } from "./modules/imports/eleves.import";
 
 // Emploi du temps
 export { createCreneauBatch } from "./modules/emploi/creneaux.batch";
+export { updateCreneau } from "./modules/emploi/creneaux.update";
 export { checkScheduleConflicts } from "./modules/emploi/conflicts.check";
 export { getEmploiDuTempsClasse, getEmploiDuTempsProf } from "./modules/emploi/emploi.list";
+
+// At-risk students
+export { getAtRiskStudents } from "./modules/stats/risk.students";
+
+// Class management
+export { promoteClasse } from "./modules/classes/promotion";
+export { archiveAnneeScolaire } from "./modules/classes/archive";
+
+// Analytics
+export { getAnalyticsReport } from "./modules/analytics/reports";

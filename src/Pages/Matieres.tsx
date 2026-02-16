@@ -185,7 +185,7 @@ export default function Matieres() {
 
       <ConfirmModal
         isOpen={confirmState.isOpen}
-        onClose={() => setConfirmState((p) => ({ ...p, isOpen: false }))}
+        onCancel={() => setConfirmState((p) => ({ ...p, isOpen: false }))}
         onConfirm={confirmState.onConfirm}
         title={confirmState.title}
         message={confirmState.message}

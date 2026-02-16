@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { collection, addDoc, query, orderBy, serverTimestamp, Timestamp, onSnapshot, deleteDoc, doc } from "firebase/firestore";
-import { db } from "../services/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useToast, ConfirmModal } from "../components/ui";
 
 interface UserData {
@@ -14,6 +16,12 @@ interface UserData {
   isActive?: boolean;
 }
 
+interface Attachment {
+  name: string;
+  url: string;
+  type: string;
+}
+
 interface Message {
   id: string;
   auteurId: string;
@@ -23,14 +31,16 @@ interface Message {
   destinataire: string; // "tous" | "admins" | "profs" | userId
   destinataireNom?: string;
   createdAt?: Timestamp;
+  attachments?: Attachment[];
 }
 
 export default function Messages() {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const isProf = user?.role === "prof";
   const isAdminOrGest = user?.role === "admin" || user?.role === "gestionnaire";
-  const isOnlyAdmin = user?.role === "admin"; // Seul l'admin peut supprimer
+  const isOnlyAdmin = user?.role === "admin";
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +49,9 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState("");
   const [destinataire, setDestinataire] = useState("tous");
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
   }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
@@ -99,12 +112,22 @@ export default function Messages() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user) return;
+    if ((!newMessage.trim() && selectedFiles.length === 0) || !user) return;
 
     setError("");
     setSending(true);
 
     try {
+      // Upload attachments if any
+      const attachments: Attachment[] = [];
+      for (const file of selectedFiles) {
+        const filePath = `messages/${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, filePath);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        attachments.push({ name: file.name, url, type: file.type });
+      }
+
       const payload: Record<string, unknown> = {
         auteurId: user.uid,
         auteurNom: user.email?.split("@")[0] || "Utilisateur",
@@ -115,9 +138,14 @@ export default function Messages() {
         createdAt: serverTimestamp(),
       };
 
+      if (attachments.length > 0) {
+        payload.attachments = attachments;
+      }
+
       await addDoc(collection(db, "messages"), payload);
       setNewMessage("");
-      // Le listener temps reel va automatiquement mettre a jour les messages
+      setSelectedFiles([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
       console.error(err);
       setError("Erreur lors de l'envoi. Verifiez votre connexion.");
@@ -125,6 +153,20 @@ export default function Messages() {
       setSending(false);
     }
   };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFiles(Array.from(e.target.files));
+    }
+  };
+
+  // Filter messages by search query
+  const filteredMessages = searchQuery.trim()
+    ? messages.filter((m) =>
+        m.contenu.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.auteurNom.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : messages;
 
   const formatDate = (timestamp?: Timestamp) => {
     if (!timestamp) return "";
@@ -198,8 +240,19 @@ export default function Messages() {
       </div>
 
       <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, overflow: "hidden", display: "flex", flexDirection: "column", height: "calc(100vh - 280px)", minHeight: 400 }}>
+        {/* Search bar */}
+        <div style={{ padding: "12px 16px", borderBottom: `1px solid ${colors.border}`, background: colors.bgSecondary }}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={`${t("searchMessages")}...`}
+            style={{ width: "100%", padding: "10px 14px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 13, background: colors.bgCard, color: colors.text, outline: "none" }}
+          />
+        </div>
+
         <div style={{ flex: 1, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column-reverse", gap: 16 }}>
-          {messages.length === 0 ? (
+          {filteredMessages.length === 0 ? (
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
               <div>
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 16px", color: colors.textMuted }}>
@@ -209,7 +262,7 @@ export default function Messages() {
               </div>
             </div>
           ) : (
-            messages.map((message) => {
+            filteredMessages.map((message) => {
               const isMe = message.auteurId === user?.uid;
               const isFromAdmin = message.auteurRole === "admin";
               const destLabel = getDestinataireLabel(message);
@@ -265,7 +318,32 @@ export default function Messages() {
                         </span>
                       </div>
                     )}
-                    <p style={{ margin: 0, fontSize: 14, color: isMe ? colors.onGradient : colors.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{message.contenu}</p>
+                    {message.contenu && (
+                      <p style={{ margin: 0, fontSize: 14, color: isMe ? colors.onGradient : colors.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{message.contenu}</p>
+                    )}
+                    {/* Attachments */}
+                    {message.attachments && message.attachments.length > 0 && (
+                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                        {message.attachments.map((att, i) => (
+                          <a
+                            key={i}
+                            href={att.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: "flex", alignItems: "center", gap: 6,
+                              padding: "6px 10px", borderRadius: 6, fontSize: 12,
+                              background: isMe ? "rgba(255,255,255,0.15)" : colors.bgSecondary,
+                              color: isMe ? colors.onGradient : colors.primary,
+                              textDecoration: "none",
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05L12.25 20.24C10.28 22.21 7.07 22.21 5.1 20.24C3.13 18.27 3.13 15.06 5.1 13.09L14.29 3.9C15.58 2.61 17.67 2.61 18.96 3.9C20.25 5.19 20.25 7.28 18.96 8.57L9.76 17.76C9.12 18.41 8.07 18.41 7.42 17.76C6.78 17.12 6.78 16.07 7.42 15.42L15.95 6.9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            {att.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8, gap: 8 }}>
                       {destLabel && (
                         <span style={{ fontSize: 10, color: isMe ? "rgba(255,255,255,0.7)" : colors.textMuted, background: isMe ? "rgba(255,255,255,0.15)" : colors.border, padding: "2px 6px", borderRadius: 4 }}>
@@ -320,9 +398,25 @@ export default function Messages() {
             </select>
           </div>
 
+          {/* Selected files preview */}
+          {selectedFiles.length > 0 && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+              {selectedFiles.map((f, i) => (
+                <span key={i} style={{ padding: "4px 10px", background: colors.primaryBg, color: colors.primary, borderRadius: 6, fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}>
+                  {f.name}
+                  <button type="button" onClick={() => setSelectedFiles((prev) => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: colors.danger, cursor: "pointer", fontSize: 14, padding: 0 }}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 12 }}>
+            <button type="button" onClick={() => fileInputRef.current?.click()} style={{ padding: "14px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: 12, cursor: "pointer", color: colors.textMuted, display: "flex", alignItems: "center" }} title={t("attachments")}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05L12.25 20.24C10.28 22.21 7.07 22.21 5.1 20.24C3.13 18.27 3.13 15.06 5.1 13.09L14.29 3.9C15.58 2.61 17.67 2.61 18.96 3.9C20.25 5.19 20.25 7.28 18.96 8.57L9.76 17.76C9.12 18.41 8.07 18.41 7.42 17.76C6.78 17.12 6.78 16.07 7.42 15.42L15.95 6.9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+            <input ref={fileInputRef} type="file" multiple onChange={handleFileSelect} style={{ display: "none" }} />
             <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Ecrivez votre message..." style={{ flex: 1, padding: "14px 18px", border: `1px solid ${colors.border}`, borderRadius: 12, fontSize: 14, outline: "none", background: colors.bgInput, color: colors.text }} />
-            <button type="submit" disabled={sending || !newMessage.trim()} style={{ padding: "14px 24px", background: sending || !newMessage.trim() ? colors.border : (isProf ? `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)` : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`), color: sending || !newMessage.trim() ? colors.textMuted : colors.onGradient, border: "none", borderRadius: 12, fontSize: 14, fontWeight: 500, cursor: sending || !newMessage.trim() ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+            <button type="submit" disabled={sending || (!newMessage.trim() && selectedFiles.length === 0)} style={{ padding: "14px 24px", background: sending || (!newMessage.trim() && selectedFiles.length === 0) ? colors.border : (isProf ? `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)` : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`), color: sending || (!newMessage.trim() && selectedFiles.length === 0) ? colors.textMuted : colors.onGradient, border: "none", borderRadius: 12, fontSize: 14, fontWeight: 500, cursor: sending || (!newMessage.trim() && selectedFiles.length === 0) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M16.5 1.5L8.25 9.75M16.5 1.5L11.25 16.5L8.25 9.75M16.5 1.5L1.5 6.75L8.25 9.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Envoyer
             </button>

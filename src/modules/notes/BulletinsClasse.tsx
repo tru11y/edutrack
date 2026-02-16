@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { useToast } from "../../components/ui";
 import {
   generateBulletinsClasseSecure,
@@ -9,12 +10,15 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { getBulletinsByClasse } from "./notes.service";
 import BulletinView from "./BulletinView";
+import BulletinVersionHistory from "./BulletinVersionHistory";
 import type { Bulletin, Trimestre } from "./notes.types";
 import { TRIMESTRE_LABELS } from "./notes.types";
 
 export default function BulletinsClasse() {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const toast = useToast();
+  const [versionBulletinId, setVersionBulletinId] = useState<string | null>(null);
 
   const [classes, setClasses] = useState<string[]>([]);
   const [selectedClasse, setSelectedClasse] = useState("");
@@ -162,12 +166,31 @@ export default function BulletinsClasse() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {bulletins.map((b) => (
-            <BulletinView
-              key={b.id || b.eleveId}
-              bulletin={b}
-              eleveNom={elevesMap[b.eleveId] || b.eleveId}
-            />
+            <div key={b.id || b.eleveId}>
+              <BulletinView
+                bulletin={b}
+                eleveNom={elevesMap[b.eleveId] || b.eleveId}
+              />
+              {b.id && (
+                <button
+                  onClick={() => setVersionBulletinId(b.id!)}
+                  style={{
+                    marginTop: 4, padding: "6px 14px", background: colors.bgSecondary,
+                    border: `1px solid ${colors.border}`, borderRadius: 8,
+                    fontSize: 12, color: colors.textMuted, cursor: "pointer",
+                  }}
+                >
+                  {t("versionHistory")}
+                </button>
+              )}
+            </div>
           ))}
+          {versionBulletinId && (
+            <BulletinVersionHistory
+              bulletinId={versionBulletinId}
+              onClose={() => setVersionBulletinId(null)}
+            />
+          )}
         </div>
       )}
     </div>
