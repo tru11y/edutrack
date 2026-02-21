@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
 import { VALID_EVALUATION_TYPES, VALID_TRIMESTRES, isValidDate } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface CreateEvaluationData {
   classe: string;
@@ -21,6 +22,7 @@ export const createEvaluation = functions
     requireAuth(context.auth?.uid);
     const staff = await verifyStaff(context.auth!.uid);
     requirePermission(staff, "Seul le staff peut creer des evaluations.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     requireArgument(!!data.classe, "La classe est requise.");
     requireArgument(!!data.matiere, "La matiere est requise.");
@@ -62,6 +64,7 @@ export const createEvaluation = functions
         maxNote: data.maxNote,
         professeurId: context.auth!.uid,
         professeurNom: profNom,
+        schoolId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });

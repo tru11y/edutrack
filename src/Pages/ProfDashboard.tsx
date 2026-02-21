@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useTenant } from "../context/TenantContext";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { JOURS } from "../constants";
@@ -25,6 +26,7 @@ interface RecentEval {
 export default function ProfDashboard() {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const { schoolId } = useTenant();
   const navigate = useNavigate();
   const [myClasses, setMyClasses] = useState<string[]>([]);
   const [todayCourses, setTodayCourses] = useState<TodayCreneau[]>([]);
@@ -44,18 +46,18 @@ export default function ProfDashboard() {
         const days = ["dimanche", ...JOURS];
         const today = days[new Date().getDay()] || "lundi";
         const scheduleSnap = await getDocs(
-          query(collection(db, "emploi_du_temps"), where("professeurId", "==", user.uid), where("jour", "==", today))
+          query(collection(db, "emploi_du_temps"), where("schoolId", "==", schoolId), where("professeurId", "==", user.uid), where("jour", "==", today))
         );
         const creneaux = scheduleSnap.docs.map((d) => d.data() as TodayCreneau).sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
         setTodayCourses(creneaux);
 
         const evalsSnap = await getDocs(
-          query(collection(db, "evaluations"), where("professeurId", "==", user.uid), orderBy("createdAt", "desc"), limit(5))
+          query(collection(db, "evaluations"), where("schoolId", "==", schoolId), where("professeurId", "==", user.uid), orderBy("createdAt", "desc"), limit(5))
         );
         setRecentEvals(evalsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as RecentEval)));
 
         if (classes.length > 0) {
-          const elevesSnap = await getDocs(collection(db, "eleves"));
+          const elevesSnap = await getDocs(query(collection(db, "eleves"), where("schoolId", "==", schoolId)));
           const count = elevesSnap.docs.filter((d) => classes.includes(d.data().classe) && d.data().statut === "actif").length;
           setStudentsCount(count);
         }

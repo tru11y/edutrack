@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError, notFound } from "../../helpers/errors";
 import { isValidDate, isPositiveNumber } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 const VALID_METHODES = ["especes", "mobile_money", "virement", "cheque"] as const;
 
@@ -19,6 +20,7 @@ export const ajouterVersement = functions
     requireAuth(context.auth?.uid);
     const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent ajouter des versements.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     requireArgument(!!data.paiementId, "paiementId est requis.");
     requireArgument(isPositiveNumber(data.montant), "Le montant doit etre un nombre positif.");
@@ -114,6 +116,7 @@ export const ajouterVersement = functions
           methode: data.methode,
           nouveauStatut: statut,
           performedBy: context.auth!.uid,
+          schoolId,
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
       });

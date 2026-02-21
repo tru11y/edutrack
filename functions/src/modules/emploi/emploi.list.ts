@@ -1,14 +1,18 @@
 import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { requireAuth, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const getEmploiDuTempsClasse = functions
   .region("europe-west1")
   .https.onCall(async (data: { classe: string }, context) => {
     requireAuth(context.auth?.uid);
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const snap = await db.collection("emploi_du_temps")
+        .where("schoolId", "==", schoolId)
         .where("classe", "==", data.classe)
         .get();
 
@@ -28,8 +32,11 @@ export const getEmploiDuTempsProf = functions
   .https.onCall(async (data: { professeurId: string }, context) => {
     requireAuth(context.auth?.uid);
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const snap = await db.collection("emploi_du_temps")
+        .where("schoolId", "==", schoolId)
         .where("professeurId", "==", data.professeurId)
         .get();
 

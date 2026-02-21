@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { requireAuth, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface GetEvaluationsData {
   classe?: string;
@@ -13,9 +14,11 @@ export const getEvaluationsByClasse = functions
   .region("europe-west1")
   .https.onCall(async (data: GetEvaluationsData, context) => {
     requireAuth(context.auth?.uid);
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
-      let query: FirebaseFirestore.Query = db.collection("evaluations");
+      let query: FirebaseFirestore.Query = db.collection("evaluations")
+        .where("schoolId", "==", schoolId);
 
       if (data.classe) {
         query = query.where("classe", "==", data.classe);

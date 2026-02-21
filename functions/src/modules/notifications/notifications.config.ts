@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyAdmin } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const getNotificationConfig = functions
   .region("europe-west1")
@@ -10,8 +11,10 @@ export const getNotificationConfig = functions
     const isAdmin = await verifyAdmin(context.auth!.uid);
     requirePermission(isAdmin, "Seul l'admin peut voir la configuration.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
-      const doc = await db.collection("notification_config").doc("global").get();
+      const doc = await db.collection("notification_config").doc(schoolId).get();
       const defaultConfig = {
         autoAbsenceNotif: true,
         autoImpayeNotif: true,
@@ -36,9 +39,11 @@ export const updateNotificationConfig = functions
     const isAdmin = await verifyAdmin(context.auth!.uid);
     requirePermission(isAdmin, "Seul l'admin peut modifier la configuration.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
-      await db.collection("notification_config").doc("global").set(
-        { ...data, updatedAt: admin.firestore.FieldValue.serverTimestamp() },
+      await db.collection("notification_config").doc(schoolId).set(
+        { ...data, schoolId, updatedAt: admin.firestore.FieldValue.serverTimestamp() },
         { merge: true }
       );
       return { success: true, message: "Configuration mise a jour." };

@@ -3,6 +3,7 @@ import { db } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission } from "../../helpers/errors";
 import { getCurrentMonth } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface StatsPaiementMensuel {
   mois: string;
@@ -20,12 +21,13 @@ export const getStatsPaiementMensuel = functions
     requireAuth(context.auth?.uid);
     const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(isAuthorized);
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     const mois = data?.mois || getCurrentMonth();
 
     const [elevesSnap, paiementsSnap, configSnap] = await Promise.all([
-      db.collection("eleves").where("statut", "==", "actif").get(),
-      db.collection("paiements").where("mois", "==", mois).get(),
+      db.collection("eleves").where("schoolId", "==", schoolId).where("statut", "==", "actif").get(),
+      db.collection("paiements").where("schoolId", "==", schoolId).where("mois", "==", mois).get(),
       db.collection("config").doc("ecole").get(),
     ]);
 

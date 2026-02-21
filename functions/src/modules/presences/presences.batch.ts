@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyProf, verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
 import { VALID_PRESENCE_STATUTS } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface PresenceEntry {
   eleveId: string;
@@ -23,6 +24,7 @@ export const marquerPresenceBatch = functions
     requireAuth(context.auth?.uid);
     const isProf = await verifyProf(context.auth!.uid);
     requirePermission(isProf, "Seuls les professeurs peuvent marquer les presences.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     requireArgument(
       !!data.coursId && !!data.date && !!data.classe,
@@ -116,6 +118,7 @@ export const marquerPresenceBatch = functions
         date: data.date,
         presences: presencesSummary,
         marqueePar: context.auth!.uid,
+        schoolId,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
@@ -139,6 +142,7 @@ export const marquerPresenceBatch = functions
           classe: data.classe,
           date: data.date,
           marqueePar: context.auth!.uid,
+          schoolId,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -153,6 +157,7 @@ export const marquerPresenceBatch = functions
       date: data.date,
       nombreEleves: data.presences.length,
       performedBy: context.auth!.uid,
+      schoolId,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 

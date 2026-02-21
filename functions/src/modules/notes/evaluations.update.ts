@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyStaff, verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, notFound, handleError } from "../../helpers/errors";
 import { VALID_EVALUATION_TYPES, VALID_TRIMESTRES, isValidDate } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface UpdateEvaluationData {
   id: string;
@@ -29,6 +30,10 @@ export const updateEvaluation = functions
     if (!evalSnap.exists) notFound("Evaluation non trouvee.");
 
     const evalData = evalSnap.data()!;
+    const schoolId = await getSchoolId(context.auth!.uid);
+    if (evalData.schoolId && evalData.schoolId !== schoolId) {
+      requirePermission(false, "Cette evaluation n'appartient pas a votre etablissement.");
+    }
     const isAdminOrGest = await verifyAdminOrGestionnaire(context.auth!.uid);
     if (!isAdminOrGest && evalData.professeurId !== context.auth!.uid) {
       requirePermission(false, "Vous ne pouvez modifier que vos propres evaluations.");

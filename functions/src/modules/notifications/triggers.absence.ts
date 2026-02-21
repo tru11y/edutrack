@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
 import { sendPushToUser } from "../../helpers/push";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const triggerAbsenceNotification = functions
   .region("europe-west1")
@@ -11,10 +12,13 @@ export const triggerAbsenceNotification = functions
     const staff = await verifyStaff(context.auth!.uid);
     requirePermission(staff);
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       // Find parent of this student
       const usersSnap = await db.collection("users")
         .where("role", "==", "parent")
+        .where("schoolId", "==", schoolId)
         .get();
 
       const parentUsers = usersSnap.docs.filter((doc) => {
@@ -36,6 +40,7 @@ export const triggerAbsenceNotification = functions
             context: { eleveId: data.eleveId, date: data.date, classe: data.classe },
           },
           senderId: context.auth!.uid,
+          schoolId,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           readAt: null,
         });

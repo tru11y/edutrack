@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
 import { sendPushToUser } from "../../helpers/push";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const triggerImpayeNotification = functions
   .region("europe-west1")
@@ -11,9 +12,12 @@ export const triggerImpayeNotification = functions
     const allowed = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(allowed);
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const usersSnap = await db.collection("users")
         .where("role", "==", "parent")
+        .where("schoolId", "==", schoolId)
         .get();
 
       const parentUsers = usersSnap.docs.filter((doc) => {
@@ -35,6 +39,7 @@ export const triggerImpayeNotification = functions
             context: { eleveId: data.eleveId, mois: data.mois, montantRestant: data.montantRestant },
           },
           senderId: context.auth!.uid,
+          schoolId,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           readAt: null,
         });

@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from "react";
-import { collection, addDoc, query, orderBy, serverTimestamp, Timestamp, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, where, serverTimestamp, Timestamp, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useTenant } from "../context/TenantContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast, ConfirmModal } from "../components/ui";
 
@@ -38,6 +39,7 @@ export default function Messages() {
   const { user } = useAuth();
   const { colors } = useTheme();
   const { t } = useLanguage();
+  const { schoolId } = useTenant();
   const isProf = user?.role === "prof";
   const isAdminOrGest = user?.role === "admin" || user?.role === "gestionnaire";
   const isOnlyAdmin = user?.role === "admin";
@@ -58,7 +60,7 @@ export default function Messages() {
 
   // Listener temps reel pour les utilisateurs
   useEffect(() => {
-    const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
+    const unsubUsers = onSnapshot(query(collection(db, "users"), where("schoolId", "==", schoolId)), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as UserData[];
       setUsers(data.filter((u) => u.isActive !== false));
     }, (err) => {
@@ -72,7 +74,7 @@ export default function Messages() {
   useEffect(() => {
     if (!user?.uid) return;
 
-    const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "messages"), where("schoolId", "==", schoolId), orderBy("createdAt", "desc"));
     const unsubMessages = onSnapshot(q, (snap) => {
       const allMessages = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Message[];
 
@@ -142,6 +144,7 @@ export default function Messages() {
         payload.attachments = attachments;
       }
 
+      payload.schoolId = schoolId;
       await addDoc(collection(db, "messages"), payload);
       setNewMessage("");
       setSelectedFiles([]);

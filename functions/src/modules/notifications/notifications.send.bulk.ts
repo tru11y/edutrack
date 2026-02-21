@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface SendBulkNotificationData {
   title: string;
@@ -20,16 +21,19 @@ export const sendBulkNotification = functions
     requireArgument(!!data.title, "Le titre est requis.");
     requireArgument(!!data.message, "Le message est requis.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       let recipientIds: string[] = [];
 
       if (data.targetType === "all") {
-        const usersSnap = await db.collection("users").where("isActive", "==", true).get();
+        const usersSnap = await db.collection("users").where("isActive", "==", true).where("schoolId", "==", schoolId).get();
         recipientIds = usersSnap.docs.map((d) => d.id);
       } else if (data.targetType === "role" && data.targetValue) {
         const usersSnap = await db.collection("users")
           .where("role", "==", data.targetValue)
           .where("isActive", "==", true)
+          .where("schoolId", "==", schoolId)
           .get();
         recipientIds = usersSnap.docs.map((d) => d.id);
       } else if (data.targetType === "classe" && data.targetValue) {
@@ -37,11 +41,12 @@ export const sendBulkNotification = functions
         const elevesSnap = await db.collection("eleves")
           .where("classe", "==", data.targetValue)
           .where("statut", "==", "actif")
+          .where("schoolId", "==", schoolId)
           .get();
         const eleveIds = elevesSnap.docs.map((d) => d.id);
 
         // Find users linked to these eleves (parents + eleves)
-        const usersSnap = await db.collection("users").where("isActive", "==", true).get();
+        const usersSnap = await db.collection("users").where("isActive", "==", true).where("schoolId", "==", schoolId).get();
         for (const userDoc of usersSnap.docs) {
           const userData = userDoc.data();
           if (userData.eleveId && eleveIds.includes(userData.eleveId)) {
@@ -75,6 +80,7 @@ export const sendBulkNotification = functions
               context: { targetType: data.targetType, targetValue: data.targetValue },
             },
             senderId: context.auth!.uid,
+            schoolId,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             readAt: null,
           });

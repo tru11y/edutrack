@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError, notFound } from "../../helpers/errors";
 import { isValidDate, isValidMonth, isPositiveNumber, getLastDayOfMonth } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface CreateDepenseData {
   libelle: string;
@@ -22,12 +23,15 @@ export const createDepense = functions
     requireArgument(isPositiveNumber(data.montant), "Le montant doit etre un nombre positif.");
     requireArgument(isValidDate(data.date), "Format de date invalide (attendu: YYYY-MM-DD).");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const ref = await db.collection("depenses").add({
         libelle: data.libelle,
         categorie: data.categorie,
         montant: data.montant,
         date: data.date,
+        schoolId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: context.auth!.uid,
       });
@@ -37,6 +41,7 @@ export const createDepense = functions
         depenseId: ref.id,
         montant: data.montant,
         performedBy: context.auth!.uid,
+        schoolId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 
@@ -54,6 +59,8 @@ export const getDepenses = functions
     const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent voir les depenses.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       let snap;
 
@@ -62,12 +69,14 @@ export const getDepenses = functions
         const startDate = `${data.mois}-01`;
         const endDate = getLastDayOfMonth(data.mois);
         snap = await db.collection("depenses")
+          .where("schoolId", "==", schoolId)
           .where("date", ">=", startDate)
           .where("date", "<=", endDate)
           .orderBy("date", "desc")
           .get();
       } else {
         snap = await db.collection("depenses")
+          .where("schoolId", "==", schoolId)
           .orderBy("date", "desc")
           .get();
       }
@@ -99,9 +108,12 @@ export const deleteDepense = functions
     requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent supprimer des depenses.");
     requireArgument(!!data.depenseId, "ID de la depense requis.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const docSnap = await db.collection("depenses").doc(data.depenseId).get();
       if (!docSnap.exists) notFound("Depense non trouvee.");
+      if (docSnap.data()?.schoolId !== schoolId) notFound("Depense non trouvee.");
 
       await db.collection("depenses").doc(data.depenseId).delete();
 
@@ -109,6 +121,7 @@ export const deleteDepense = functions
         action: "DEPENSE_DELETED",
         depenseId: data.depenseId,
         performedBy: context.auth!.uid,
+        schoolId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 

@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError, notFound } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const updateDisciplineRecord = functions
   .region("europe-west1")
@@ -13,10 +14,13 @@ export const updateDisciplineRecord = functions
     const { id, ...updates } = data;
     requireArgument(typeof id === "string" && id.length > 0, "ID de l'incident requis.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const ref = db.collection("discipline").doc(id as string);
       const snap = await ref.get();
       if (!snap.exists) notFound("Incident non trouve.");
+      if (snap.data()?.schoolId !== schoolId) notFound("Incident non trouve.");
 
       const allowedFields = ["type", "description", "motif", "sanction"];
       const cleanUpdates: Record<string, unknown> = {};

@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface ClasseStats {
   classe: string;
@@ -18,14 +19,16 @@ export const getClasseComparison = functions
     const allowed = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(allowed);
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
-      const classesSnap = await db.collection("classes").get();
+      const classesSnap = await db.collection("classes").where("schoolId", "==", schoolId).get();
       const classeNames = classesSnap.docs.map((d) => d.data().nom || d.id);
 
-      const elevesSnap = await db.collection("eleves").where("statut", "==", "actif").get();
-      const presencesSnap = await db.collectionGroup("appels").get();
-      const paiementsSnap = await db.collection("paiements").get();
-      const bulletinsSnap = await db.collection("bulletins").get();
+      const elevesSnap = await db.collection("eleves").where("schoolId", "==", schoolId).where("statut", "==", "actif").get();
+      const presencesSnap = await db.collectionGroup("appels").where("schoolId", "==", schoolId).get();
+      const paiementsSnap = await db.collection("paiements").where("schoolId", "==", schoolId).get();
+      const bulletinsSnap = await db.collection("bulletins").where("schoolId", "==", schoolId).get();
 
       // Group data by classe
       const result: ClasseStats[] = [];

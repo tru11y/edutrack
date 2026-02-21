@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyAdmin } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const toggleUserStatus = functions
   .region("europe-west1")
@@ -12,7 +13,15 @@ export const toggleUserStatus = functions
     requireArgument(!!data.userId && typeof data.isActive === "boolean", "Parametres invalides.");
     requireArgument(!(data.userId === context.auth!.uid && !data.isActive), "Vous ne pouvez pas desactiver votre propre compte.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
+      // Verify target user belongs to same school
+      const targetDoc = await db.collection("users").doc(data.userId).get();
+      if (targetDoc.exists && targetDoc.data()?.schoolId && targetDoc.data()?.schoolId !== schoolId) {
+        throw new functions.https.HttpsError("permission-denied", "Cet utilisateur n'appartient pas a votre ecole.");
+      }
+
       await db.collection("users").doc(data.userId).update({
         isActive: data.isActive,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -25,6 +34,7 @@ export const toggleUserStatus = functions
         action: data.isActive ? "USER_ACTIVATED" : "USER_DEACTIVATED",
         targetUserId: data.userId,
         performedBy: context.auth!.uid,
+        schoolId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 

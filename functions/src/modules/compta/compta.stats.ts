@@ -3,6 +3,7 @@ import { db } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
 import { getLastDayOfMonth } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 // FIX C2: Optimiser queries Firestore par mois
 export const getComptaStats = functions
@@ -11,6 +12,8 @@ export const getComptaStats = functions
     requireAuth(context.auth?.uid);
     const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent voir les statistiques comptables.");
+
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
       let totalPaiementsRecus = 0;
@@ -22,9 +25,9 @@ export const getComptaStats = functions
         const endDate = getLastDayOfMonth(data.mois);
 
         const [paiementsSnap, depensesSnap, salairesSnap] = await Promise.all([
-          db.collection("paiements").where("mois", "==", data.mois).get(),
-          db.collection("depenses").where("date", ">=", startDate).where("date", "<=", endDate).get(),
-          db.collection("salaires").where("mois", "==", data.mois).get(),
+          db.collection("paiements").where("schoolId", "==", schoolId).where("mois", "==", data.mois).get(),
+          db.collection("depenses").where("schoolId", "==", schoolId).where("date", ">=", startDate).where("date", "<=", endDate).get(),
+          db.collection("salaires").where("schoolId", "==", schoolId).where("mois", "==", data.mois).get(),
         ]);
 
         paiementsSnap.docs.forEach((doc) => {
@@ -40,9 +43,9 @@ export const getComptaStats = functions
         });
       } else {
         const [paiementsSnap, depensesSnap, salairesSnap] = await Promise.all([
-          db.collection("paiements").get(),
-          db.collection("depenses").get(),
-          db.collection("salaires").get(),
+          db.collection("paiements").where("schoolId", "==", schoolId).get(),
+          db.collection("depenses").where("schoolId", "==", schoolId).get(),
+          db.collection("salaires").where("schoolId", "==", schoolId).get(),
         ]);
 
         paiementsSnap.docs.forEach((doc) => {

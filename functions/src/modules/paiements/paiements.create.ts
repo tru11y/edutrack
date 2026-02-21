@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError, notFound } from "../../helpers/errors";
 import { isValidDate, isValidMonth, isNonNegativeNumber } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface CreatePaiementData {
   eleveId: string;
@@ -25,6 +26,8 @@ export const createPaiement = functions
     requireArgument(isValidMonth(data.mois), "Format de mois invalide (attendu: YYYY-MM).");
     requireArgument(isNonNegativeNumber(data.montantTotal) && isNonNegativeNumber(data.montantPaye), "Les montants ne peuvent pas etre negatifs.");
     requireArgument(data.montantPaye <= data.montantTotal, "Le montant paye ne peut pas depasser le montant total.");
+
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     const eleveDoc = await db.collection("eleves").doc(data.eleveId).get();
     if (!eleveDoc.exists) notFound("Eleve non trouve.");
@@ -76,6 +79,7 @@ export const createPaiement = functions
         montantRestant,
         statut,
         datePaiement: admin.firestore.Timestamp.fromDate(datePaiementParsed),
+        schoolId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: context.auth!.uid,
         createdByName,

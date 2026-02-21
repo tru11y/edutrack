@@ -7,12 +7,6 @@ export const processNotificationQueue = functions
   .pubsub.schedule("every 5 minutes")
   .onRun(async () => {
     try {
-      const configDoc = await db.collection("notification_config").doc("global").get();
-      const config = configDoc.exists ? configDoc.data() : null;
-
-      if (!config) return;
-
-      const webhookUrls = config.webhookUrls || {};
       const pendingSnap = await db.collection("notifications")
         .where("status", "==", "pending")
         .limit(100)
@@ -20,10 +14,23 @@ export const processNotificationQueue = functions
 
       if (pendingSnap.empty) return;
 
+      // Cache configs per school to avoid repeated reads
+      const configCache: Record<string, FirebaseFirestore.DocumentData | null> = {};
+
       const batch = db.batch();
 
       for (const doc of pendingSnap.docs) {
         const notification = doc.data();
+        const notifSchoolId = notification.schoolId;
+
+        // Load config for this notification's school (cached)
+        if (notifSchoolId && !(notifSchoolId in configCache)) {
+          const configDoc = await db.collection("notification_config").doc(notifSchoolId).get();
+          configCache[notifSchoolId] = configDoc.exists ? configDoc.data()! : null;
+        }
+
+        const config = notifSchoolId ? configCache[notifSchoolId] : null;
+        const webhookUrls = config?.webhookUrls || {};
         const channel = notification.channel;
         const webhookUrl = webhookUrls[channel];
 

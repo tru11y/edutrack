@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
 import { sendPushToUser } from "../../helpers/push";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface SendNotificationData {
   type: "absence" | "retard" | "impaye" | "bulletin" | "general";
@@ -24,6 +25,8 @@ export const sendNotification = functions
     requireArgument(!!data.title, "Le titre est requis.");
     requireArgument(!!data.message, "Le message est requis.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const ref = await db.collection("notifications").add({
         type: data.type || "general",
@@ -36,6 +39,7 @@ export const sendNotification = functions
           context: data.context || {},
         },
         senderId: context.auth!.uid,
+        schoolId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         readAt: null,
       });

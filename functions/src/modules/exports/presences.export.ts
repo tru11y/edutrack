@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 import * as ExcelJS from "exceljs";
 
 export const exportPresencesExcel = functions
@@ -11,8 +12,11 @@ export const exportPresencesExcel = functions
     const allowed = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(allowed);
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
-      const appelsSnap = await db.collectionGroup("appels").get();
+      const appelsSnap = await db.collectionGroup("appels")
+        .where("schoolId", "==", schoolId).get();
 
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet("Presences");

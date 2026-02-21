@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, notFound, handleError } from "../../helpers/errors";
 import { isValidNote } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface CreateNoteData {
   evaluationId: string;
@@ -30,6 +31,7 @@ export const createNote = functions
     requireAuth(context.auth?.uid);
     const staff = await verifyStaff(context.auth!.uid);
     requirePermission(staff, "Seul le staff peut saisir des notes.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     requireArgument(!!data.evaluationId, "L'ID de l'evaluation est requis.");
     requireArgument(!!data.eleveId, "L'ID de l'eleve est requis.");
@@ -54,6 +56,7 @@ export const createNote = functions
         note: data.absence ? 0 : data.note,
         commentaire: data.commentaire || "",
         absence: data.absence || false,
+        schoolId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -70,6 +73,7 @@ export const createNotesBatch = functions
     requireAuth(context.auth?.uid);
     const staff = await verifyStaff(context.auth!.uid);
     requirePermission(staff, "Seul le staff peut saisir des notes.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     requireArgument(!!data.evaluationId, "L'ID de l'evaluation est requis.");
     requireArgument(
@@ -111,6 +115,7 @@ export const createNotesBatch = functions
           note: entry.absence ? 0 : entry.note,
           commentaire: entry.commentaire || "",
           absence: entry.absence || false,
+          schoolId,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
