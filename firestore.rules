@@ -294,5 +294,83 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow write: if false;
     }
+
+    // SCHOOLS - Super admin tout, membres de l'ecole lecture
+    match /schools/{schoolId} {
+      allow read: if isSuperAdmin() ||
+        (signedIn() && getUserData().schoolId == schoolId);
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() ||
+        (isAdmin() && getUserData().schoolId == schoolId);
+      allow delete: if isSuperAdmin();
+    }
+
+    // SCHOOL SUBSCRIPTIONS - Super admin tout, admin de l'ecole lecture
+    match /school_subscriptions/{schoolId} {
+      allow read: if isSuperAdmin() ||
+        (isAdminOrGestionnaire() && getUserData().schoolId == schoolId);
+      allow write: if isSuperAdmin();
+    }
+
+    // SUPER ADMINS - Lecture seule par les super admins eux-memes
+    match /superadmins/{uid} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    // ADMISSIONS - Soumission publique, admin de l'ecole gere
+    match /admissions/{admissionId} {
+      allow create: if true; // formulaire public
+      allow read, update, delete: if isAdminOrGestionnaire() &&
+        resource.data.schoolId == getUserData().schoolId;
+    }
+
+    // TRANSPORT ROUTES - Admin/gestionnaire de l'ecole
+    match /transport_routes/{routeId} {
+      allow read: if isStaff() && belongsToUserSchool();
+      allow write: if isAdminOrGestionnaire() &&
+        (resource == null || belongsToUserSchool());
+    }
+
+    // LIBRARY / EMPRUNTS - Staff gere, eleves lecture de leurs emprunts
+    match /livres/{livreId} {
+      allow read: if signedIn();
+      allow write: if isAdminOrGestionnaire();
+    }
+
+    match /emprunts/{empruntId} {
+      allow read: if isStaff() ||
+        (isEleve() && resource.data.eleveId == getUserData().eleveId) ||
+        (isParent() && resource.data.eleveId in getUserData().enfantsIds);
+      allow write: if isStaff();
+    }
+
+    // LMS DEVOIRS / SUBMISSIONS
+    match /devoirs/{devoirId} {
+      allow read: if isStaff() ||
+        (isEleve() && resource.data.classe == get(/databases/$(database)/documents/eleves/$(getUserData().eleveId)).data.classe) ||
+        isParent();
+      allow create, update: if isStaff();
+      allow delete: if isAdminOrGestionnaire();
+    }
+
+    match /submissions/{submissionId} {
+      allow read: if isStaff() ||
+        (isEleve() && resource.data.eleveId == getUserData().eleveId);
+      allow create: if isEleve() && request.resource.data.eleveId == request.auth.uid;
+      allow update: if isStaff();
+      allow delete: if isAdminOrGestionnaire();
+    }
+
+    // HR - LEAVE REQUESTS
+    match /leave_requests/{requestId} {
+      allow read: if isAdminOrGestionnaire() ||
+        (isStaff() && resource.data.userId == request.auth.uid);
+      allow create: if isStaff() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdminOrGestionnaire() ||
+        (isStaff() && resource.data.userId == request.auth.uid &&
+         resource.data.statut == "en_attente");
+      allow delete: if isAdmin();
+    }
   }
 }
