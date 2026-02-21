@@ -13,7 +13,7 @@ export const getAdminDashboardStats = functions
     const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
-      const [elevesSnap, profsSnap, classesSnap, paiementsSnap, depensesSnap, salairesSnap, matieresSnap, emploiSnap, usersSnap] =
+      const [elevesSnap, profsSnap, classesSnap, paiementsSnap, depensesSnap, salairesSnap] =
         await Promise.all([
           db.collection("eleves").where("schoolId", "==", schoolId).get(),
           db.collection("professeurs").where("schoolId", "==", schoolId).get(),
@@ -21,10 +21,14 @@ export const getAdminDashboardStats = functions
           db.collection("paiements").where("schoolId", "==", schoolId).get(),
           db.collection("depenses").where("schoolId", "==", schoolId).get(),
           db.collection("salaires").where("schoolId", "==", schoolId).get(),
-          db.collection("matieres").where("schoolId", "==", schoolId).get(),
-          db.collection("emploi_du_temps").where("schoolId", "==", schoolId).get(),
-          db.collection("users").where("schoolId", "==", schoolId).get(),
         ]);
+
+      // Queries supplementaires (non bloquantes)
+      const [matieresSnap, emploiSnap, usersSnap] = await Promise.all([
+        db.collection("matieres").where("schoolId", "==", schoolId).get().catch(() => null),
+        db.collection("emploi_du_temps").where("schoolId", "==", schoolId).get().catch(() => null),
+        db.collection("users").where("schoolId", "==", schoolId).get().catch(() => null),
+      ]);
 
       let totalPaiementsRecus = 0;
       let totalPaiementsAttendus = 0;
@@ -55,14 +59,14 @@ export const getAdminDashboardStats = functions
 
       // Salles uniques dans l'emploi du temps
       const sallesSet = new Set<string>();
-      emploiSnap.docs.forEach((doc) => {
+      emploiSnap?.docs.forEach((doc) => {
         const salle = doc.data().salle;
         if (salle) sallesSet.add(salle);
       });
 
       // Breakdown des roles utilisateurs
       const roleBreakdown: Record<string, number> = {};
-      usersSnap.docs.forEach((doc) => {
+      usersSnap?.docs.forEach((doc) => {
         const role = doc.data().role || "inconnu";
         roleBreakdown[role] = (roleBreakdown[role] || 0) + 1;
       });
@@ -73,9 +77,9 @@ export const getAdminDashboardStats = functions
           totalEleves: elevesSnap.size,
           totalProfesseurs: profsSnap.size,
           totalClasses: classesSnap.size,
-          totalMatieres: matieresSnap.size,
+          totalMatieres: matieresSnap?.size ?? 0,
           totalSalles: sallesSet.size,
-          totalUsers: usersSnap.size,
+          totalUsers: usersSnap?.size ?? 0,
           roleBreakdown,
           totalPaiementsRecus,
           totalPaiementsAttendus,

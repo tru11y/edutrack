@@ -1,4 +1,20 @@
 {
-  "indexes": [],
+  "indexes": [
+    { "collectionGroup": "cahier",        "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "date",      "order": "DESCENDING" }] },
+    { "collectionGroup": "depenses",      "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "date",      "order": "DESCENDING" }] },
+    { "collectionGroup": "matieres",      "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "nom",       "order": "ASCENDING"  }] },
+    { "collectionGroup": "evaluations",   "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "date",      "order": "DESCENDING" }] },
+    { "collectionGroup": "discipline",    "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
+    { "collectionGroup": "admissions",    "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
+    { "collectionGroup": "audit_logs",    "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "timestamp", "order": "DESCENDING" }] },
+    { "collectionGroup": "leave_requests","queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
+    { "collectionGroup": "devoirs",       "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
+    { "collectionGroup": "livres",        "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "titre",     "order": "ASCENDING"  }] },
+    { "collectionGroup": "transport_routes","queryScope":"COLLECTION","fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "nom",       "order": "ASCENDING"  }] },
+    { "collectionGroup": "paiements",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
+    { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "recipientId","order": "ASCENDING"}, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
+    { "collectionGroup": "notes",         "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "evaluationId","order":"ASCENDING"  }] },
+    { "collectionGroup": "bulletins",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "classe",    "order": "ASCENDING"  }] }
+  ],
   "fieldOverrides": []
 }

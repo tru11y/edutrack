@@ -250,8 +250,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (snap.exists()) {
         const data = snap.data();
 
-        if (!data.isActive) {
-          // Compte desactive - deconnexion silencieuse
+        if (data.isActive === false) {
+          // Compte explicitement desactive
           setUser(null);
           setLoading(false);
           return;

@@ -50,8 +50,8 @@ const navItems: NavItem[] = [
   { to: "/corbeille", labelKey: "trash", icon: "trash", roles: ["admin", "gestionnaire"] },
   { to: "/admissions", labelKey: "admissions" as TranslationKey, icon: "users", roles: ["admin", "gestionnaire"] },
   { to: "/transport", labelKey: "transport" as TranslationKey, icon: "card", roles: ["admin", "gestionnaire"] },
-  { to: "/bibliotheque", labelKey: "library" as TranslationKey, icon: "book", roles: ["admin", "gestionnaire"] },
-  { to: "/rh", labelKey: "hr" as TranslationKey, icon: "users", roles: ["admin", "gestionnaire", "prof"] },
+  { to: "/library", labelKey: "library" as TranslationKey, icon: "book", roles: ["admin", "gestionnaire"] },
+  { to: "/hr", labelKey: "hr" as TranslationKey, icon: "users", roles: ["admin", "gestionnaire", "prof"] },
   { to: "/lms", labelKey: "lms" as TranslationKey, icon: "grade", roles: ["admin", "gestionnaire", "prof"] },
   { to: "/billing", labelKey: "billing" as TranslationKey, icon: "wallet", roles: ["admin"] },
   // Eleve portal
