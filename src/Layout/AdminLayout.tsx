@@ -7,10 +7,12 @@ import { useTheme } from "../context/ThemeContext";
 import { useLanguage, type TranslationKey } from "../context/LanguageContext";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useSchool } from "../context/SchoolContext";
+import { useTenant } from "../context/TenantContext";
 import NotificationCenter from "../modules/notifications/NotificationCenter";
 import GlobalSearch from "../components/GlobalSearch";
 import Breadcrumb from "../components/Breadcrumb";
 import PageTransition from "../components/PageTransition";
+import SubscriptionBanner from "../components/SubscriptionBanner";
 
 interface NavItem {
   to: string;
@@ -46,6 +48,12 @@ const navItems: NavItem[] = [
   { to: "/archives", labelKey: "archives" as TranslationKey, icon: "book", roles: ["admin"] },
   { to: "/analytics", labelKey: "analytics" as TranslationKey, icon: "chart", roles: ["admin", "gestionnaire"] },
   { to: "/corbeille", labelKey: "trash", icon: "trash", roles: ["admin", "gestionnaire"] },
+  { to: "/admissions", labelKey: "admissions" as TranslationKey, icon: "users", roles: ["admin", "gestionnaire"] },
+  { to: "/transport", labelKey: "transport" as TranslationKey, icon: "card", roles: ["admin", "gestionnaire"] },
+  { to: "/bibliotheque", labelKey: "library" as TranslationKey, icon: "book", roles: ["admin", "gestionnaire"] },
+  { to: "/rh", labelKey: "hr" as TranslationKey, icon: "users", roles: ["admin", "gestionnaire", "prof"] },
+  { to: "/lms", labelKey: "lms" as TranslationKey, icon: "grade", roles: ["admin", "gestionnaire", "prof"] },
+  { to: "/billing", labelKey: "billing" as TranslationKey, icon: "wallet", roles: ["admin"] },
   // Eleve portal
   { to: "/eleve", labelKey: "dashboard", icon: "dashboard", end: true, roles: ["eleve"] },
   { to: "/eleve/notes", labelKey: "evaluations", icon: "grade", roles: ["eleve"] },
@@ -344,6 +352,7 @@ export default function AdminLayout() {
       {/* Main */}
       <main id="main-content" style={{ flex: 1, marginLeft: isMobile ? 0 : sidebarWidth, marginTop: isMobile ? 60 : 0, minHeight: isMobile ? "calc(100vh - 60px)" : "100vh", transition: "margin-left 0.3s ease-in-out" }}>
         <div style={{ padding: isMobile ? 16 : 32, maxWidth: 1400, margin: "0 auto" }}>
+          <SubscriptionBanner />
           <Breadcrumb />
           <PageTransition>
             <Outlet />

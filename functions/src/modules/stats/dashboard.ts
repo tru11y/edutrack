@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const getAdminDashboardStats = functions
   .region("europe-west1")
@@ -9,16 +10,17 @@ export const getAdminDashboardStats = functions
     requireAuth(context.auth?.uid);
     const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent acceder aux statistiques.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
       const [elevesSnap, profsSnap, classesSnap, paiementsSnap, depensesSnap, salairesSnap] =
         await Promise.all([
-          db.collection("eleves").get(),
-          db.collection("professeurs").get(),
-          db.collection("classes").get(),
-          db.collection("paiements").get(),
-          db.collection("depenses").get(),
-          db.collection("salaires").get(),
+          db.collection("eleves").where("schoolId", "==", schoolId).get(),
+          db.collection("professeurs").where("schoolId", "==", schoolId).get(),
+          db.collection("classes").where("schoolId", "==", schoolId).get(),
+          db.collection("paiements").where("schoolId", "==", schoolId).get(),
+          db.collection("depenses").where("schoolId", "==", schoolId).get(),
+          db.collection("salaires").where("schoolId", "==", schoolId).get(),
         ]);
 
       let totalPaiementsRecus = 0;
@@ -88,12 +90,13 @@ export const getDetailedStats = functions
     requireAuth(context.auth?.uid);
     const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(isAuthorized, "Acces refuse.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
       const [elevesSnap, appelsSnap, paiementsSnap] = await Promise.all([
-        db.collection("eleves").get(),
+        db.collection("eleves").where("schoolId", "==", schoolId).get(),
         db.collectionGroup("appels").get(),
-        db.collection("paiements").get(),
+        db.collection("paiements").where("schoolId", "==", schoolId).get(),
       ]);
 
       // Build presence map: eleveId -> {present, absent, retard}
@@ -102,6 +105,7 @@ export const getDetailedStats = functions
 
       appelsSnap.docs.forEach((appel) => {
         const d = appel.data();
+        if (d.schoolId && d.schoolId !== schoolId) return;
         const eleveId = d.eleveId || appel.id;
         const current = presenceMap.get(eleveId) || { present: 0, absent: 0, retard: 0 };
 

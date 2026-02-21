@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface CreneauData {
   jour: string; // "lundi", "mardi", etc.
@@ -21,6 +22,8 @@ export const createCreneauBatch = functions
     const allowed = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(allowed, "Seuls les admins/gestionnaires peuvent creer des creneaux.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     requireArgument(
       Array.isArray(data.creneaux) && data.creneaux.length > 0,
       "Le tableau de creneaux est requis."
@@ -39,6 +42,7 @@ export const createCreneauBatch = functions
         const ref = db.collection("emploi_du_temps").doc();
         batch.set(ref, {
           ...creneau,
+          schoolId,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });

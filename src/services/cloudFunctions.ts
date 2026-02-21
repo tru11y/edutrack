@@ -824,6 +824,122 @@ export function updateUserPermissionsSecure(userId: string, permissions: string[
   return callFunction("updateUserPermissions", { userId, permissions });
 }
 
+// =====================
+// Schools (SaaS)
+// =====================
+
+export function createSchoolSecure(params: {
+  schoolName: string; adminEmail: string; adminPassword: string;
+  adminNom?: string; adminPrenom?: string; adresse?: string; telephone?: string;
+}): Promise<{ success: boolean; schoolId: string; message: string }> {
+  return callFunction("createSchool", params);
+}
+
+export function updateSchoolSecure(params: { schoolId?: string; updates: Record<string, unknown> }): Promise<{ success: boolean; message: string }> {
+  return callFunction("updateSchool", params);
+}
+
+// =====================
+// Billing
+// =====================
+
+export function createCheckoutSessionSecure(params: { priceId: string }): Promise<{ success: boolean; url: string }> {
+  return callFunction("createCheckoutSession", params);
+}
+
+export function createCustomerPortalSecure(): Promise<{ success: boolean; url: string }> {
+  return callFunction("createCustomerPortal", undefined);
+}
+
+// =====================
+// Admissions
+// =====================
+
+export function listAdmissionsSecure(params: { statut?: string } = {}): Promise<{ success: boolean; admissions: unknown[] }> {
+  return callFunction("listAdmissions", params);
+}
+
+export function updateAdmissionSecure(params: { id: string; statut: string; rejectReason?: string }): Promise<{ success: boolean; message: string }> {
+  return callFunction("updateAdmission", params);
+}
+
+// =====================
+// Transport
+// =====================
+
+export function createRouteSecure(params: { nom: string; arrets?: string[]; chauffeur?: string; telephone?: string }): Promise<{ success: boolean; id: string; message: string }> {
+  return callFunction("createRoute", params);
+}
+
+export function listRoutesSecure(): Promise<{ success: boolean; routes: unknown[] }> {
+  return callFunction("listRoutes", undefined);
+}
+
+export function deleteRouteSecure(id: string): Promise<{ success: boolean; message: string }> {
+  return callFunction("deleteRoute", { id });
+}
+
+// =====================
+// Library
+// =====================
+
+export function createBookSecure(params: { titre: string; auteur: string; isbn?: string; quantite?: number; categorie?: string }): Promise<{ success: boolean; id: string; message: string }> {
+  return callFunction("createBook", params);
+}
+
+export function listBooksSecure(): Promise<{ success: boolean; books: unknown[] }> {
+  return callFunction("listBooks", undefined);
+}
+
+export function borrowBookSecure(params: { bookId: string; eleveId: string; eleveNom: string }): Promise<{ success: boolean; id: string; message: string }> {
+  return callFunction("borrowBook", params);
+}
+
+export function returnBookSecure(empruntId: string): Promise<{ success: boolean; message: string }> {
+  return callFunction("returnBook", { empruntId });
+}
+
+// =====================
+// HR / Leave
+// =====================
+
+export function createLeaveRequestSecure(params: { type: string; dateDebut: string; dateFin: string; motif?: string }): Promise<{ success: boolean; id: string; message: string }> {
+  return callFunction("createLeaveRequest", params);
+}
+
+export function listLeaveRequestsSecure(params: { all?: boolean } = {}): Promise<{ success: boolean; requests: unknown[] }> {
+  return callFunction("listLeaveRequests", params);
+}
+
+export function updateLeaveRequestSecure(params: { id: string; statut: string; commentaire?: string }): Promise<{ success: boolean; message: string }> {
+  return callFunction("updateLeaveRequest", params);
+}
+
+// =====================
+// LMS
+// =====================
+
+export function createAssignmentSecure(params: {
+  titre: string; description?: string; classe: string; matiere: string; dateLimite: string; fichierUrl?: string;
+}): Promise<{ success: boolean; id: string; message: string }> {
+  return callFunction("createAssignment", params);
+}
+
+export function listAssignmentsSecure(params: { classe?: string; matiere?: string } = {}): Promise<{ success: boolean; assignments: unknown[] }> {
+  return callFunction("listAssignments", params);
+}
+
+export function submitAssignmentSecure(params: { assignmentId: string; fichierUrl?: string; contenu?: string }): Promise<{ success: boolean; id: string; message: string }> {
+  return callFunction("submitAssignment", params);
+}
+
+export function gradeSubmissionSecure(params: { submissionId: string; note: number; commentaire?: string }): Promise<{ success: boolean; message: string }> {
+  return callFunction("gradeSubmission", params);
+}
+
+// Re-export callFunction for direct use
+export { callFunction };
+
 export function getCloudFunctionErrorMessage(error: unknown): string {
   if (error && typeof error === "object" && "message" in error) {
     const msg = (error as { message: string }).message;

@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, notFound, handleError } from "../../helpers/errors";
 import { isValidNote } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface UpdateNoteData {
   id: string;
@@ -24,6 +25,10 @@ export const updateNote = functions
     if (!noteSnap.exists) notFound("Note non trouvee.");
 
     const noteData = noteSnap.data()!;
+    const schoolId = await getSchoolId(context.auth!.uid);
+    if (noteData.schoolId && noteData.schoolId !== schoolId) {
+      requirePermission(false, "Cette note n'appartient pas a votre etablissement.");
+    }
     const evalSnap = await db.collection("evaluations").doc(noteData.evaluationId).get();
     if (!evalSnap.exists) notFound("Evaluation associee non trouvee.");
 

@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 type ReportType = "attendance" | "grades" | "payments" | "comprehensive";
 
@@ -50,6 +51,8 @@ export const getAnalyticsReport = functions
 
     requireArgument(!!data.type, "Le type de rapport est requis.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const result: {
         type: ReportType;
@@ -62,7 +65,7 @@ export const getAnalyticsReport = functions
 
       // Build attendance report
       if (data.type === "attendance" || data.type === "comprehensive") {
-        let presQuery: FirebaseFirestore.Query = db.collection("presences");
+        let presQuery: FirebaseFirestore.Query = db.collection("presences").where("schoolId", "==", schoolId);
         if (data.dateStart) presQuery = presQuery.where("date", ">=", data.dateStart);
         if (data.dateEnd) presQuery = presQuery.where("date", "<=", data.dateEnd);
 
@@ -100,8 +103,8 @@ export const getAnalyticsReport = functions
 
       // Build grades report
       if (data.type === "grades" || data.type === "comprehensive") {
-        const notesSnap = await db.collection("notes").get();
-        const evaluationsSnap = await db.collection("evaluations").get();
+        const notesSnap = await db.collection("notes").where("schoolId", "==", schoolId).get();
+        const evaluationsSnap = await db.collection("evaluations").where("schoolId", "==", schoolId).get();
         const evalMap: Record<string, { matiere: string; maxNote: number }> = {};
 
         for (const doc of evaluationsSnap.docs) {
@@ -157,7 +160,7 @@ export const getAnalyticsReport = functions
 
       // Build payments report
       if (data.type === "payments" || data.type === "comprehensive") {
-        let payQuery: FirebaseFirestore.Query = db.collection("paiements");
+        let payQuery: FirebaseFirestore.Query = db.collection("paiements").where("schoolId", "==", schoolId);
         if (data.dateStart) payQuery = payQuery.where("mois", ">=", data.dateStart.substring(0, 7));
         if (data.dateEnd) payQuery = payQuery.where("mois", "<=", data.dateEnd.substring(0, 7));
 
@@ -182,6 +185,7 @@ export const getAnalyticsReport = functions
       // Build correlations (comprehensive only)
       if (data.type === "comprehensive") {
         const classesSnap = await db.collection("eleves")
+          .where("schoolId", "==", schoolId)
           .where("statut", "==", "actif")
           .get();
 
@@ -196,7 +200,7 @@ export const getAnalyticsReport = functions
           const tauxPresence = attendanceData?.taux ?? 0;
 
           // Get average notes for this class
-          const notesSnap = await db.collection("notes").get();
+          const notesSnap = await db.collection("notes").where("schoolId", "==", schoolId).get();
           const classEleves = classesSnap.docs
             .filter((d) => d.data().classe === classe)
             .map((d) => d.id);

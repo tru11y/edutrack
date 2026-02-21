@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { SchoolProvider } from "./context/SchoolContext";
+import { TenantProvider } from "./context/TenantContext";
 import { ToastProvider } from "./components/ui/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PageLoader from "./components/PageLoader";
@@ -64,6 +65,22 @@ const Archives = lazy(() => import("./pages/Archives"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const PermissionManagement = lazy(() => import("./pages/PermissionManagement"));
 
+// New SaaS pages
+const LandingPage = lazy(() => import("./pages/landing/LandingPage"));
+const PricingPage = lazy(() => import("./pages/landing/PricingPage"));
+const SignupPage = lazy(() => import("./pages/landing/SignupPage"));
+const SuperAdminLayout = lazy(() => import("./Layout/SuperAdminLayout"));
+const SuperAdminDashboard = lazy(() => import("./pages/superadmin/SuperAdminDashboard"));
+const SchoolsList = lazy(() => import("./pages/superadmin/SchoolsList"));
+const SchoolDetail = lazy(() => import("./pages/superadmin/SchoolDetail"));
+const BillingSettings = lazy(() => import("./pages/BillingSettings"));
+const PublicAdmission = lazy(() => import("./pages/PublicAdmission"));
+const Admissions = lazy(() => import("./pages/Admissions"));
+const Transport = lazy(() => import("./pages/Transport"));
+const Library = lazy(() => import("./pages/Library"));
+const HRManagement = lazy(() => import("./pages/HRManagement"));
+const LMS = lazy(() => import("./pages/LMS"));
+
 function OnlineQueueRetry() {
   useEffect(() => {
     const handleOnline = () => {
@@ -107,8 +124,19 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function SuperAdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!user.isSuperAdmin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 function ProfRedirect() {
   const { user } = useAuth();
+  if (user?.isSuperAdmin) {
+    return <Navigate to="/superadmin" replace />;
+  }
   if (user?.role === "eleve") {
     return <Navigate to="/eleve" replace />;
   }
@@ -128,6 +156,7 @@ export default function App() {
         <LanguageProvider>
           <AuthProvider>
             <SchoolProvider>
+            <TenantProvider>
             <ToastProvider>
               <BrowserRouter>
                 <OnboardingProvider>
@@ -138,7 +167,21 @@ export default function App() {
                 <MessageNotificationContainer />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
+                    {/* Public routes */}
+                    <Route path="/landing" element={<LandingPage />} />
+                    <Route path="/pricing" element={<PricingPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/admission/:schoolId" element={<PublicAdmission />} />
                     <Route path="/login" element={<LoginPage />} />
+
+                    {/* Super Admin routes */}
+                    <Route path="/superadmin" element={<SuperAdminRoute><SuperAdminLayout /></SuperAdminRoute>}>
+                      <Route index element={<SuperAdminDashboard />} />
+                      <Route path="schools" element={<SchoolsList />} />
+                      <Route path="schools/:schoolId" element={<SchoolDetail />} />
+                    </Route>
+
+                    {/* Main app routes */}
                     <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
                       <Route index element={<ProfRedirect />} />
                       <Route path="eleves" element={<AdminRoute><ElevesList /></AdminRoute>} />
@@ -178,6 +221,12 @@ export default function App() {
                       <Route path="archives" element={<AdminRoute><Archives /></AdminRoute>} />
                       <Route path="analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
                       <Route path="admin/permissions" element={<AdminRoute><PermissionManagement /></AdminRoute>} />
+                      <Route path="billing" element={<AdminRoute><BillingSettings /></AdminRoute>} />
+                      <Route path="admissions" element={<AdminRoute><Admissions /></AdminRoute>} />
+                      <Route path="transport" element={<AdminRoute><Transport /></AdminRoute>} />
+                      <Route path="library" element={<AdminRoute><Library /></AdminRoute>} />
+                      <Route path="hr" element={<AdminRoute><HRManagement /></AdminRoute>} />
+                      <Route path="lms" element={<LMS />} />
                       {/* Student Portal */}
                       <Route path="eleve" element={<ElevePortalDashboard />} />
                       <Route path="eleve/notes" element={<EleveNotes />} />
@@ -199,6 +248,7 @@ export default function App() {
                 </OnboardingProvider>
               </BrowserRouter>
             </ToastProvider>
+            </TenantProvider>
             </SchoolProvider>
           </AuthProvider>
         </LanguageProvider>

@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface GenerateBulletinData {
   eleveId: string;
@@ -22,10 +23,12 @@ async function computeBulletinForEleve(
   classe: string,
   trimestre: number,
   anneeScolaire: string,
-  appreciationGenerale: string
+  appreciationGenerale: string,
+  schoolId: string
 ) {
   // Get all notes for this student
   const notesSnap = await db.collection("notes")
+    .where("schoolId", "==", schoolId)
     .where("eleveId", "==", eleveId)
     .get();
 
@@ -93,6 +96,7 @@ async function computeBulletinForEleve(
     classe,
     trimestre,
     anneeScolaire,
+    schoolId,
     moyennesMatiere,
     moyenneGenerale,
     rang: 0, // Will be computed after all bulletins
@@ -116,6 +120,7 @@ export const generateBulletin = functions
     requireArgument(!!data.classe, "La classe est requise.");
     requireArgument([1, 2, 3].includes(data.trimestre), "Trimestre invalide.");
     requireArgument(!!data.anneeScolaire, "L'annee scolaire est requise.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
       const bulletinData = await computeBulletinForEleve(
@@ -123,11 +128,13 @@ export const generateBulletin = functions
         data.classe,
         data.trimestre,
         data.anneeScolaire,
-        data.appreciationGenerale || ""
+        data.appreciationGenerale || "",
+        schoolId
       );
 
       // Upsert bulletin
       const existing = await db.collection("bulletins")
+        .where("schoolId", "==", schoolId)
         .where("eleveId", "==", data.eleveId)
         .where("trimestre", "==", data.trimestre)
         .where("anneeScolaire", "==", data.anneeScolaire)
@@ -168,6 +175,7 @@ export const generateBulletinsClasse = functions
     requireArgument(!!data.classe, "La classe est requise.");
     requireArgument([1, 2, 3].includes(data.trimestre), "Trimestre invalide.");
     requireArgument(!!data.anneeScolaire, "L'annee scolaire est requise.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
       // Get all students in this class
@@ -188,7 +196,8 @@ export const generateBulletinsClasse = functions
           data.classe,
           data.trimestre,
           data.anneeScolaire,
-          ""
+          "",
+          schoolId
         );
         bulletins.push({
           eleveId: eleveDoc.id,
@@ -211,6 +220,7 @@ export const generateBulletinsClasse = functions
       for (const bulletin of bulletins) {
         // Check if bulletin already exists
         const existing = await db.collection("bulletins")
+          .where("schoolId", "==", schoolId)
           .where("eleveId", "==", bulletin.eleveId)
           .where("trimestre", "==", data.trimestre)
           .where("anneeScolaire", "==", data.anneeScolaire)

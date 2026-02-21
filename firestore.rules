@@ -47,6 +47,30 @@ service cloud.firestore {
     }
 
     // ========================================
+    // FONCTIONS MULTI-TENANT
+    // ========================================
+
+    // Obtenir le schoolId de l'utilisateur courant
+    function getUserSchoolId() {
+      return getUserData().schoolId;
+    }
+
+    // Verifier qu'un document appartient a l'ecole de l'utilisateur
+    function belongsToUserSchool() {
+      return resource.data.schoolId == getUserSchoolId();
+    }
+
+    // Verifier qu'un nouveau document a le bon schoolId
+    function createdWithUserSchool() {
+      return request.resource.data.schoolId == getUserSchoolId();
+    }
+
+    // Verifier si l'utilisateur est un super admin
+    function isSuperAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/superadmins/$(request.auth.uid));
+    }
+
+    // ========================================
     // REGLES PAR COLLECTION
     // ========================================
 

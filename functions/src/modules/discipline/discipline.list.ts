@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const getDisciplineRecords = functions
   .region("europe-west1")
@@ -10,8 +11,10 @@ export const getDisciplineRecords = functions
     const isStaff = await verifyStaff(context.auth!.uid);
     requirePermission(isStaff, "Seul le staff peut voir les incidents.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
-      let query: FirebaseFirestore.Query = db.collection("discipline");
+      let query: FirebaseFirestore.Query = db.collection("discipline").where("schoolId", "==", schoolId);
 
       if (data?.classe && typeof data.classe === "string") {
         query = query.where("classe", "==", data.classe);

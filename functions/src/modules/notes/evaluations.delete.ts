@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, notFound, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const deleteEvaluation = functions
   .region("europe-west1")
@@ -14,6 +15,12 @@ export const deleteEvaluation = functions
     const evalRef = db.collection("evaluations").doc(data.id);
     const evalSnap = await evalRef.get();
     if (!evalSnap.exists) notFound("Evaluation non trouvee.");
+
+    const schoolId = await getSchoolId(context.auth!.uid);
+    const evalData = evalSnap.data()!;
+    if (evalData.schoolId && evalData.schoolId !== schoolId) {
+      requirePermission(false, "Cette evaluation n'appartient pas a votre etablissement.");
+    }
 
     try {
       // Delete associated notes

@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyAdmin } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface ArchiveParams {
   anneeScolaire: string;
@@ -20,11 +21,13 @@ export const archiveAnneeScolaire = functions
 
     requireArgument(!!data.anneeScolaire, "L'annee scolaire est requise.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const stats: Record<string, number> = {};
 
       for (const collName of COLLECTIONS_TO_ARCHIVE) {
-        const snap = await db.collection(collName).get();
+        const snap = await db.collection(collName).where("schoolId", "==", schoolId).get();
         const archivePath = `archives/${data.anneeScolaire}/${collName}`;
         let count = 0;
 
@@ -59,6 +62,7 @@ export const archiveAnneeScolaire = functions
       await db.collection("audit_logs").add({
         action: "archive_annee_scolaire",
         performedBy: context.auth!.uid,
+        schoolId,
         details: {
           anneeScolaire: data.anneeScolaire,
           deleteOriginals: data.deleteOriginals || false,

@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyProf } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError, notFound } from "../../helpers/errors";
 import { VALID_PRESENCE_STATUTS } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface MarquerPresenceData {
   coursId: string;
@@ -19,6 +20,7 @@ export const marquerPresence = functions
     requireAuth(context.auth?.uid);
     const isProf = await verifyProf(context.auth!.uid);
     requirePermission(isProf, "Seuls les professeurs peuvent marquer les presences.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     requireArgument(!!data.coursId && !!data.eleveId && !!data.statut, "coursId, eleveId et statut sont requis.");
     requireArgument(
@@ -120,6 +122,7 @@ export const marquerPresence = functions
             coursId: data.coursId,
             classe: coursClasse,
             marqueePar: context.auth!.uid,
+            schoolId,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           },
           { merge: true }
@@ -132,6 +135,7 @@ export const marquerPresence = functions
           statut: data.statut,
           classe: coursClasse,
           performedBy: context.auth!.uid,
+          schoolId,
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
       });

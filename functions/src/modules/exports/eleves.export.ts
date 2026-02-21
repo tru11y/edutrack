@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 import * as ExcelJS from "exceljs";
 
 export const exportElevesExcel = functions
@@ -11,8 +12,11 @@ export const exportElevesExcel = functions
     const allowed = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(allowed);
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
-      let query: FirebaseFirestore.Query = db.collection("eleves");
+      let query: FirebaseFirestore.Query = db.collection("eleves")
+        .where("schoolId", "==", schoolId);
       if (data.classe) query = query.where("classe", "==", data.classe);
 
       const snap = await query.get();

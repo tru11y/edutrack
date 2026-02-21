@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface EleveRow {
   nom: string;
@@ -19,6 +20,8 @@ export const importElevesCsv = functions
     requireAuth(context.auth?.uid);
     const isAllowed = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(isAllowed, "Seul l'admin ou gestionnaire peut importer des eleves.");
+
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     const { rows, dryRun } = data;
     requireArgument(Array.isArray(rows) && rows.length > 0, "Aucune ligne a importer.");
@@ -66,6 +69,7 @@ export const importElevesCsv = functions
           adresse: r.adresse || "",
           statut: "actif",
           isBanned: false,
+          schoolId,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });

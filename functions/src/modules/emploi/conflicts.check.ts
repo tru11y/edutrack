@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { requireAuth, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface Conflict {
   type: "prof" | "classe";
@@ -27,8 +28,10 @@ export const checkScheduleConflicts = functions
   .https.onCall(async (_data: unknown, context) => {
     requireAuth(context.auth?.uid);
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
-      const snap = await db.collection("emploi_du_temps").get();
+      const snap = await db.collection("emploi_du_temps").where("schoolId", "==", schoolId).get();
       const creneaux = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       const conflicts: Conflict[] = [];
 

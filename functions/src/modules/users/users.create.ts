@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyAdmin } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
 import { isValidEmail, VALID_ROLES } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface CreateUserData {
   email: string;
@@ -27,6 +28,8 @@ export const createUser = functions
     requireArgument(data.password.length >= 6, "Le mot de passe doit contenir au moins 6 caracteres.");
     requireArgument(VALID_ROLES.includes(data.role), "Role invalide.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const userRecord = await admin.auth().createUser({
         email: data.email,
@@ -43,6 +46,7 @@ export const createUser = functions
         eleveId: data.eleveId || null,
         professeurId: data.professeurId || null,
         enfantsIds: data.enfantsIds || [],
+        schoolId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: context.auth!.uid,
       });
@@ -53,6 +57,7 @@ export const createUser = functions
         targetEmail: data.email,
         targetRole: data.role,
         performedBy: context.auth!.uid,
+        schoolId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 

@@ -41,6 +41,8 @@ export interface AppUser {
   nom?: string;
   prenom?: string;
   permissions?: string[];
+  schoolId?: string;
+  isSuperAdmin?: boolean;
 }
 
 export interface OnlineUser {
@@ -265,6 +267,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           enfantsIds: data.enfantsIds,
           nom: data.nom,
           prenom: data.prenom,
+          schoolId: data.schoolId,
+          isSuperAdmin: data.isSuperAdmin || false,
         };
 
         setUser(appUser);

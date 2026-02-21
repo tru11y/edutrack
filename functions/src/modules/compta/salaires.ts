@@ -3,6 +3,7 @@ import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError, notFound } from "../../helpers/errors";
 import { isValidMonth, isValidDate, isPositiveNumber, VALID_SALARY_STATUTS } from "../../helpers/validation";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface CreateSalaireData {
   profId: string;
@@ -28,6 +29,8 @@ export const createSalaire = functions
       requireArgument(isValidDate(data.datePaiement), "Format de date de paiement invalide (attendu: YYYY-MM-DD).");
     }
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     const profDoc = await db.collection("professeurs").doc(data.profId).get();
     if (!profDoc.exists) notFound("Professeur non trouve.");
 
@@ -49,6 +52,7 @@ export const createSalaire = functions
         mois: data.mois,
         montant: data.montant,
         statut: data.statut,
+        schoolId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: context.auth!.uid,
       };
@@ -65,6 +69,7 @@ export const createSalaire = functions
         profId: data.profId,
         montant: data.montant,
         performedBy: context.auth!.uid,
+        schoolId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 
@@ -81,8 +86,10 @@ export const getSalaires = functions
     const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent voir les salaires.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
-      let query: FirebaseFirestore.Query = db.collection("salaires");
+      let query: FirebaseFirestore.Query = db.collection("salaires").where("schoolId", "==", schoolId);
 
       if (data?.mois) {
         query = query.where("mois", "==", data.mois);
@@ -123,9 +130,12 @@ export const updateSalaireStatut = functions
     requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent modifier les salaires.");
     requireArgument(!!data.salaireId && !!data.statut, "ID du salaire et statut sont requis.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const docSnap = await db.collection("salaires").doc(data.salaireId).get();
       if (!docSnap.exists) notFound("Salaire non trouve.");
+      if (docSnap.data()?.schoolId !== schoolId) notFound("Salaire non trouve.");
 
       const updateData: Record<string, unknown> = {
         statut: data.statut,
@@ -147,6 +157,7 @@ export const updateSalaireStatut = functions
         oldStatut: prevData?.statut || null,
         newStatut: data.statut,
         performedBy: context.auth!.uid,
+        schoolId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 

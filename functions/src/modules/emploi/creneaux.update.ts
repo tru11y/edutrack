@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db, admin } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError, notFound } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface UpdateCreneauParams {
   id: string;
@@ -35,10 +36,13 @@ export const updateCreneau = functions
 
     requireArgument(!!data.id, "L'ID du creneau est requis.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       const creneauRef = db.collection("emploi_du_temps").doc(data.id);
       const creneauSnap = await creneauRef.get();
       if (!creneauSnap.exists) notFound("Creneau non trouve.");
+      if (creneauSnap.data()?.schoolId !== schoolId) notFound("Creneau non trouve.");
 
       const current = creneauSnap.data()!;
       const updated = {
@@ -54,6 +58,7 @@ export const updateCreneau = functions
 
       // Check for conflicts with other creneaux
       const allSnap = await db.collection("emploi_du_temps")
+        .where("schoolId", "==", schoolId)
         .where("jour", "==", updated.jour)
         .get();
 

@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdmin } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const getAllCahierEntries = functions
   .region("europe-west1")
@@ -9,11 +10,12 @@ export const getAllCahierEntries = functions
     requireAuth(context.auth?.uid);
     const isAdmin = await verifyAdmin(context.auth!.uid);
     requirePermission(isAdmin, "Seuls les administrateurs peuvent acceder au cahier de texte complet.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
       const [cahierSnap, elevesSnap] = await Promise.all([
-        db.collection("cahier").orderBy("date", "desc").get(),
-        db.collection("eleves").get(),
+        db.collection("cahier").where("schoolId", "==", schoolId).orderBy("date", "desc").get(),
+        db.collection("eleves").where("schoolId", "==", schoolId).get(),
       ]);
 
       const elevesMap = new Map<string, { nom: string; prenom: string; classe: string }>();

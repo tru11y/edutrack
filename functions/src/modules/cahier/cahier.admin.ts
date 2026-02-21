@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdmin } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface GetCahierTextesAdminParams {
   classe?: string;
@@ -15,9 +16,10 @@ export const getCahierTextesAdmin = functions
     requireAuth(context.auth?.uid);
     const isAdmin = await verifyAdmin(context.auth!.uid);
     requirePermission(isAdmin, "Seuls les administrateurs peuvent acceder aux cahiers de texte.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
-      let cahierQuery: FirebaseFirestore.Query = db.collection("cahier");
+      let cahierQuery: FirebaseFirestore.Query = db.collection("cahier").where("schoolId", "==", schoolId);
 
       if (data?.classe) {
         cahierQuery = cahierQuery.where("classe", "==", data.classe);
@@ -39,7 +41,7 @@ export const getCahierTextesAdmin = functions
         });
       }
 
-      const profsSnap = await db.collection("professeurs").get();
+      const profsSnap = await db.collection("professeurs").where("schoolId", "==", schoolId).get();
       const profsMap = new Map<string, { nom: string; prenom: string }>();
       profsSnap.docs.forEach((doc) => {
         const d = doc.data();

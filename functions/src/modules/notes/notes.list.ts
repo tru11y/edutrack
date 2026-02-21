@@ -1,14 +1,17 @@
 import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { requireAuth, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const getNotesByEvaluation = functions
   .region("europe-west1")
   .https.onCall(async (data: { evaluationId: string }, context) => {
     requireAuth(context.auth?.uid);
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
       const snap = await db.collection("notes")
+        .where("schoolId", "==", schoolId)
         .where("evaluationId", "==", data.evaluationId)
         .get();
 
@@ -29,9 +32,11 @@ export const getNotesByEleve = functions
   .region("europe-west1")
   .https.onCall(async (data: { eleveId: string; trimestre?: number }, context) => {
     requireAuth(context.auth?.uid);
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
       const notesSnap = await db.collection("notes")
+        .where("schoolId", "==", schoolId)
         .where("eleveId", "==", data.eleveId)
         .get();
 

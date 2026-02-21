@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const getBulletinVersions = functions
   .region("europe-west1")
@@ -10,8 +11,15 @@ export const getBulletinVersions = functions
     const staff = await verifyStaff(context.auth!.uid);
     requirePermission(staff, "Seul le staff peut consulter les versions.");
     requireArgument(!!data.bulletinId, "L'ID du bulletin est requis.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
+      // Verify bulletin belongs to this school
+      const bulletinSnap = await db.collection("bulletins").doc(data.bulletinId).get();
+      if (bulletinSnap.exists && bulletinSnap.data()?.schoolId && bulletinSnap.data()?.schoolId !== schoolId) {
+        requirePermission(false, "Ce bulletin n'appartient pas a votre etablissement.");
+      }
+
       const versionsSnap = await db
         .collection("bulletins")
         .doc(data.bulletinId)
@@ -39,8 +47,14 @@ export const compareBulletinVersions = functions
     requirePermission(staff, "Seul le staff peut comparer les versions.");
     requireArgument(!!data.bulletinId, "L'ID du bulletin est requis.");
     requireArgument(!!data.versionA && !!data.versionB, "Les deux versions sont requises.");
+    const schoolId = await getSchoolId(context.auth!.uid);
 
     try {
+      // Verify bulletin belongs to this school
+      const bulletinSnap = await db.collection("bulletins").doc(data.bulletinId).get();
+      if (bulletinSnap.exists && bulletinSnap.data()?.schoolId && bulletinSnap.data()?.schoolId !== schoolId) {
+        requirePermission(false, "Ce bulletin n'appartient pas a votre etablissement.");
+      }
       const [vASnap, vBSnap] = await Promise.all([
         db.collection("bulletins").doc(data.bulletinId).collection("versions").doc(data.versionA).get(),
         db.collection("bulletins").doc(data.bulletinId).collection("versions").doc(data.versionB).get(),

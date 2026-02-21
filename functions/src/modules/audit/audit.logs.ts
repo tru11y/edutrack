@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdmin } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const getAuditLogs = functions
   .region("europe-west1")
@@ -10,11 +11,14 @@ export const getAuditLogs = functions
     const isAdmin = await verifyAdmin(context.auth!.uid);
     requirePermission(isAdmin, "Seuls les administrateurs peuvent voir les logs d'audit.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     const queryLimit = data?.limit || 100;
     const safeLimit = Math.min(queryLimit, 500);
 
     try {
       const logsSnapshot = await db.collection("audit_logs")
+        .where("schoolId", "==", schoolId)
         .orderBy("timestamp", "desc")
         .limit(safeLimit)
         .get();

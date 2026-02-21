@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyStaff } from "../../helpers/auth";
 import { requireAuth, requirePermission, requireArgument, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface CalculateMoyennesData {
   eleveId: string;
@@ -34,9 +35,12 @@ export const calculateMoyennes = functions
       "Trimestre invalide."
     );
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       // Get all notes for this student
       const notesSnap = await db.collection("notes")
+        .where("schoolId", "==", schoolId)
         .where("eleveId", "==", data.eleveId)
         .get();
 

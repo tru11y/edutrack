@@ -100,3 +100,31 @@ export { archiveAnneeScolaire } from "./modules/classes/archive";
 
 // Analytics
 export { getAnalyticsReport } from "./modules/analytics/reports";
+
+// Schools (Multi-tenant)
+export { createSchool } from "./modules/schools/schools.create";
+export { updateSchool } from "./modules/schools/schools.update";
+export { listSchools } from "./modules/schools/schools.list";
+export { getSchoolsStats } from "./modules/schools/schools.stats";
+
+// Billing
+export { createCheckoutSession } from "./modules/billing/billing.checkout";
+export { stripeWebhook } from "./modules/billing/billing.webhook";
+export { createBillingPortalSession } from "./modules/billing/billing.portal";
+
+// Admissions
+export { createAdmission } from "./modules/admissions/admissions.create";
+export { listAdmissions } from "./modules/admissions/admissions.list";
+export { updateAdmission } from "./modules/admissions/admissions.update";
+
+// Transport
+export { createRoute, updateRoute, deleteRoute, listRoutes, assignStudentToRoute } from "./modules/transport/transport.crud";
+
+// Library
+export { createBook, updateBook, deleteBook, listBooks, borrowBook, returnBook } from "./modules/library/library.crud";
+
+// HR
+export { createLeaveRequest, listLeaveRequests, updateLeaveRequest } from "./modules/hr/hr.leave";
+
+// LMS
+export { createAssignment, listAssignments, submitAssignment, gradeSubmission } from "./modules/lms/lms.assignments";

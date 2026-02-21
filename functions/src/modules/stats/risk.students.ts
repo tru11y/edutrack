@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
+import { getSchoolId } from "../../helpers/tenant";
 
 interface AtRiskStudent {
   eleveId: string;
@@ -22,9 +23,12 @@ export const getAtRiskStudents = functions
     const allowed = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(allowed, "Acces reserve aux admins/gestionnaires.");
 
+    const schoolId = await getSchoolId(context.auth!.uid);
+
     try {
       // Fetch all active eleves
       const elevesSnap = await db.collection("eleves")
+        .where("schoolId", "==", schoolId)
         .where("statut", "==", "actif")
         .get();
 
