@@ -154,6 +154,10 @@ export interface AdminDashboardStats {
   totalEleves: number;
   totalProfesseurs: number;
   totalClasses: number;
+  totalMatieres?: number;
+  totalSalles?: number;
+  totalUsers?: number;
+  roleBreakdown?: Record<string, number>;
   totalPaiementsRecus: number;
   totalPaiementsAttendus: number;
   tauxCouverture: number;
