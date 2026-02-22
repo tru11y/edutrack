@@ -128,3 +128,6 @@ export { createLeaveRequest, listLeaveRequests, updateLeaveRequest } from "./mod
 
 // LMS
 export { createAssignment, listAssignments, submitAssignment, gradeSubmission } from "./modules/lms/lms.assignments";
+
+// Migration
+export { runDataMigration } from "./modules/migration/migration.run";

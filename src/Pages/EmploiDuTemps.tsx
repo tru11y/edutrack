@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { useTenant } from "../context/TenantContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast, ConfirmModal } from "../components/ui";
 import { getCreneaux, createCreneau, deleteCreneau } from "../modules/emploi-du-temps/emploi.service";
@@ -34,6 +35,7 @@ const EMPTY_FORM = {
 export default function EmploiDuTemps() {
   const { colors } = useTheme();
   const toast = useToast();
+  const { schoolId } = useTenant();
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
   }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
@@ -149,8 +151,8 @@ export default function EmploiDuTemps() {
       const [c, p, classesSnap, matieresSnap] = await Promise.all([
         getCreneaux(),
         getAllProfesseurs(),
-        getDocs(collection(db, "classes")),
-        getDocs(collection(db, "matieres")),
+        schoolId ? getDocs(query(collection(db, "classes"), where("schoolId", "==", schoolId))) : getDocs(collection(db, "classes")),
+        schoolId ? getDocs(query(collection(db, "matieres"), where("schoolId", "==", schoolId))) : getDocs(collection(db, "matieres")),
       ]);
       setCreneaux(c);
       setProfs(p.filter((pr) => pr.statut === "actif"));
