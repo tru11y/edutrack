@@ -166,6 +166,7 @@ export async function moveCahierToTrash(id: string): Promise<void> {
     type: "cahier",
     originalId: id,
     data: data,
+    schoolId: data.schoolId || "",
     deletedAt: serverTimestamp(),
   });
 

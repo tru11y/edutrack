@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useTenant } from "../../context/TenantContext";
 import { useToast, ConfirmModal } from "../../components/ui";
 
 import { getAllEleves } from "../eleves/eleve.service";
@@ -58,6 +59,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
   const { user } = useAuth();
   const { colors } = useTheme();
   const toast = useToast();
+  const { schoolId } = useTenant();
 
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [presences, setPresences] = useState<PresenceItem[]>([]);
@@ -141,7 +143,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
       }
 
       // 4. Charger tous les élèves pour l'ajout manuel
-      const eligibles = await getElevesEligibles();
+      const eligibles = await getElevesEligibles(schoolId);
       setAllEleves(eligibles);
 
       setInitialLoading(false);

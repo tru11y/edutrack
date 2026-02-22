@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSchool } from "../../context/SchoolContext";
+import { useTenant } from "../../context/TenantContext";
 
 interface Paiement {
   id?: string;
@@ -40,6 +41,7 @@ export default function AdminPaiementsList() {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const { school } = useSchool();
+  const { schoolId } = useTenant();
   const isGestionnaire = user?.role === "gestionnaire";
 
   function handleDownloadPDF(p: Paiement) {
@@ -72,11 +74,12 @@ export default function AdminPaiementsList() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    getAllPaiements().then((d) => {
+    if (!schoolId) return;
+    getAllPaiements(schoolId).then((d) => {
       setPaiements(d);
       setLoading(false);
     });
-  }, []);
+  }, [schoolId]);
 
   const filteredPaiements = paiements.filter((p) => {
     const matchFilter = filter === "all" || p.statut === filter;

@@ -43,8 +43,11 @@ export async function unbanEleveIfFullyPaid(
    GETTERS
 ========================= */
 
-export const getAllPaiements = async (): Promise<Paiement[]> => {
-  const snap = await getDocs(paiementsRef);
+export const getAllPaiements = async (schoolId?: string): Promise<Paiement[]> => {
+  const q = schoolId
+    ? query(paiementsRef, where("schoolId", "==", schoolId))
+    : paiementsRef;
+  const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Paiement[];
 };
 
@@ -145,6 +148,7 @@ export const movePaiementToTrash = async (id: string): Promise<void> => {
     type: "paiements",
     originalId: id,
     data: data,
+    schoolId: data.schoolId || "",
     deletedAt: serverTimestamp(),
   });
 
