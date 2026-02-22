@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { getAllEleves } from "../../modules/eleves/eleve.service";
 import { getAllProfesseurs } from "../../modules/professeurs/professeur.service";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
+import { useTenant } from "../../context/TenantContext";
 import { LoadingSpinner } from "../../components/ui/Skeleton";
 import { useToast, ConfirmModal } from "../../components/ui";
 import { GRADIENTS } from "../../constants";
@@ -18,6 +19,7 @@ export default function Classes() {
   const { colors } = useTheme();
   const { user } = useAuth();
   const toast = useToast();
+  const { schoolId } = useTenant();
   const isAdmin = user?.role === "admin" || user?.role === "gestionnaire";
 
   // Data state
@@ -38,12 +40,13 @@ export default function Classes() {
 
   // Data loading
   const loadData = useCallback(async () => {
+    if (!schoolId) return;
     try {
       const [classesSnap, matieresSnap, elevesData, profsData] = await Promise.all([
-        getDocs(collection(db, "classes")),
-        getDocs(collection(db, "matieres")),
-        getAllEleves(),
-        getAllProfesseurs(),
+        getDocs(query(collection(db, "classes"), where("schoolId", "==", schoolId))),
+        getDocs(query(collection(db, "matieres"), where("schoolId", "==", schoolId))),
+        getAllEleves(schoolId),
+        getAllProfesseurs(schoolId),
       ]);
 
       const classesData = classesSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as ClasseData[];
@@ -70,7 +73,7 @@ export default function Classes() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [schoolId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     loadData();

@@ -39,7 +39,13 @@
       "Bash(grep:*)",
       "Bash(npx jest --forceExit --detectOpenHandles)",
       "Bash(npx jest:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npx firebase functions:log:*)",
+      "Bash(echo:*)",
+      "Bash(echo Missing wrappers::*)",
+      "Bash(head:*)",
+      "Bash(cat:*)",
+      "Bash(export:*)"
     ]
   }
 }

@@ -150,7 +150,7 @@ export default function EmploiDuTemps() {
     try {
       const [c, p, classesSnap, matieresSnap] = await Promise.all([
         getCreneaux(schoolId),
-        getAllProfesseurs(),
+        getAllProfesseurs(schoolId),
         schoolId ? getDocs(query(collection(db, "classes"), where("schoolId", "==", schoolId))) : getDocs(collection(db, "classes")),
         schoolId ? getDocs(query(collection(db, "matieres"), where("schoolId", "==", schoolId))) : getDocs(collection(db, "matieres")),
       ]);

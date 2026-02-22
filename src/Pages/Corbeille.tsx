@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp, query, where } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useTheme } from "../context/ThemeContext";
 import { useToast, ConfirmModal } from "../components/ui";
@@ -12,6 +12,7 @@ interface TrashItem {
   type: string;
   originalId: string;
   data: Record<string, unknown>;
+  schoolId?: string;
   deletedAt?: Timestamp;
 }
 
@@ -28,14 +29,12 @@ export default function Corbeille() {
 
   const loadItems = async () => {
     try {
-      const q = schoolId
-        ? query(collection(db, "corbeille"), where("schoolId", "==", schoolId))
-        : collection(db, "corbeille");
-      const snap = await getDocs(q);
-      const data = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      })) as TrashItem[];
+      // Load all items (admin rule allows it), filter client-side for backward compat
+      // with old items that lack schoolId field
+      const snap = await getDocs(collection(db, "corbeille"));
+      const data = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as TrashItem))
+        .filter((item) => !schoolId || !item.schoolId || item.schoolId === schoolId);
       // Sort by deletedAt descending
       setItems(data.sort((a, b) => {
         const aTime = a.deletedAt?.toMillis() || 0;
@@ -51,7 +50,7 @@ export default function Corbeille() {
 
   useEffect(() => {
     loadItems();
-  }, []);
+  }, [schoolId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRestore = (item: TrashItem) => {
     setConfirmState({

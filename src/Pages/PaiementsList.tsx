@@ -5,6 +5,7 @@ import { getAllPaiements, movePaiementToTrash } from "../modules/paiements/paiem
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast, ConfirmModal } from "../components/ui";
+import { useTenant } from "../context/TenantContext";
 import { exportPaiementsExcelSecure } from "../services/cloudFunctions";
 import { downloadBase64File } from "../utils/download";
 import { exportToCSV } from "../utils/csvExport";
@@ -29,6 +30,7 @@ export default function PaiementsList() {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const toast = useToast();
+  const { schoolId } = useTenant();
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -41,7 +43,7 @@ export default function PaiementsList() {
 
   const loadPaiements = async () => {
     try {
-      const data = await getAllPaiements();
+      const data = await getAllPaiements(schoolId);
       setPaiements(data.sort((a, b) => b.mois.localeCompare(a.mois)));
     } catch (err) {
       console.error(err);
@@ -51,8 +53,8 @@ export default function PaiementsList() {
   };
 
   useEffect(() => {
-    loadPaiements();
-  }, []);
+    if (schoolId) loadPaiements();
+  }, [schoolId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDelete = (paiement: Paiement) => {
     if (!paiement.id) return;

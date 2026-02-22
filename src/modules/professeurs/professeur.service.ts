@@ -7,6 +7,8 @@ import {
   getDocs,
   getDoc,
   updateDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../services/firebase";
@@ -55,8 +57,9 @@ export async function createProfesseurWithAccount(
    READ
 ====================== */
 
-export async function getAllProfesseurs(): Promise<Professeur[]> {
-  const snap = await getDocs(profsRef);
+export async function getAllProfesseurs(schoolId?: string): Promise<Professeur[]> {
+  const q = schoolId ? query(profsRef, where("schoolId", "==", schoolId)) : profsRef;
+  const snap = await getDocs(q);
   return snap.docs.map((d) => ({
     id: d.id,
     ...(d.data() as Professeur),

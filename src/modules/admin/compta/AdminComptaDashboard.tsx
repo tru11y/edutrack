@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "../../../context/ThemeContext";
+import { useTenant } from "../../../context/TenantContext";
 import {
   getComptaStatsSecure,
   getDepensesSecure,
@@ -34,6 +35,7 @@ function formatMontant(n: number): string {
 export default function AdminComptaDashboard() {
   const { colors } = useTheme();
   const toast = useToast();
+  const { schoolId } = useTenant();
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
   }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
@@ -66,7 +68,7 @@ export default function AdminComptaDashboard() {
     setError("");
 
     const [paiementsRes, profsRes, statsRes, depensesRes, salairesRes] = await Promise.allSettled([
-      getAllPaiements(),
+      getAllPaiements(schoolId),
       getAllProfesseurs(),
       getComptaStatsSecure(mois),
       getDepensesSecure(mois),

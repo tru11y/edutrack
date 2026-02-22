@@ -70,8 +70,9 @@ function normalizeEleve(data: Partial<Eleve>): Omit<Eleve, "id"> & { id?: string
    READ
 ====================== */
 
-export async function getAllEleves(): Promise<Eleve[]> {
-  const snap = await getDocs(elevesRef);
+export async function getAllEleves(schoolId?: string): Promise<Eleve[]> {
+  const q = schoolId ? query(elevesRef, where("schoolId", "==", schoolId)) : elevesRef;
+  const snap = await getDocs(q);
 
   return snap.docs.map((d) =>
     normalizeEleve({
@@ -214,6 +215,7 @@ export async function moveEleveToTrash(id: string): Promise<void> {
     type: "eleves",
     originalId: id,
     data: data,
+    schoolId: (data as { schoolId?: string }).schoolId || "",
     deletedAt: serverTimestamp(),
   });
 
