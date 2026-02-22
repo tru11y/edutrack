@@ -1,9 +1,9 @@
 import * as admin from "firebase-admin";
 import { db } from "../firebase";
 
-// Collections that hold school-scoped data
+// Collections that hold school-scoped data (top-level only)
 const SCHOOL_COLLECTIONS = [
-  "eleves", "professeurs", "classes", "cours", "paiements",
+  "eleves", "professeurs", "classes", "cours", "presences", "paiements",
   "discipline", "discipline_logs", "cahier", "depenses", "salaires",
   "matieres", "emploi_du_temps", "evaluations", "notes", "bulletins",
   "messages", "alerts", "notifications", "notification_config",
@@ -37,6 +37,23 @@ export async function migrateDataToSchool(schoolId: string): Promise<number> {
     } catch {
       // Skip collections that don't exist or have access issues
     }
+  }
+
+  // Migrate presences/{coursId}/appels subcollections (collectionGroup)
+  try {
+    const appelsSnap = await db.collectionGroup("appels").get();
+    const appelsToMigrate = appelsSnap.docs.filter((d) => !d.data().schoolId);
+    const CHUNK = 400;
+    for (let i = 0; i < appelsToMigrate.length; i += CHUNK) {
+      const batch = db.batch();
+      appelsToMigrate.slice(i, i + CHUNK).forEach((d) =>
+        batch.update(d.ref, { schoolId })
+      );
+      await batch.commit();
+    }
+    totalMigrated += appelsToMigrate.length;
+  } catch {
+    // Ignore if no appels exist
   }
 
   // Also migrate users that don't have schoolId yet
