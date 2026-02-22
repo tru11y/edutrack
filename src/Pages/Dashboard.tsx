@@ -11,11 +11,13 @@ import {
   getAdvancedStatsSecure,
   getClasseComparisonSecure,
   getAtRiskStudentsSecure,
+  getRecommendationsSecure,
   getCloudFunctionErrorMessage,
   type AdminDashboardStats,
   type AdvancedStatsResult,
   type ClasseComparisonItem,
   type AtRiskStudent,
+  type Recommendation,
 } from "../services/cloudFunctions";
 
 export default function Dashboard() {
@@ -25,6 +27,7 @@ export default function Dashboard() {
   const [advancedStats, setAdvancedStats] = useState<AdvancedStatsResult | null>(null);
   const [classeComparison, setClasseComparison] = useState<ClasseComparisonItem[]>([]);
   const [atRiskStudents, setAtRiskStudents] = useState<AtRiskStudent[]>([]);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showWidgetConfig, setShowWidgetConfig] = useState(false);
@@ -51,6 +54,7 @@ export default function Dashboard() {
     getAdvancedStatsSecure().then(setAdvancedStats).catch(() => {});
     getClasseComparisonSecure().then((res) => setClasseComparison(res.classes || [])).catch(() => {});
     getAtRiskStudentsSecure().then((res) => setAtRiskStudents(res.students || [])).catch(() => {});
+    getRecommendationsSecure().then((res) => setRecommendations(res.recommendations || [])).catch(() => {});
   }, []);
 
   if (loading) {
@@ -449,6 +453,65 @@ export default function Dashboard() {
               ]}
               height={220}
             />
+          </div>
+        </div>
+      )}
+
+      {/* AI Recommendations */}
+      {recommendations.length > 0 && (
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginTop: 24 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 16px", display: "flex", alignItems: "center", gap: 8 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Recommandations
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {recommendations.map((rec, i) => {
+              const catColors: Record<string, { bg: string; color: string }> = {
+                financier: { bg: colors.warningBg, color: colors.warning },
+                academique: { bg: colors.infoBg, color: colors.info },
+                organisationnel: { bg: colors.primaryBg, color: colors.primary },
+                marketing: { bg: colors.successBg, color: colors.success },
+              };
+              const prioColors: Record<string, string> = {
+                haute: colors.danger,
+                moyenne: colors.warning,
+                basse: colors.info,
+              };
+              const c = catColors[rec.category] ?? { bg: colors.bgSecondary, color: colors.text };
+              return (
+                <div key={i} style={{
+                  padding: "14px 16px", borderRadius: 12,
+                  background: colors.bgSecondary, border: `1px solid ${colors.border}`,
+                  display: "flex", gap: 14, alignItems: "flex-start",
+                }}>
+                  <div style={{
+                    flexShrink: 0, width: 36, height: 36, borderRadius: 10,
+                    background: c.bg, color: c.color,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 16,
+                  }}>
+                    {rec.category === "financier" ? "₣" : rec.category === "academique" ? "📚" : rec.category === "marketing" ? "📣" : "⚙"}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>{rec.titre}</span>
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 6,
+                        background: `${prioColors[rec.priority]}20`, color: prioColors[rec.priority],
+                      }}>
+                        {rec.priority}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 4px" }}>{rec.detail}</p>
+                    <p style={{ fontSize: 12, color: c.color, margin: 0, fontStyle: "italic" }}>{rec.action}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

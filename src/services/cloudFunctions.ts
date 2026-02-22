@@ -963,3 +963,15 @@ export function getCloudFunctionErrorMessage(error: unknown): string {
 export function runDataMigrationSecure(): Promise<{ success: boolean; totalMigrated: number; message: string }> {
   return callFunction("runDataMigration", undefined);
 }
+
+// Recommandations IA
+export interface Recommendation {
+  category: "academique" | "financier" | "organisationnel" | "marketing";
+  priority: "haute" | "moyenne" | "basse";
+  titre: string;
+  detail: string;
+  action: string;
+}
+export function getRecommendationsSecure(): Promise<{ success: boolean; recommendations: Recommendation[] }> {
+  return callFunction("getRecommendations", undefined);
+}

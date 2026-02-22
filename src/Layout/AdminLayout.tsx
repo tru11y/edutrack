@@ -48,12 +48,6 @@ const navItems: NavItem[] = [
   { to: "/archives", labelKey: "archives" as TranslationKey, icon: "book", roles: ["admin"] },
   { to: "/analytics", labelKey: "analytics" as TranslationKey, icon: "chart", roles: ["admin", "gestionnaire"] },
   { to: "/corbeille", labelKey: "trash", icon: "trash", roles: ["admin", "gestionnaire"] },
-  { to: "/admissions", labelKey: "admissions" as TranslationKey, icon: "users", roles: ["admin", "gestionnaire"] },
-  { to: "/transport", labelKey: "transport" as TranslationKey, icon: "card", roles: ["admin", "gestionnaire"] },
-  { to: "/library", labelKey: "library" as TranslationKey, icon: "book", roles: ["admin", "gestionnaire"] },
-  { to: "/hr", labelKey: "hr" as TranslationKey, icon: "users", roles: ["admin", "gestionnaire", "prof"] },
-  { to: "/lms", labelKey: "lms" as TranslationKey, icon: "grade", roles: ["admin", "gestionnaire", "prof"] },
-  { to: "/billing", labelKey: "billing" as TranslationKey, icon: "wallet", roles: ["admin"] },
   // Eleve portal
   { to: "/eleve", labelKey: "dashboard", icon: "dashboard", end: true, roles: ["eleve"] },
   { to: "/eleve/notes", labelKey: "evaluations", icon: "grade", roles: ["eleve"] },
@@ -143,22 +137,32 @@ export default function AdminLayout() {
     if (isMobile) setSidebarOpen(false);
   }, [location.pathname, isMobile]);
 
-  // Unread messages listener
+  // Unread messages — messages reçus dont l'ID n'est pas dans le set lu
   useEffect(() => {
     if (!user?.uid) return;
+    const role = user.role;
+    const isAdminOrGest = role === "admin" || role === "gestionnaire";
+    const isProf = role === "prof";
+    const readKey = `msg_read_ids_${user.uid}`;
+
     const q = query(collection(db, "messages"));
     const unsub = onSnapshot(q, (snap) => {
-      const msgs = snap.docs.map((d) => d.data());
-      const readKey = `messages_read_${user.uid}`;
-      const lastRead = parseInt(localStorage.getItem(readKey) || "0", 10);
-      const unread = msgs.filter((m) => {
-        const ts = m.createdAt?.toMillis?.() || 0;
-        return ts > lastRead && m.auteurId !== user.uid;
+      const readIds: string[] = JSON.parse(localStorage.getItem(readKey) || "[]");
+      const readSet = new Set(readIds);
+      const unread = snap.docs.filter((doc) => {
+        const m = doc.data();
+        if (m.auteurId === user.uid) return false; // own message
+        if (readSet.has(doc.id)) return false;      // already read
+        if (m.destinataire === "tous") return true;
+        if (m.destinataire === "admins" && isAdminOrGest) return true;
+        if (m.destinataire === "profs" && isProf) return true;
+        if (m.destinataire === user.uid) return true;
+        return false;
       }).length;
       setUnreadMessages(unread);
     }, () => {});
     return () => unsub();
-  }, [user?.uid]);
+  }, [user?.uid, user?.role]);
 
   const handleLogout = async () => {
     await logout();
