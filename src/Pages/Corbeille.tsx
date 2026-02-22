@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp, query, where } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useTheme } from "../context/ThemeContext";
 import { useToast, ConfirmModal } from "../components/ui";
+import { useTenant } from "../context/TenantContext";
 import type { Timestamp } from "firebase/firestore";
 
 interface TrashItem {
@@ -17,6 +18,7 @@ interface TrashItem {
 export default function Corbeille() {
   const { colors } = useTheme();
   const toast = useToast();
+  const { schoolId } = useTenant();
   const [items, setItems] = useState<TrashItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState<string | null>(null);
@@ -26,7 +28,10 @@ export default function Corbeille() {
 
   const loadItems = async () => {
     try {
-      const snap = await getDocs(collection(db, "corbeille"));
+      const q = schoolId
+        ? query(collection(db, "corbeille"), where("schoolId", "==", schoolId))
+        : collection(db, "corbeille");
+      const snap = await getDocs(q);
       const data = snap.docs.map((d) => ({
         id: d.id,
         ...d.data(),

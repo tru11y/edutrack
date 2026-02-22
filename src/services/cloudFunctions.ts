@@ -958,3 +958,8 @@ export function getCloudFunctionErrorMessage(error: unknown): string {
   }
   return "Une erreur inattendue s'est produite.";
 }
+
+// Migration
+export function runDataMigrationSecure(): Promise<{ success: boolean; totalMigrated: number; message: string }> {
+  return callFunction("runDataMigration", undefined);
+}

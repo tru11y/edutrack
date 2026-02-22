@@ -4,6 +4,7 @@ import { db } from "../services/firebase";
 import { useTheme } from "../context/ThemeContext";
 import { useSchool, type SchoolConfig } from "../context/SchoolContext";
 import { useToast } from "../components/ui";
+import { runDataMigrationSecure } from "../services/cloudFunctions";
 
 const COLOR_PRESETS = [
   { label: "Indigo", value: "#6366f1" },
@@ -22,6 +23,7 @@ export default function SchoolSettings() {
   const toast = useToast();
   const [config, setConfig] = useState<SchoolConfig>(school);
   const [saving, setSaving] = useState(false);
+  const [migrating, setMigrating] = useState(false);
 
   // Sync from context when it loads/updates
   useEffect(() => {
@@ -184,6 +186,32 @@ export default function SchoolSettings() {
             {saving ? "Enregistrement..." : "Enregistrer"}
           </button>
         </div>
+      </div>
+
+      {/* Migration section */}
+      <div style={{ background: colors.surface, borderRadius: 16, padding: 28, border: `1px solid ${colors.warning}40` }}>
+        <h3 style={{ margin: "0 0 6px", color: colors.warning, fontSize: 15, fontWeight: 700 }}>Migration des donnees</h3>
+        <p style={{ margin: "0 0 16px", color: colors.textSecondary, fontSize: 13 }}>
+          Si vos donnees existantes (eleves, classes, paiements…) n'apparaissent pas dans les statistiques,
+          lancez la migration pour les associer a votre ecole.
+        </p>
+        <button
+          disabled={migrating}
+          onClick={async () => {
+            setMigrating(true);
+            try {
+              const res = await runDataMigrationSecure();
+              toast.success(`Migration reussie : ${res.totalMigrated} document(s) mis a jour.`);
+            } catch {
+              toast.error("Erreur lors de la migration.");
+            } finally {
+              setMigrating(false);
+            }
+          }}
+          style={{ ...btnPrimary, background: colors.warning, opacity: migrating ? 0.6 : 1 }}
+        >
+          {migrating ? "Migration en cours..." : "Lancer la migration"}
+        </button>
       </div>
     </div>
   );
