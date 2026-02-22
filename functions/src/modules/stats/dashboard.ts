@@ -120,7 +120,7 @@ export const getDetailedStats = functions
     try {
       const [elevesSnap, appelsSnap, paiementsSnap] = await Promise.all([
         db.collection("eleves").where("schoolId", "==", schoolId).get(),
-        db.collectionGroup("appels").get(),
+        db.collectionGroup("appels").where("schoolId", "==", schoolId).get(),
         db.collection("paiements").where("schoolId", "==", schoolId).get(),
       ]);
 

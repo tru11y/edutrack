@@ -73,13 +73,6 @@ const SuperAdminLayout = lazy(() => import("./Layout/SuperAdminLayout"));
 const SuperAdminDashboard = lazy(() => import("./pages/superadmin/SuperAdminDashboard"));
 const SchoolsList = lazy(() => import("./pages/superadmin/SchoolsList"));
 const SchoolDetail = lazy(() => import("./pages/superadmin/SchoolDetail"));
-const BillingSettings = lazy(() => import("./pages/BillingSettings"));
-const PublicAdmission = lazy(() => import("./pages/PublicAdmission"));
-const Admissions = lazy(() => import("./pages/Admissions"));
-const Transport = lazy(() => import("./pages/Transport"));
-const Library = lazy(() => import("./pages/Library"));
-const HRManagement = lazy(() => import("./pages/HRManagement"));
-const LMS = lazy(() => import("./pages/LMS"));
 
 function OnlineQueueRetry() {
   useEffect(() => {
@@ -171,7 +164,6 @@ export default function App() {
                     <Route path="/landing" element={<LandingPage />} />
                     <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/signup" element={<SignupPage />} />
-                    <Route path="/admission/:schoolId" element={<PublicAdmission />} />
                     <Route path="/login" element={<LoginPage />} />
 
                     {/* Super Admin routes */}
@@ -221,12 +213,6 @@ export default function App() {
                       <Route path="archives" element={<AdminRoute><Archives /></AdminRoute>} />
                       <Route path="analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
                       <Route path="admin/permissions" element={<AdminRoute><PermissionManagement /></AdminRoute>} />
-                      <Route path="billing" element={<AdminRoute><BillingSettings /></AdminRoute>} />
-                      <Route path="admissions" element={<AdminRoute><Admissions /></AdminRoute>} />
-                      <Route path="transport" element={<AdminRoute><Transport /></AdminRoute>} />
-                      <Route path="library" element={<AdminRoute><Library /></AdminRoute>} />
-                      <Route path="hr" element={<AdminRoute><HRManagement /></AdminRoute>} />
-                      <Route path="lms" element={<LMS />} />
                       {/* Student Portal */}
                       <Route path="eleve" element={<ElevePortalDashboard />} />
                       <Route path="eleve/notes" element={<EleveNotes />} />
