@@ -28,7 +28,7 @@ export const createCreneau = async (data: Omit<Creneau, "id" | "createdAt">): Pr
   }
 
   // Vérification des chevauchements (même prof OU même classe)
-  const existing = await getCreneauxByJour(data.jour);
+  const existing = await getCreneauxByJour(data.jour, data.schoolId);
   for (const creneau of existing) {
     if (hasOverlap(data as Creneau, creneau)) {
       if (creneau.professeurId === data.professeurId) {
@@ -50,16 +50,19 @@ export const deleteCreneau = async (id: string): Promise<void> => {
   await deleteDoc(doc(db, COLLECTION, id));
 };
 
-export const getCreneaux = async (): Promise<Creneau[]> => {
-  const snap = await getDocs(collection(db, COLLECTION));
+export const getCreneaux = async (schoolId?: string): Promise<Creneau[]> => {
+  const q = schoolId
+    ? query(collection(db, COLLECTION), where("schoolId", "==", schoolId))
+    : collection(db, COLLECTION);
+  const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Creneau));
 };
 
-export const getCreneauxByJour = async (jour: string): Promise<Creneau[]> => {
-  const q = query(
-    collection(db, COLLECTION),
-    where("jour", "==", jour)
-  );
+export const getCreneauxByJour = async (jour: string, schoolId?: string): Promise<Creneau[]> => {
+  const constraints = schoolId
+    ? [where("jour", "==", jour), where("schoolId", "==", schoolId)]
+    : [where("jour", "==", jour)];
+  const q = query(collection(db, COLLECTION), ...constraints);
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Creneau));
 };
