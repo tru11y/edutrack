@@ -1,5 +1,6 @@
 {
   "indexes": [
+    { "collectionGroup": "appels", "queryScope": "COLLECTION_GROUP", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }] },
     { "collectionGroup": "cahier",        "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "date",      "order": "DESCENDING" }] },
     { "collectionGroup": "depenses",      "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "date",      "order": "DESCENDING" }] },
     { "collectionGroup": "matieres",      "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "nom",       "order": "ASCENDING"  }] },

@@ -95,6 +95,14 @@ export default function Messages() {
 
       setMessages(filteredMessages);
       setLoading(false);
+
+      // Marquer tous les messages visibles comme lus
+      if (user?.uid) {
+        const readKey = `msg_read_ids_${user.uid}`;
+        const existing: string[] = JSON.parse(localStorage.getItem(readKey) || "[]");
+        const allIds = new Set([...existing, ...filteredMessages.map((m) => m.id)]);
+        localStorage.setItem(readKey, JSON.stringify([...allIds]));
+      }
     }, (err) => {
       console.error("Erreur messages:", err);
       setLoading(false);

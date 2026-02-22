@@ -131,3 +131,6 @@ export { createAssignment, listAssignments, submitAssignment, gradeSubmission } 
 
 // Migration
 export { runDataMigration } from "./modules/migration/migration.run";
+
+// Recommandations IA
+export { getRecommendations } from "./modules/recommendations/recommendations";

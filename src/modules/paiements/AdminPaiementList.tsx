@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Timestamp } from "firebase/firestore";
 import { getAllPaiements } from "./paiement.service";
+import { exportRecuPaiementPDF } from "./paiement.pdf";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from "../../context/LanguageContext";
+import { useSchool } from "../../context/SchoolContext";
 
 interface Paiement {
   id?: string;
@@ -37,7 +39,33 @@ export default function AdminPaiementsList() {
   const { user } = useAuth();
   const { colors } = useTheme();
   const { t } = useLanguage();
+  const { school } = useSchool();
   const isGestionnaire = user?.role === "gestionnaire";
+
+  function handleDownloadPDF(p: Paiement) {
+    const [prenom, ...rest] = (p.eleveNom || "").split(" ");
+    exportRecuPaiementPDF(
+      {
+        id: p.id,
+        eleveId: p.eleveId,
+        eleveNom: p.eleveNom,
+        mois: p.mois,
+        montantTotal: p.montantTotal,
+        montantPaye: p.montantPaye,
+        montantRestant: p.montantRestant,
+        statut: p.statut,
+        datePaiement: p.datePaiement,
+        versements: [],
+      },
+      {
+        elevePrenom: prenom || "",
+        eleveNom: rest.join(" ") || prenom || "",
+        classe: "",
+        adminNom: user?.displayName || user?.email || "",
+        schoolName: school?.schoolName || "EduTrack",
+      }
+    );
+  }
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "paye" | "partiel" | "impaye">("all");
@@ -314,7 +342,7 @@ export default function AdminPaiementsList() {
                   <td style={{ padding: "16px 20px", textAlign: "center" }}>
                     <StatusBadge statut={p.statut} colors={colors} />
                   </td>
-                  <td style={{ padding: "16px 20px", textAlign: "right" }}>
+                  <td style={{ padding: "16px 20px", textAlign: "right", display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
                     <Link
                       to={`/admin/eleves/${p.eleveId}/paiements`}
                       style={{
@@ -330,6 +358,29 @@ export default function AdminPaiementsList() {
                     >
                       Voir
                     </Link>
+                    <button
+                      onClick={() => handleDownloadPDF(p)}
+                      title="Télécharger la facture PDF"
+                      style={{
+                        padding: "6px 10px",
+                        background: colors.primaryBg,
+                        color: colors.primary,
+                        border: `1px solid ${colors.primary}30`,
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+                        <path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      PDF
+                    </button>
                   </td>
                 </tr>
               ))}
