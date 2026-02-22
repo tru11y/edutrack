@@ -16,5 +16,14 @@
     { "collectionGroup": "notes",         "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "evaluationId","order":"ASCENDING"  }] },
     { "collectionGroup": "bulletins",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "classe",    "order": "ASCENDING"  }] }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "appels",
+      "fieldPath": "schoolId",
+      "indexes": [
+        { "queryScope": "COLLECTION", "order": "ASCENDING" },
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
+      ]
+    }
+  ]
 }
