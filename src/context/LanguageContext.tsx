@@ -109,29 +109,17 @@ const translations = {
 
     // Notes / Evaluations
     evaluations: "Evaluations",
-    bulletins: "Bulletins",
-
-    // Notifications
-    notifications: "Notifications",
-    notificationConfig: "Config. notifs",
 
     // V3
     discipline: "Discipline",
     matieres: "Matieres",
     importEleves: "Import eleves",
-    auditLogs: "Journal d'audit",
-    schoolSettings: "Parametres ecole",
     atRiskStudents: "Eleves a risque",
     riskAbsence: "Absences",
     riskPayment: "Impayes",
     riskGrades: "Notes",
-    analytics: "Analytiques",
-    reports: "Rapports",
-    generateReport: "Generer le rapport",
-    promotion: "Promotion",
     archives: "Archives",
     archiveYear: "Archiver une annee",
-    promoteClass: "Promouvoir une classe",
     conversations: "Conversations",
     attachments: "Pieces jointes",
     searchMessages: "Rechercher dans les messages",
@@ -150,9 +138,6 @@ const translations = {
     showWidget: "Afficher",
     hideWidget: "Masquer",
     resetWidgets: "Reinitialiser",
-    versionHistory: "Historique des versions",
-    compareVersions: "Comparer les versions",
-    versionNumber: "Version",
     permissions: "Permissions",
     managePermissions: "Gerer les permissions",
     permissionGranted: "Permission accordee",
@@ -285,29 +270,17 @@ const translations = {
 
     // Notes / Evaluations
     evaluations: "Evaluations",
-    bulletins: "Report Cards",
-
-    // Notifications
-    notifications: "Notifications",
-    notificationConfig: "Notif. config",
 
     // V3
     discipline: "Discipline",
     matieres: "Subjects",
     importEleves: "Import students",
-    auditLogs: "Audit logs",
-    schoolSettings: "School settings",
     atRiskStudents: "At-risk students",
     riskAbsence: "Absences",
     riskPayment: "Unpaid",
     riskGrades: "Grades",
-    analytics: "Analytics",
-    reports: "Reports",
-    generateReport: "Generate report",
-    promotion: "Promotion",
     archives: "Archives",
     archiveYear: "Archive year",
-    promoteClass: "Promote class",
     conversations: "Conversations",
     attachments: "Attachments",
     searchMessages: "Search messages",
@@ -326,9 +299,6 @@ const translations = {
     showWidget: "Show",
     hideWidget: "Hide",
     resetWidgets: "Reset",
-    versionHistory: "Version history",
-    compareVersions: "Compare versions",
-    versionNumber: "Version",
     permissions: "Permissions",
     managePermissions: "Manage permissions",
     permissionGranted: "Permission granted",

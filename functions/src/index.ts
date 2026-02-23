@@ -30,9 +30,6 @@ export { getCahierTextesAdmin } from "./modules/cahier/cahier.admin";
 // Stats / Dashboard
 export { getAdminDashboardStats, getDetailedStats } from "./modules/stats/dashboard";
 
-// Audit
-export { getAuditLogs } from "./modules/audit/audit.logs";
-
 // Reports
 export {
   sendMonthlyPaymentReport,
@@ -50,12 +47,6 @@ export { updateNote } from "./modules/notes/notes.update";
 export { deleteNote } from "./modules/notes/notes.delete";
 export { getNotesByEvaluation, getNotesByEleve } from "./modules/notes/notes.list";
 export { calculateMoyennes } from "./modules/notes/moyennes.calculate";
-export { generateBulletin, generateBulletinsClasse } from "./modules/notes/bulletins.generate";
-export { getBulletinVersions, compareBulletinVersions } from "./modules/notes/bulletins.versions";
-
-// Advanced Stats
-export { getAdvancedStats } from "./modules/stats/advanced.stats";
-export { getClasseComparison } from "./modules/stats/classe.comparison";
 
 // Exports
 export { exportElevesExcel } from "./modules/exports/eleves.export";
@@ -63,15 +54,6 @@ export { exportPresencesExcel } from "./modules/exports/presences.export";
 export { exportNotesExcel } from "./modules/exports/notes.export";
 export { exportPaiementsExcel } from "./modules/exports/paiements.export";
 
-// Notifications
-export { sendNotification } from "./modules/notifications/notifications.create";
-export { getNotifications } from "./modules/notifications/notifications.list";
-export { markNotificationRead } from "./modules/notifications/notifications.read";
-export { getNotificationConfig, updateNotificationConfig } from "./modules/notifications/notifications.config";
-export { triggerAbsenceNotification } from "./modules/notifications/triggers.absence";
-export { triggerImpayeNotification } from "./modules/notifications/triggers.impaye";
-export { sendBulkNotification } from "./modules/notifications/notifications.send.bulk";
-export { processNotificationQueue } from "./modules/notifications/queue.process";
 
 // Discipline
 export { createDisciplineRecord } from "./modules/discipline/discipline.create";
@@ -95,11 +77,7 @@ export { getEmploiDuTempsClasse, getEmploiDuTempsProf } from "./modules/emploi/e
 export { getAtRiskStudents } from "./modules/stats/risk.students";
 
 // Class management
-export { promoteClasse } from "./modules/classes/promotion";
 export { archiveAnneeScolaire } from "./modules/classes/archive";
-
-// Analytics
-export { getAnalyticsReport } from "./modules/analytics/reports";
 
 // Schools (Multi-tenant)
 export { createSchool } from "./modules/schools/schools.create";

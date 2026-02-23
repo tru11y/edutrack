@@ -45,7 +45,8 @@
       "Bash(echo Missing wrappers::*)",
       "Bash(head:*)",
       "Bash(cat:*)",
-      "Bash(export:*)"
+      "Bash(export:*)",
+      "Bash(cd C:\\\\Users\\\\PC\\\\OneDrive - Epitech\\\\amy\\\\owge\\\\edutrack:*)"
     ]
   }
 }

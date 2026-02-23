@@ -8,7 +8,6 @@ import { useLanguage, type TranslationKey } from "../context/LanguageContext";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useSchool } from "../context/SchoolContext";
 import { useTenant } from "../context/TenantContext";
-import NotificationCenter from "../modules/notifications/NotificationCenter";
 import GlobalSearch from "../components/GlobalSearch";
 import Breadcrumb from "../components/Breadcrumb";
 import PageTransition from "../components/PageTransition";
@@ -33,31 +32,22 @@ const navItems: NavItem[] = [
   { to: "/utilisateurs", labelKey: "users", icon: "settings", roles: ["admin", "gestionnaire"] },
   { to: "/messages", labelKey: "messages", icon: "message", roles: ["admin", "gestionnaire", "prof"] },
   { to: "/evaluations", labelKey: "evaluations", icon: "grade", roles: ["admin", "gestionnaire", "prof"] },
-  { to: "/bulletins", labelKey: "bulletins", icon: "diploma", roles: ["admin", "gestionnaire"] },
   { to: "/emploi-du-temps", labelKey: "schedule", icon: "book", roles: ["admin", "gestionnaire"] },
-  { to: "/notifications", labelKey: "notifications" as TranslationKey, icon: "bell", roles: ["admin", "gestionnaire", "prof", "eleve", "parent"] },
-  { to: "/notifications/config", labelKey: "notificationConfig" as TranslationKey, icon: "settings", roles: ["admin"] },
   { to: "/discipline", labelKey: "discipline" as TranslationKey, icon: "shield", roles: ["admin", "gestionnaire", "prof"] },
   { to: "/matieres", labelKey: "matieres" as TranslationKey, icon: "book", roles: ["admin", "gestionnaire"] },
   { to: "/import-eleves", labelKey: "importEleves" as TranslationKey, icon: "upload", roles: ["admin", "gestionnaire"] },
-  { to: "/audit", labelKey: "auditLogs" as TranslationKey, icon: "settings", roles: ["admin"] },
-  { to: "/parametres", labelKey: "schoolSettings" as TranslationKey, icon: "settings", roles: ["admin"] },
   { to: "/admin/permissions", labelKey: "permissions" as TranslationKey, icon: "settings", roles: ["admin"] },
   { to: "/comptabilite", labelKey: "accounting", icon: "wallet", roles: ["admin"] },
-  { to: "/classes/promotion", labelKey: "promotion" as TranslationKey, icon: "users", roles: ["admin"] },
   { to: "/archives", labelKey: "archives" as TranslationKey, icon: "book", roles: ["admin"] },
-  { to: "/analytics", labelKey: "analytics" as TranslationKey, icon: "chart", roles: ["admin", "gestionnaire"] },
   { to: "/corbeille", labelKey: "trash", icon: "trash", roles: ["admin", "gestionnaire"] },
   // Eleve portal
   { to: "/eleve", labelKey: "dashboard", icon: "dashboard", end: true, roles: ["eleve"] },
   { to: "/eleve/notes", labelKey: "evaluations", icon: "grade", roles: ["eleve"] },
   { to: "/eleve/presences", labelKey: "presences", icon: "check", roles: ["eleve"] },
   { to: "/eleve/emploi-du-temps", labelKey: "schedule", icon: "book", roles: ["eleve"] },
-  { to: "/eleve/bulletins", labelKey: "bulletins", icon: "diploma", roles: ["eleve"] },
   // Parent portal
   { to: "/parent/dashboard", labelKey: "dashboard", icon: "dashboard", end: true, roles: ["parent"] },
   { to: "/parent/notes", labelKey: "evaluations", icon: "grade", roles: ["parent"] },
-  { to: "/parent/bulletins", labelKey: "bulletins", icon: "diploma", roles: ["parent"] },
   { to: "/parent/presences", labelKey: "presences", icon: "check", roles: ["parent"] },
   { to: "/parent/cahier", labelKey: "textbook", icon: "book", roles: ["parent"] },
   { to: "/parent/paiements", labelKey: "payments", icon: "card", roles: ["parent"] },
@@ -218,7 +208,6 @@ export default function AdminLayout() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <GlobalSearch />
-            <NotificationCenter />
             <button onClick={toggleTheme} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 4 }}>
               {isDark ? icons.sun : icons.moon}
             </button>
