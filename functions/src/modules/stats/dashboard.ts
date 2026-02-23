@@ -74,13 +74,28 @@ export const getAdminDashboardStats = functions
       });
 
       // totalProfesseurs = max(collection professeurs, users avec role "prof")
-      // allProfsSnap couvre les profs sans schoolId (crees avant migration)
+      // allProfsSnap: tous les users role=prof sans filtre schoolId
+      // (certains ont un ancien schoolId issu d'une migration precedente)
       const profFromUsers = usersSnap?.docs.filter((d) => d.data().role === "prof").length ?? 0;
-      const profFromAllUsers = allProfsSnap?.docs.filter((d) => {
-        const sid = d.data().schoolId;
-        return !sid || sid === schoolId; // ancien doc sans schoolId OU schoolId correspondant
-      }).length ?? 0;
+      const profFromAllUsers = allProfsSnap?.docs.length ?? 0;
       const totalProfesseurs = Math.max(profsSnap.size, profFromUsers, profFromAllUsers);
+
+      // Corriger silencieusement les users avec un schoolId incorrect (migration unique)
+      if (allProfsSnap && profFromAllUsers > profFromUsers) {
+        try {
+          const allUsersSnap = await db.collection("users").get();
+          const batch = db.batch();
+          let count = 0;
+          allUsersSnap.docs.forEach((d) => {
+            const sid = d.data().schoolId;
+            if (sid && sid !== schoolId) {
+              batch.update(d.ref, { schoolId });
+              count++;
+            }
+          });
+          if (count > 0) await batch.commit();
+        } catch { /* silent */ }
+      }
 
       return {
         success: true,
