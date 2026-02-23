@@ -55,6 +55,7 @@ const ParentCahier = lazy(() => import("./modules/parent/ParentCahier"));
 const ParentPaiement = lazy(() => import("./modules/parent/ParentPaiement"));
 const Archives = lazy(() => import("./pages/Archives"));
 const PermissionManagement = lazy(() => import("./pages/PermissionManagement"));
+const SchoolSettings = lazy(() => import("./pages/SchoolSettings"));
 
 
 function OnlineQueueRetry() {
@@ -169,6 +170,7 @@ export default function App() {
                       <Route path="corbeille" element={<AdminRoute><Corbeille /></AdminRoute>} />
                       <Route path="archives" element={<AdminRoute><Archives /></AdminRoute>} />
                       <Route path="admin/permissions" element={<AdminRoute><PermissionManagement /></AdminRoute>} />
+                      <Route path="parametres" element={<AdminRoute><SchoolSettings /></AdminRoute>} />
                       {/* Student Portal */}
                       <Route path="eleve" element={<ElevePortalDashboard />} />
                       <Route path="eleve/notes" element={<EleveNotes />} />

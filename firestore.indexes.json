@@ -12,6 +12,8 @@
     { "collectionGroup": "livres",        "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "titre",     "order": "ASCENDING"  }] },
     { "collectionGroup": "transport_routes","queryScope":"COLLECTION","fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "nom",       "order": "ASCENDING"  }] },
     { "collectionGroup": "paiements",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
+    { "collectionGroup": "paiements",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "mois",      "order": "ASCENDING"  }] },
+    { "collectionGroup": "salaires",      "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "mois",      "order": "ASCENDING"  }] },
     { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "recipientId","order": "ASCENDING"}, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
     { "collectionGroup": "notes",         "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "evaluationId","order":"ASCENDING"  }] },
     { "collectionGroup": "bulletins",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "classe",    "order": "ASCENDING"  }] }
