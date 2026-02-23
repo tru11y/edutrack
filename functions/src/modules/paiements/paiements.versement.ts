@@ -112,10 +112,12 @@ export const ajouterVersement = functions
           action: "VERSEMENT_AJOUTE",
           paiementId: data.paiementId,
           eleveId: paiementData.eleveId,
+          eleveNom: paiementData.eleveNom || "",
           montant: data.montant,
           methode: data.methode,
           nouveauStatut: statut,
           performedBy: context.auth!.uid,
+          performedByName: createdByName,
           schoolId,
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });

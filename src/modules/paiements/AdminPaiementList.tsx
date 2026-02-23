@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "../../services/firebase";
 import { getAllPaiements } from "./paiement.service";
 import { exportRecuPaiementPDF } from "./paiement.pdf";
 import { useAuth } from "../../context/AuthContext";
@@ -8,18 +9,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSchool } from "../../context/SchoolContext";
 import { useTenant } from "../../context/TenantContext";
-
-interface Paiement {
-  id?: string;
-  mois: string;
-  eleveId: string;
-  eleveNom: string;
-  montantTotal: number;
-  montantPaye: number;
-  montantRestant: number;
-  statut: "paye" | "partiel" | "impaye";
-  datePaiement?: Timestamp | Date;
-}
+import type { Paiement } from "./paiement.types";
 
 function toDate(val: unknown): Date | null {
   if (!val) return null;
@@ -44,30 +34,6 @@ export default function AdminPaiementsList() {
   const { schoolId } = useTenant();
   const isGestionnaire = user?.role === "gestionnaire";
 
-  function handleDownloadPDF(p: Paiement) {
-    const [prenom, ...rest] = (p.eleveNom || "").split(" ");
-    exportRecuPaiementPDF(
-      {
-        id: p.id,
-        eleveId: p.eleveId,
-        eleveNom: p.eleveNom,
-        mois: p.mois,
-        montantTotal: p.montantTotal,
-        montantPaye: p.montantPaye,
-        montantRestant: p.montantRestant,
-        statut: p.statut,
-        datePaiement: p.datePaiement,
-        versements: [],
-      },
-      {
-        elevePrenom: prenom || "",
-        eleveNom: rest.join(" ") || prenom || "",
-        classe: "",
-        adminNom: user?.displayName || user?.email || "",
-        schoolName: school?.schoolName || "EduTrack",
-      }
-    );
-  }
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "paye" | "partiel" | "impaye">("all");
@@ -80,6 +46,52 @@ export default function AdminPaiementsList() {
       setLoading(false);
     });
   }, [schoolId]);
+
+  async function handleDownloadPDF(p: Paiement) {
+    // Reconstituer prénom/nom depuis eleveNom
+    const parts = (p.eleveNom || "").split(" ");
+    const elevePrenom = parts[0] || "";
+    const eleveNom = parts.slice(1).join(" ") || elevePrenom;
+
+    const generatedByName = user?.prenom && user?.nom
+      ? `${user.prenom} ${user.nom}`.trim()
+      : user?.email || "Administration";
+
+    const filename = exportRecuPaiementPDF(p, {
+      elevePrenom,
+      eleveNom,
+      classe: "",
+      adminNom: generatedByName,
+      generatedByName,
+      schoolName: school?.schoolName,
+      schoolAdresse: school?.adresse,
+      schoolTelephone: school?.telephone,
+      schoolEmail: school?.email,
+    });
+
+    // Sauvegarder la trace du reçu généré dans Firestore
+    try {
+      await addDoc(collection(db, "sauvegardes"), {
+        type: "recu_paiement",
+        fichier: filename,
+        paiementId: p.id || "",
+        reference: p.reference || "",
+        eleveId: p.eleveId,
+        eleveNom: p.eleveNom,
+        mois: p.mois,
+        montantPaye: p.montantPaye,
+        montantTotal: p.montantTotal,
+        statut: p.statut,
+        schoolId: schoolId || "",
+        generatedAt: serverTimestamp(),
+        generatedBy: user?.uid || "",
+        generatedByName,
+      });
+    } catch (err) {
+      // Non-bloquant — la génération du PDF a déjà réussi
+      console.warn("Sauvegarde du reçu non enregistrée :", err);
+    }
+  }
 
   const filteredPaiements = paiements.filter((p) => {
     const matchFilter = filter === "all" || p.statut === filter;
@@ -122,11 +134,11 @@ export default function AdminPaiementsList() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>{t("payments")}</h1>
           <Link
-            to="/admin/eleves"
+            to="/paiements/nouveau"
             style={{
               padding: "10px 20px",
-              background: colors.gradientPrimary,
-              color: colors.onGradient,
+              background: colors.primary,
+              color: "#fff",
               borderRadius: 10,
               textDecoration: "none",
               fontSize: 14,
@@ -134,7 +146,6 @@ export default function AdminPaiementsList() {
               display: "flex",
               alignItems: "center",
               gap: 8,
-              boxShadow: colors.shadowPrimary
             }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -146,7 +157,7 @@ export default function AdminPaiementsList() {
         <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>{t("managePayments")}</p>
       </div>
 
-      {/* Stats Cards - Admin2 voit seulement les compteurs, pas les montants */}
+      {/* Stats Cards */}
       <div style={{ display: "grid", gridTemplateColumns: isGestionnaire ? "repeat(3, 1fr)" : "repeat(4, 1fr)", gap: 20, marginBottom: 32 }}>
         {!isGestionnaire && (
           <StatCard
@@ -158,21 +169,21 @@ export default function AdminPaiementsList() {
           />
         )}
         <StatCard
-          label={isGestionnaire ? "Payes" : "Total encaisse"}
+          label={isGestionnaire ? "Payés" : "Total encaissé"}
           value={isGestionnaire ? `${stats.count.paye}` : `${stats.paye.toLocaleString("fr-FR")} FCFA`}
           color={colors.success}
           bg={colors.successBg}
           colors={colors}
         />
         <StatCard
-          label={isGestionnaire ? "Partiels" : "Impayes"}
+          label={isGestionnaire ? "Partiels" : "Impayés"}
           value={isGestionnaire ? `${stats.count.partiel}` : `${stats.impaye.toLocaleString("fr-FR")} FCFA`}
           color={isGestionnaire ? colors.warning : colors.danger}
           bg={isGestionnaire ? colors.warningBg : colors.dangerBg}
           colors={colors}
         />
         <StatCard
-          label={isGestionnaire ? "Impayes" : "Taux recouvrement"}
+          label={isGestionnaire ? "Impayés" : "Taux recouvrement"}
           value={isGestionnaire ? `${stats.count.impaye}` : `${stats.total > 0 ? Math.round((stats.paye / stats.total) * 100) : 0}%`}
           color={isGestionnaire ? colors.danger : colors.warning}
           bg={isGestionnaire ? colors.dangerBg : colors.warningBg}
@@ -181,77 +192,52 @@ export default function AdminPaiementsList() {
       </div>
 
       {/* Filters */}
-      <div style={{
-        background: colors.bgCard,
-        borderRadius: 16,
-        border: `1px solid ${colors.border}`,
-        padding: 20,
-        marginBottom: 24
-      }}>
+      <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 20, marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          {/* Search */}
           <div style={{ flex: 1, minWidth: 240 }}>
             <div style={{ position: "relative" }}>
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>
-                <circle cx="8" cy="8" r="5.5" stroke={colors.textLight} strokeWidth="1.5"/>
-                <path d="M12 12L16 16" stroke={colors.textLight} strokeWidth="1.5" strokeLinecap="round"/>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: colors.textMuted }}>
+                <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M12 12L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
               <input
                 type="text"
-                placeholder="Rechercher un eleve ou une classe..."
+                placeholder="Rechercher un élève ou un mois..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{
-                  width: "100%",
-                  padding: "12px 12px 12px 44px",
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: 10,
-                  fontSize: 14,
-                  outline: "none",
-                  transition: "border-color 0.2s",
-                  boxSizing: "border-box",
-                  background: colors.bgInput,
-                  color: colors.text
+                  width: "100%", padding: "12px 12px 12px 44px",
+                  border: `1px solid ${colors.border}`, borderRadius: 10,
+                  fontSize: 14, outline: "none", boxSizing: "border-box",
+                  background: colors.bgInput, color: colors.text,
                 }}
               />
             </div>
           </div>
-
-          {/* Filter buttons */}
           <div style={{ display: "flex", gap: 8 }}>
             {[
               { value: "all", label: "Tous", count: paiements.length },
-              { value: "paye", label: "Payes", count: stats.count.paye, color: colors.success },
+              { value: "paye", label: "Payés", count: stats.count.paye, color: colors.success },
               { value: "partiel", label: "Partiels", count: stats.count.partiel, color: colors.warning },
-              { value: "impaye", label: "Impayes", count: stats.count.impaye, color: colors.danger },
+              { value: "impaye", label: "Impayés", count: stats.count.impaye, color: colors.danger },
             ].map((f) => (
               <button
                 key={f.value}
                 onClick={() => setFilter(f.value as typeof filter)}
                 style={{
-                  padding: "8px 16px",
-                  border: "1px solid",
+                  padding: "8px 16px", border: "1px solid",
                   borderColor: filter === f.value ? (f.color || colors.primary) : colors.border,
                   background: filter === f.value ? (f.color || colors.primary) + "20" : colors.bgCard,
-                  borderRadius: 8,
-                  fontSize: 13,
-                  fontWeight: 500,
+                  borderRadius: 8, fontSize: 13, fontWeight: 500,
                   color: filter === f.value ? (f.color || colors.primary) : colors.textMuted,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  transition: "all 0.15s"
+                  cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
                 }}
               >
                 {f.label}
                 <span style={{
                   background: filter === f.value ? (f.color || colors.primary) : colors.border,
-                  color: filter === f.value ? colors.onGradient : colors.textMuted,
-                  padding: "2px 8px",
-                  borderRadius: 20,
-                  fontSize: 11,
-                  fontWeight: 600
+                  color: filter === f.value ? "#fff" : colors.textMuted,
+                  padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 600,
                 }}>
                   {f.count}
                 </span>
@@ -262,71 +248,53 @@ export default function AdminPaiementsList() {
       </div>
 
       {/* Table */}
-      <div style={{
-        background: colors.bgCard,
-        borderRadius: 16,
-        border: `1px solid ${colors.border}`,
-        overflow: "hidden"
-      }}>
+      <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, overflow: "hidden" }}>
         {filteredPaiements.length === 0 ? (
           <div style={{ padding: 60, textAlign: "center" }}>
-            <div style={{
-              width: 64, height: 64, background: colors.bgSecondary, borderRadius: "50%",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 16px"
-            }}>
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <rect x="3.5" y="7" width="21" height="14" rx="2" stroke={colors.textLight} strokeWidth="2"/>
-                <path d="M3.5 11.5H24.5" stroke={colors.textLight} strokeWidth="2"/>
-              </svg>
-            </div>
-            <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Aucun paiement trouve</p>
+            <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>Aucun paiement trouvé</p>
           </div>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: colors.bgSecondary }}>
-                <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Eleve</th>
-                <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Mois</th>
-                <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Date</th>
-                {!isGestionnaire && <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Total</th>}
-                {!isGestionnaire && <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Paye</th>}
-                {!isGestionnaire && <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Reste</th>}
-                <th style={{ padding: "14px 20px", textAlign: "center", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Statut</th>
-                <th style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Actions</th>
+                <th style={thStyle}>Élève</th>
+                <th style={thStyle}>Référence</th>
+                <th style={thStyle}>Mois</th>
+                <th style={thStyle}>Date</th>
+                {!isGestionnaire && <th style={{ ...thStyle, textAlign: "right" }}>Total</th>}
+                {!isGestionnaire && <th style={{ ...thStyle, textAlign: "right" }}>Payé</th>}
+                {!isGestionnaire && <th style={{ ...thStyle, textAlign: "right" }}>Reste</th>}
+                <th style={thStyle}>Saisi par</th>
+                <th style={{ ...thStyle, textAlign: "center" }}>Statut</th>
+                <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredPaiements.map((p, idx) => (
                 <tr
                   key={p.id || idx}
-                  style={{
-                    borderTop: idx > 0 ? `1px solid ${colors.borderLight}` : "none",
-                    transition: "background 0.15s"
-                  }}
+                  style={{ borderTop: idx > 0 ? `1px solid ${colors.border}` : "none" }}
                   onMouseEnter={(e) => e.currentTarget.style.background = colors.bgHover}
                   onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                 >
                   <td style={{ padding: "16px 20px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{
-                        width: 40, height: 40, borderRadius: "50%",
-                        background: colors.gradientPrimary,
+                        width: 36, height: 36, borderRadius: "50%",
+                        background: colors.primaryBg, color: colors.primary,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        color: colors.onGradient, fontWeight: 600, fontSize: 14
+                        fontWeight: 700, fontSize: 13, flexShrink: 0,
                       }}>
-                        {p.eleveNom?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?"}
+                        {p.eleveNom?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
                       </div>
-                      <div>
-                        <p style={{ fontSize: 14, fontWeight: 500, color: colors.text, margin: 0 }}>
-                          {p.eleveNom}
-                        </p>
-                        <p style={{ fontSize: 12, color: colors.textMuted, margin: 0 }}>{p.mois}</p>
-                      </div>
+                      <span style={{ fontSize: 14, fontWeight: 500, color: colors.text }}>{p.eleveNom}</span>
                     </div>
                   </td>
-                  <td style={{ padding: "16px 20px", fontSize: 14, color: colors.textSecondary }}>{p.mois}</td>
-                  <td style={{ padding: "16px 20px", fontSize: 14, color: colors.text }}>{formatDate(p.datePaiement)}</td>
+                  <td style={{ padding: "16px 20px", fontSize: 12, color: colors.textMuted, fontFamily: "monospace" }}>
+                    {p.reference || "—"}
+                  </td>
+                  <td style={{ padding: "16px 20px", fontSize: 14, color: colors.text }}>{p.mois}</td>
+                  <td style={{ padding: "16px 20px", fontSize: 14, color: colors.textMuted }}>{formatDate(p.datePaiement)}</td>
                   {!isGestionnaire && (
                     <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 500, color: colors.text, textAlign: "right" }}>
                       {p.montantTotal.toLocaleString("fr-FR")} F
@@ -338,52 +306,45 @@ export default function AdminPaiementsList() {
                     </td>
                   )}
                   {!isGestionnaire && (
-                    <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 500, color: p.montantRestant > 0 ? colors.danger : colors.textMuted, textAlign: "right" }}>
+                    <td style={{ padding: "16px 20px", fontSize: 14, fontWeight: 500, textAlign: "right", color: p.montantRestant > 0 ? colors.danger : colors.textMuted }}>
                       {p.montantRestant.toLocaleString("fr-FR")} F
                     </td>
                   )}
+                  <td style={{ padding: "16px 20px", fontSize: 12, color: colors.textMuted }}>
+                    {p.createdByName || "—"}
+                  </td>
                   <td style={{ padding: "16px 20px", textAlign: "center" }}>
                     <StatusBadge statut={p.statut} colors={colors} />
                   </td>
-                  <td style={{ padding: "16px 20px", textAlign: "right", display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
-                    <Link
-                      to={`/admin/eleves/${p.eleveId}/paiements`}
-                      style={{
-                        padding: "6px 12px",
-                        background: colors.bgSecondary,
-                        color: colors.textSecondary,
-                        borderRadius: 6,
-                        textDecoration: "none",
-                        fontSize: 13,
-                        fontWeight: 500,
-                        transition: "all 0.15s"
-                      }}
-                    >
-                      Voir
-                    </Link>
-                    <button
-                      onClick={() => handleDownloadPDF(p)}
-                      title="Télécharger la facture PDF"
-                      style={{
-                        padding: "6px 10px",
-                        background: colors.primaryBg,
-                        color: colors.primary,
-                        border: `1px solid ${colors.primary}30`,
-                        borderRadius: 6,
-                        fontSize: 12,
-                        fontWeight: 500,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
-                        <path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      PDF
-                    </button>
+                  <td style={{ padding: "16px 20px", textAlign: "right" }}>
+                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+                      <Link
+                        to={`/eleves/${p.eleveId}`}
+                        style={{
+                          padding: "6px 12px", background: colors.bgSecondary,
+                          color: colors.textMuted, borderRadius: 6,
+                          textDecoration: "none", fontSize: 13, fontWeight: 500,
+                        }}
+                      >
+                        Voir
+                      </Link>
+                      <button
+                        onClick={() => void handleDownloadPDF(p)}
+                        title="Télécharger le reçu PDF"
+                        style={{
+                          padding: "6px 12px", background: colors.primaryBg,
+                          color: colors.primary, border: `1px solid ${colors.primary}30`,
+                          borderRadius: 6, fontSize: 12, fontWeight: 600,
+                          cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+                          <path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Reçu PDF
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -395,19 +356,20 @@ export default function AdminPaiementsList() {
   );
 }
 
+const thStyle: React.CSSProperties = {
+  padding: "12px 20px",
+  textAlign: "left",
+  fontSize: 11,
+  fontWeight: 700,
+  color: "#6b7280",
+  textTransform: "uppercase",
+  letterSpacing: "0.5px",
+};
+
 function StatCard({ label, value, color, bg, colors }: { label: string; value: string; color: string; bg: string; colors: ReturnType<typeof import("../../context/ThemeContext").useTheme>["colors"] }) {
   return (
-    <div style={{
-      background: colors.bgCard,
-      borderRadius: 16,
-      border: `1px solid ${colors.border}`,
-      padding: 20
-    }}>
-      <div style={{
-        width: 40, height: 40, borderRadius: 10, background: bg,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        marginBottom: 12
-      }}>
+    <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 20 }}>
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: bg, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <rect x="2" y="4" width="16" height="12" rx="2" stroke={color} strokeWidth="1.5"/>
           <path d="M2 8H18" stroke={color} strokeWidth="1.5"/>
@@ -421,23 +383,13 @@ function StatCard({ label, value, color, bg, colors }: { label: string; value: s
 
 function StatusBadge({ statut, colors }: { statut: "paye" | "partiel" | "impaye"; colors: ReturnType<typeof import("../../context/ThemeContext").useTheme>["colors"] }) {
   const config = {
-    paye: { label: "Paye", bg: colors.successBg, color: colors.success },
+    paye:    { label: "Payé",    bg: colors.successBg, color: colors.success },
     partiel: { label: "Partiel", bg: colors.warningBg, color: colors.warning },
-    impaye: { label: "Impaye", bg: colors.dangerBg, color: colors.danger },
+    impaye:  { label: "Impayé",  bg: colors.dangerBg,  color: colors.danger },
   };
-
   const { label, bg, color } = config[statut] || config.impaye;
-
   return (
-    <span style={{
-      display: "inline-block",
-      padding: "6px 12px",
-      background: bg,
-      color: color,
-      borderRadius: 20,
-      fontSize: 12,
-      fontWeight: 600
-    }}>
+    <span style={{ display: "inline-block", padding: "5px 12px", background: bg, color, borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
       {label}
     </span>
   );

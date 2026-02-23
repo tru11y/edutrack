@@ -8,12 +8,14 @@ import type { Eleve } from "../eleves/eleve.types";
 import { exportRecuPaiementPDF } from "./paiement.pdf";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useSchool } from "../../context/SchoolContext";
 import type { Paiement } from "./paiement.types";
 
 export default function PaiementEleve() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { school } = useSchool();
 
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [eleve, setEleve] = useState<Eleve | null>(null);
@@ -104,8 +106,13 @@ export default function PaiementEleve() {
                         exportRecuPaiementPDF(p, {
                           eleveNom: eleve.nom,
                           elevePrenom: eleve.prenom,
-                          classe: eleve.classe,
-                          adminNom: user?.email || "Administration",
+                          classe: eleve.classe || "",
+                          adminNom: user?.prenom && user?.nom ? `${user.prenom} ${user.nom}`.trim() : user?.email || "Administration",
+                          generatedByName: user?.prenom && user?.nom ? `${user.prenom} ${user.nom}`.trim() : user?.email || "Administration",
+                          schoolName: school?.schoolName,
+                          schoolAdresse: school?.adresse,
+                          schoolTelephone: school?.telephone,
+                          schoolEmail: school?.email,
                         })
                       }
                       style={{

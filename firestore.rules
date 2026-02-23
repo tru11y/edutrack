@@ -229,6 +229,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // SAUVEGARDES — historique des reçus générés
+    match /sauvegardes/{docId} {
+      allow read: if isAdminOrGestionnaire();
+      allow create: if isAdminOrGestionnaire() && request.resource.data.schoolId == getUserSchoolId();
+      allow update, delete: if false;
+    }
+
     // CONFIG - Admin uniquement
     match /config/{docId} {
       allow read: if isAdminOrGestionnaire();
