@@ -2,7 +2,7 @@ import * as functions from "firebase-functions";
 import { db } from "../../firebase";
 import { verifyAdminOrGestionnaire } from "../../helpers/auth";
 import { requireAuth, requirePermission, handleError } from "../../helpers/errors";
-import { getSchoolId, migrateDataToSchool } from "../../helpers/tenant";
+import { getSchoolId } from "../../helpers/tenant";
 
 export const getAdminDashboardStats = functions
   .region("europe-west1")
@@ -11,7 +11,6 @@ export const getAdminDashboardStats = functions
     const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
     requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent acceder aux statistiques.");
     const schoolId = await getSchoolId(context.auth!.uid);
-    try { await migrateDataToSchool(schoolId); } catch { /* silent */ }
 
     try {
       const [elevesSnap, profsSnap, classesSnap, paiementsSnap, depensesSnap, salairesSnap] =
