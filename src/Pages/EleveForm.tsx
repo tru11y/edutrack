@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { createEleve, getEleveById, updateEleve } from "../modules/eleves/eleve.service";
 import { useTheme } from "../context/ThemeContext";
+import { useTenant } from "../context/TenantContext";
 import type { ParentContact } from "../modules/eleves/eleve.types";
 
 export default function EleveForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { colors } = useTheme();
+  const { schoolId } = useTenant();
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
@@ -32,12 +34,15 @@ export default function EleveForm() {
   // Charger les classes
   useEffect(() => {
     const loadClasses = async () => {
-      const snap = await getDocs(collection(db, "classes"));
+      const q = schoolId
+        ? query(collection(db, "classes"), where("schoolId", "==", schoolId))
+        : collection(db, "classes");
+      const snap = await getDocs(q);
       const classNames = snap.docs.map(d => d.data().nom as string).filter(Boolean).sort();
       setClasses(classNames);
     };
     loadClasses();
-  }, []);
+  }, [schoolId]);
 
   const [parents, setParents] = useState<ParentContact[]>([
     { nom: "", telephone: "", lien: "pere" },
@@ -140,7 +145,7 @@ export default function EleveForm() {
       if (isEdit && id) {
         await updateEleve(id, payload);
       } else {
-        await createEleve(payload);
+        await createEleve({ ...payload, schoolId: schoolId || "" });
       }
 
       navigate("/eleves");
