@@ -9,11 +9,14 @@ import {
   getAdminDashboardStatsSecure,
   getAtRiskStudentsSecure,
   getRecommendationsSecure,
+  runDataMigrationSecure,
   getCloudFunctionErrorMessage,
   type AdminDashboardStats,
   type AtRiskStudent,
   type Recommendation,
 } from "../services/cloudFunctions";
+
+const MIGRATION_KEY = "edutrack_migrated_v1";
 
 export default function Dashboard() {
   const { colors } = useTheme();
@@ -27,25 +30,35 @@ export default function Dashboard() {
   const { widgets, toggleWidget, reorderWidgets, resetToDefault, isVisible } = useDashboardWidgets();
 
   useEffect(() => {
-    // Load cached data immediately for instant display
-    const cached = getCachedData<AdminDashboardStats>("dashboard_stats");
-    if (cached) {
-      setStats(cached);
-      setLoading(false);
-    }
+    const load = async () => {
+      // Show cached data immediately for instant display
+      const cached = getCachedData<AdminDashboardStats>("dashboard_stats");
+      if (cached) {
+        setStats(cached);
+        setLoading(false);
+      }
 
-    getAdminDashboardStatsSecure()
-      .then((res) => {
-        setStats(res.stats);
-        cacheData("dashboard_stats", res.stats);
-      })
-      .catch((err) => {
-        if (!cached) setError(getCloudFunctionErrorMessage(err));
-      })
-      .finally(() => setLoading(false));
+      // Run migration once to stamp schoolId on old documents (no-op if already done)
+      if (!localStorage.getItem(MIGRATION_KEY)) {
+        try { await runDataMigrationSecure(); } catch { /* silent */ }
+        localStorage.setItem(MIGRATION_KEY, "true");
+      }
 
-    getAtRiskStudentsSecure().then((res) => setAtRiskStudents(res.students || [])).catch(() => {});
-    getRecommendationsSecure().then((res) => setRecommendations(res.recommendations || [])).catch(() => {});
+      // Load fresh stats (data now has schoolId after migration)
+      getAdminDashboardStatsSecure()
+        .then((res) => {
+          setStats(res.stats);
+          cacheData("dashboard_stats", res.stats);
+        })
+        .catch((err) => {
+          if (!cached) setError(getCloudFunctionErrorMessage(err));
+        })
+        .finally(() => setLoading(false));
+
+      getAtRiskStudentsSecure().then((res) => setAtRiskStudents(res.students || [])).catch(() => {});
+      getRecommendationsSecure().then((res) => setRecommendations(res.recommendations || [])).catch(() => {});
+    };
+    load(); // eslint-disable-line @typescript-eslint/no-floating-promises
   }, []);
 
   if (loading) {
@@ -341,6 +354,50 @@ export default function Dashboard() {
           </div>
         </div>
       </div>}
+
+      {/* Professors Section */}
+      {isVisible("stats") && (
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 15L3.5 10L12 5L20.5 10L12 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3.5 10V16L12 21L20.5 16V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Corps enseignant
+            </h2>
+            <Link to="/utilisateurs" style={{ fontSize: 13, color: colors.primary, textDecoration: "none", fontWeight: 500 }}>
+              Gerer →
+            </Link>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16 }}>
+            <div style={{ background: colors.primaryBg, borderRadius: 12, padding: "16px 20px" }}>
+              <p style={{ fontSize: 28, fontWeight: 700, color: colors.primary, margin: "0 0 4px" }}>
+                {stats.totalProfesseurs}
+              </p>
+              <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>Professeurs</p>
+            </div>
+            <div style={{ background: colors.infoBg, borderRadius: 12, padding: "16px 20px" }}>
+              <p style={{ fontSize: 28, fontWeight: 700, color: colors.info, margin: "0 0 4px" }}>
+                {stats.totalClasses}
+              </p>
+              <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>Classes</p>
+            </div>
+            <div style={{ background: colors.successBg, borderRadius: 12, padding: "16px 20px" }}>
+              <p style={{ fontSize: 28, fontWeight: 700, color: colors.success, margin: "0 0 4px" }}>
+                {stats.totalMatieres}
+              </p>
+              <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>Matieres</p>
+            </div>
+            <div style={{ background: colors.warningBg, borderRadius: 12, padding: "16px 20px" }}>
+              <p style={{ fontSize: 28, fontWeight: 700, color: colors.warning, margin: "0 0 4px" }}>
+                {stats.totalSalaires.toLocaleString()}
+              </p>
+              <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>Salaires payes (F)</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       {isVisible("quickActions") && <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
