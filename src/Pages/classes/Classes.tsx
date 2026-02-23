@@ -102,6 +102,7 @@ export default function Classes() {
       nom: data.nom.trim(),
       niveau: data.niveau.trim() || null,
       description: data.description.trim() || null,
+      schoolId: schoolId || "",
     });
     setShowForm(false);
     await loadData();
@@ -149,6 +150,7 @@ export default function Classes() {
     await addDoc(collection(db, "matieres"), {
       nom: data.nom.trim(),
       description: data.description?.trim() || "",
+      schoolId: schoolId || "",
     });
     await loadData();
   };
