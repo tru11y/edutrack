@@ -22,24 +22,16 @@ describe("cloudFunctions service", () => {
     expect(getCloudFunctionErrorMessage(undefined)).toContain("inattendue");
   });
 
-  it("should define all v3 function wrappers", () => {
-    const v3Functions = [
+  it("should define all function wrappers", () => {
+    const functions = [
       "getAtRiskStudentsSecure",
       "updateCreneauSecure",
-      "promoteClasseSecure",
       "archiveAnneeScolaireSecure",
-      "getAnalyticsReportSecure",
     ];
 
     // These are just names, verify they follow the naming convention
-    for (const fn of v3Functions) {
+    for (const fn of functions) {
       expect(fn).toMatch(/Secure$/);
     }
-  });
-
-  it("should define correct report types", () => {
-    const validTypes = ["attendance", "grades", "payments", "comprehensive"];
-    expect(validTypes).toHaveLength(4);
-    expect(validTypes).toContain("comprehensive");
   });
 });

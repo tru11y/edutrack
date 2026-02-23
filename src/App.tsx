@@ -39,19 +39,13 @@ const EmploiDuTemps = lazy(() => import("./pages/EmploiDuTemps"));
 const Evaluations = lazy(() => import("./pages/Evaluations"));
 const EvaluationFormPage = lazy(() => import("./pages/EvaluationFormPage"));
 const NoteSaisiePage = lazy(() => import("./pages/NoteSaisiePage"));
-const Bulletins = lazy(() => import("./pages/Bulletins"));
 const ElevePortalDashboard = lazy(() => import("./modules/eleve/ElevePortalDashboard"));
 const EleveNotes = lazy(() => import("./modules/eleve/EleveNotes"));
 const ElevePortalPresences = lazy(() => import("./modules/eleve/ElevePortalPresences"));
 const ElevePortalEmploiDuTemps = lazy(() => import("./modules/eleve/ElevePortalEmploiDuTemps"));
-const EleveBulletin = lazy(() => import("./modules/eleve/EleveBulletin"));
 const ParentNotes = lazy(() => import("./modules/parent/ParentNotes"));
-const ParentBulletins = lazy(() => import("./modules/parent/ParentBulletins"));
 const ParentEmploiDuTemps = lazy(() => import("./modules/parent/ParentEmploiDuTemps"));
-const Notifications = lazy(() => import("./pages/Notifications"));
-const NotificationConfigPage = lazy(() => import("./pages/NotificationConfigPage"));
 const Discipline = lazy(() => import("./pages/Discipline"));
-const AuditLogs = lazy(() => import("./pages/AuditLogs"));
 const Matieres = lazy(() => import("./pages/Matieres"));
 const ImportEleves = lazy(() => import("./pages/ImportEleves"));
 const ProfDashboard = lazy(() => import("./pages/ProfDashboard"));
@@ -59,20 +53,9 @@ const ParentDashboard = lazy(() => import("./modules/parent/ParentDashboard"));
 const ParentPresences = lazy(() => import("./modules/parent/ParentPresences"));
 const ParentCahier = lazy(() => import("./modules/parent/ParentCahier"));
 const ParentPaiement = lazy(() => import("./modules/parent/ParentPaiement"));
-const SchoolSettings = lazy(() => import("./pages/SchoolSettings"));
-const ClassPromotion = lazy(() => import("./pages/ClassPromotion"));
 const Archives = lazy(() => import("./pages/Archives"));
-const Analytics = lazy(() => import("./pages/Analytics"));
 const PermissionManagement = lazy(() => import("./pages/PermissionManagement"));
 
-// New SaaS pages
-const LandingPage = lazy(() => import("./pages/landing/LandingPage"));
-const PricingPage = lazy(() => import("./pages/landing/PricingPage"));
-const SignupPage = lazy(() => import("./pages/landing/SignupPage"));
-const SuperAdminLayout = lazy(() => import("./Layout/SuperAdminLayout"));
-const SuperAdminDashboard = lazy(() => import("./pages/superadmin/SuperAdminDashboard"));
-const SchoolsList = lazy(() => import("./pages/superadmin/SchoolsList"));
-const SchoolDetail = lazy(() => import("./pages/superadmin/SchoolDetail"));
 
 function OnlineQueueRetry() {
   useEffect(() => {
@@ -117,19 +100,9 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function SuperAdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) return <PageLoader />;
-  if (!user) return <Navigate to="/login" replace />;
-  if (!user.isSuperAdmin) return <Navigate to="/" replace />;
-  return <>{children}</>;
-}
 
 function ProfRedirect() {
   const { user } = useAuth();
-  if (user?.isSuperAdmin) {
-    return <Navigate to="/superadmin" replace />;
-  }
   if (user?.role === "eleve") {
     return <Navigate to="/eleve" replace />;
   }
@@ -161,17 +134,7 @@ export default function App() {
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     {/* Public routes */}
-                    <Route path="/landing" element={<LandingPage />} />
-                    <Route path="/pricing" element={<PricingPage />} />
-                    <Route path="/signup" element={<SignupPage />} />
                     <Route path="/login" element={<LoginPage />} />
-
-                    {/* Super Admin routes */}
-                    <Route path="/superadmin" element={<SuperAdminRoute><SuperAdminLayout /></SuperAdminRoute>}>
-                      <Route index element={<SuperAdminDashboard />} />
-                      <Route path="schools" element={<SchoolsList />} />
-                      <Route path="schools/:schoolId" element={<SchoolDetail />} />
-                    </Route>
 
                     {/* Main app routes */}
                     <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
@@ -200,29 +163,20 @@ export default function App() {
                       <Route path="evaluations/nouvelle" element={<EvaluationFormPage />} />
                       <Route path="evaluations/:id/modifier" element={<EvaluationFormPage />} />
                       <Route path="evaluations/:id/notes" element={<NoteSaisiePage />} />
-                      <Route path="bulletins" element={<AdminRoute><Bulletins /></AdminRoute>} />
-                      <Route path="notifications" element={<Notifications />} />
-                      <Route path="notifications/config" element={<AdminRoute><NotificationConfigPage /></AdminRoute>} />
                       <Route path="discipline" element={<Discipline />} />
-                      <Route path="audit" element={<AdminRoute><AuditLogs /></AdminRoute>} />
                       <Route path="matieres" element={<AdminRoute><Matieres /></AdminRoute>} />
                       <Route path="import-eleves" element={<AdminRoute><ImportEleves /></AdminRoute>} />
-                      <Route path="parametres" element={<AdminRoute><SchoolSettings /></AdminRoute>} />
                       <Route path="corbeille" element={<AdminRoute><Corbeille /></AdminRoute>} />
-                      <Route path="classes/promotion" element={<AdminRoute><ClassPromotion /></AdminRoute>} />
                       <Route path="archives" element={<AdminRoute><Archives /></AdminRoute>} />
-                      <Route path="analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
                       <Route path="admin/permissions" element={<AdminRoute><PermissionManagement /></AdminRoute>} />
                       {/* Student Portal */}
                       <Route path="eleve" element={<ElevePortalDashboard />} />
                       <Route path="eleve/notes" element={<EleveNotes />} />
                       <Route path="eleve/presences" element={<ElevePortalPresences />} />
                       <Route path="eleve/emploi-du-temps" element={<ElevePortalEmploiDuTemps />} />
-                      <Route path="eleve/bulletins" element={<EleveBulletin />} />
                       {/* Parent Portal */}
                       <Route path="parent/dashboard" element={<ParentDashboard />} />
                       <Route path="parent/notes" element={<ParentNotes />} />
-                      <Route path="parent/bulletins" element={<ParentBulletins />} />
                       <Route path="parent/emploi-du-temps" element={<ParentEmploiDuTemps />} />
                       <Route path="parent/presences" element={<ParentPresences />} />
                       <Route path="parent/cahier" element={<ParentCahier />} />

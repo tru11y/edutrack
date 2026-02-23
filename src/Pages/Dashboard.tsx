@@ -5,17 +5,12 @@ import { useLanguage } from "../context/LanguageContext";
 import { cacheData, getCachedData } from "../utils/offlineCache";
 import { useDashboardWidgets } from "../hooks/useDashboardWidgets";
 import DashboardWidgetConfig from "../components/DashboardWidgetConfig";
-import { CircularProgress, LineChart, BarChart } from "../components/charts";
 import {
   getAdminDashboardStatsSecure,
-  getAdvancedStatsSecure,
-  getClasseComparisonSecure,
   getAtRiskStudentsSecure,
   getRecommendationsSecure,
   getCloudFunctionErrorMessage,
   type AdminDashboardStats,
-  type AdvancedStatsResult,
-  type ClasseComparisonItem,
   type AtRiskStudent,
   type Recommendation,
 } from "../services/cloudFunctions";
@@ -24,8 +19,6 @@ export default function Dashboard() {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
-  const [advancedStats, setAdvancedStats] = useState<AdvancedStatsResult | null>(null);
-  const [classeComparison, setClasseComparison] = useState<ClasseComparisonItem[]>([]);
   const [atRiskStudents, setAtRiskStudents] = useState<AtRiskStudent[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,8 +44,6 @@ export default function Dashboard() {
       })
       .finally(() => setLoading(false));
 
-    getAdvancedStatsSecure().then(setAdvancedStats).catch(() => {});
-    getClasseComparisonSecure().then((res) => setClasseComparison(res.classes || [])).catch(() => {});
     getAtRiskStudentsSecure().then((res) => setAtRiskStudents(res.students || [])).catch(() => {});
     getRecommendationsSecure().then((res) => setRecommendations(res.recommendations || [])).catch(() => {});
   }, []);
@@ -422,41 +413,6 @@ export default function Dashboard() {
         </div>
       </div>}
 
-      {/* Trends - Presences & Payments using Chart components */}
-      {isVisible("trends") && advancedStats && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: 24, marginTop: 24 }}>
-          <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
-              Tendances presences (6 mois)
-            </h2>
-            <BarChart
-              labels={advancedStats.months.map((m) => m.slice(5))}
-              datasets={[
-                { label: "Presents", data: advancedStats.months.map((m) => advancedStats.presencesByMonth[m].present), color: colors.success },
-                { label: "Retards", data: advancedStats.months.map((m) => advancedStats.presencesByMonth[m].retard), color: colors.warning },
-                { label: "Absents", data: advancedStats.months.map((m) => advancedStats.presencesByMonth[m].absent), color: colors.danger },
-              ]}
-              stacked
-              height={220}
-            />
-          </div>
-
-          <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
-              Tendances paiements (6 mois)
-            </h2>
-            <LineChart
-              labels={advancedStats.months.map((m) => m.slice(5))}
-              datasets={[
-                { label: "Total", data: advancedStats.months.map((m) => advancedStats.paiementsByMonth[m].total), color: colors.border },
-                { label: "Paye", data: advancedStats.months.map((m) => advancedStats.paiementsByMonth[m].paye), color: colors.success },
-              ]}
-              height={220}
-            />
-          </div>
-        </div>
-      )}
-
       {/* AI Recommendations */}
       {recommendations.length > 0 && (
         <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginTop: 24 }}>
@@ -516,63 +472,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Classe Comparison */}
-      {isVisible("classeComparison") && classeComparison.length > 0 && (
-        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginTop: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>
-            Comparaison des classes
-          </h2>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: `2px solid ${colors.border}` }}>
-                  <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 13, fontWeight: 600, color: colors.textMuted }}>Classe</th>
-                  <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 13, fontWeight: 600, color: colors.textMuted }}>Eleves</th>
-                  <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 13, fontWeight: 600, color: colors.textMuted }}>Presences</th>
-                  <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 13, fontWeight: 600, color: colors.textMuted }}>Moyenne</th>
-                  <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 13, fontWeight: 600, color: colors.textMuted }}>Paiements</th>
-                </tr>
-              </thead>
-              <tbody>
-                {classeComparison.map((c) => (
-                  <tr key={c.classe} style={{ borderBottom: `1px solid ${colors.border}` }}>
-                    <td style={{ padding: "10px 16px", fontSize: 14, fontWeight: 500, color: colors.text }}>{c.classe}</td>
-                    <td style={{ padding: "10px 16px", textAlign: "center", fontSize: 14, color: colors.text }}>{c.totalEleves}</td>
-                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                      <span style={{
-                        padding: "2px 10px", borderRadius: 6, fontSize: 13, fontWeight: 500,
-                        color: c.tauxPresence >= 80 ? colors.success : c.tauxPresence >= 50 ? colors.warning : colors.danger,
-                        background: c.tauxPresence >= 80 ? colors.successBg : c.tauxPresence >= 50 ? colors.warningBg : colors.dangerBg,
-                      }}>
-                        {c.tauxPresence}%
-                      </span>
-                    </td>
-                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                      <span style={{
-                        fontWeight: 600, fontSize: 14,
-                        color: c.moyenneNotes >= 14 ? colors.success : c.moyenneNotes >= 10 ? colors.primary : c.moyenneNotes >= 8 ? colors.warning : colors.danger,
-                      }}>
-                        {c.moyenneNotes > 0 ? `${c.moyenneNotes}/20` : "-"}
-                      </span>
-                    </td>
-                    <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
-                        <div style={{ width: 60, height: 6, background: colors.border, borderRadius: 3, overflow: "hidden" }}>
-                          <div style={{
-                            width: `${c.tauxPaiement}%`, height: "100%",
-                            background: c.tauxPaiement >= 80 ? colors.success : c.tauxPaiement >= 50 ? colors.warning : colors.danger,
-                          }} />
-                        </div>
-                        <span style={{ fontSize: 12, color: colors.textMuted }}>{c.tauxPaiement}%</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

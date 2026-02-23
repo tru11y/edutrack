@@ -66,18 +66,6 @@ export interface ToggleUserStatusParams {
   isActive: boolean;
 }
 
-export interface AuditLog {
-  id: string;
-  action: string;
-  targetUserId?: string;
-  targetEmail?: string;
-  eleveNom?: string;
-  montant?: number;
-  mois?: string;
-  performedBy: string;
-  performedByName?: string;
-  timestamp: string;
-}
 
 export interface CahierEntryEleve {
   id: string;
@@ -138,9 +126,6 @@ export function toggleUserStatusSecure(params: ToggleUserStatusParams): Promise<
   return callFunction("toggleUserStatus", params);
 }
 
-export function getAuditLogsSecure(limit = 100): Promise<{ success: boolean; logs: AuditLog[] }> {
-  return callFunction("getAuditLogs", { limit });
-}
 
 export function getAllCahierEntriesSecure(): Promise<{ success: boolean; entries: CahierEntryAdmin[] }> {
   return callFunction("getAllCahierEntries", undefined);
@@ -373,96 +358,6 @@ export function calculateMoyennesSecure(params: { eleveId: string; trimestre: nu
   return callFunction("calculateMoyennes", params);
 }
 
-// Bulletins
-export interface BulletinResult {
-  id?: string;
-  eleveId: string;
-  classe: string;
-  trimestre: number;
-  anneeScolaire: string;
-  moyennesMatiere: Record<string, number>;
-  moyenneGenerale: number;
-  rang: number;
-  totalEleves: number;
-  absencesTotal: number;
-  retardsTotal: number;
-  appreciationGenerale: string;
-  createdAt?: string | null;
-  updatedAt?: string | null;
-}
-
-export function generateBulletinSecure(params: {
-  eleveId: string;
-  classe: string;
-  trimestre: number;
-  anneeScolaire: string;
-  appreciationGenerale?: string;
-}): Promise<{ success: boolean; id: string; message: string }> {
-  return callFunction("generateBulletin", params);
-}
-
-export function generateBulletinsClasseSecure(params: {
-  classe: string;
-  trimestre: number;
-  anneeScolaire: string;
-}): Promise<{ success: boolean; count: number; message: string }> {
-  return callFunction("generateBulletinsClasse", params);
-}
-
-// =====================
-// Bulletin Versions
-// =====================
-
-export interface BulletinVersion {
-  id: string;
-  data: BulletinResult;
-  versionNumber: number;
-  createdAt: string | null;
-  createdBy: string;
-}
-
-export function getBulletinVersionsSecure(bulletinId: string): Promise<{ success: boolean; versions: BulletinVersion[] }> {
-  return callFunction("getBulletinVersions", { bulletinId });
-}
-
-export interface VersionDiff {
-  matiere: string;
-  noteA: number | null;
-  noteB: number | null;
-  change: number | null;
-}
-
-export function compareBulletinVersionsSecure(bulletinId: string, versionA: string, versionB: string): Promise<{ success: boolean; diff: VersionDiff[]; moyenneA: number | null; moyenneB: number | null }> {
-  return callFunction("compareBulletinVersions", { bulletinId, versionA, versionB });
-}
-
-// =====================
-// Advanced Stats
-// =====================
-
-export interface AdvancedStatsResult {
-  success: boolean;
-  months: string[];
-  presencesByMonth: Record<string, { present: number; absent: number; retard: number }>;
-  paiementsByMonth: Record<string, { total: number; paye: number }>;
-  inscriptionsByMonth: Record<string, number>;
-}
-
-export function getAdvancedStatsSecure(): Promise<AdvancedStatsResult> {
-  return callFunction("getAdvancedStats", undefined);
-}
-
-export interface ClasseComparisonItem {
-  classe: string;
-  totalEleves: number;
-  tauxPresence: number;
-  moyenneNotes: number;
-  tauxPaiement: number;
-}
-
-export function getClasseComparisonSecure(): Promise<{ success: boolean; classes: ClasseComparisonItem[] }> {
-  return callFunction("getClasseComparison", undefined);
-}
 
 // =====================
 // Exports Excel
@@ -490,63 +385,6 @@ export function exportPaiementsExcelSecure(params: { mois?: string } = {}): Prom
   return callFunction("exportPaiementsExcel", params);
 }
 
-// =====================
-// Notifications
-// =====================
-
-export interface NotificationPayload {
-  title: string;
-  message: string;
-  context?: Record<string, unknown>;
-}
-
-export interface NotificationItem {
-  id: string;
-  type: string;
-  recipientId: string;
-  channel: string;
-  status: string;
-  payload: NotificationPayload;
-  senderId: string;
-  createdAt: string | null;
-  readAt: string | null;
-}
-
-export function sendNotificationSecure(params: {
-  type: string;
-  recipientId: string;
-  channel: string;
-  title: string;
-  message: string;
-  context?: Record<string, unknown>;
-}): Promise<{ success: boolean; id: string }> {
-  return callFunction("sendNotification", params);
-}
-
-export function getNotificationsSecure(limit = 50): Promise<{ success: boolean; notifications: NotificationItem[]; unreadCount: number }> {
-  return callFunction("getNotifications", { limit });
-}
-
-export function markNotificationReadSecure(id: string): Promise<{ success: boolean }> {
-  return callFunction("markNotificationRead", { id });
-}
-
-export function getNotificationConfigSecure(): Promise<{ success: boolean; config: Record<string, unknown> }> {
-  return callFunction("getNotificationConfig", undefined);
-}
-
-export function updateNotificationConfigSecure(config: Record<string, unknown>): Promise<{ success: boolean }> {
-  return callFunction("updateNotificationConfig", config);
-}
-
-export function sendBulkNotificationSecure(params: {
-  title: string;
-  message: string;
-  targetType: "all" | "classe" | "role";
-  targetValue?: string;
-}): Promise<{ success: boolean; count: number; message: string }> {
-  return callFunction("sendBulkNotification", params);
-}
 
 // =====================
 // Emploi du temps
@@ -737,20 +575,6 @@ export function updateCreneauSecure(params: UpdateCreneauParams): Promise<{ succ
 }
 
 // =====================
-// Class Promotion
-// =====================
-
-export interface PromoteClasseParams {
-  sourceClasse: string;
-  targetClasse: string;
-  anneeScolaire: string;
-}
-
-export function promoteClasseSecure(params: PromoteClasseParams): Promise<{ success: boolean; count: number; message: string }> {
-  return callFunction("promoteClasse", params);
-}
-
-// =====================
 // Archive
 // =====================
 
@@ -761,59 +585,6 @@ export interface ArchiveParams {
 
 export function archiveAnneeScolaireSecure(params: ArchiveParams): Promise<{ success: boolean; stats: Record<string, number>; message: string }> {
   return callFunction("archiveAnneeScolaire", params);
-}
-
-// =====================
-// Analytics Reports
-// =====================
-
-export type AnalyticsReportType = "attendance" | "grades" | "payments" | "comprehensive";
-
-export interface AnalyticsReportParams {
-  type: AnalyticsReportType;
-  dateStart?: string;
-  dateEnd?: string;
-  classe?: string;
-  matiere?: string;
-}
-
-export interface AnalyticsAttendance {
-  totalPresences: number;
-  totalAbsences: number;
-  totalRetards: number;
-  tauxPresence: number;
-  byClasse: Record<string, { present: number; absent: number; retard: number; taux: number }>;
-}
-
-export interface AnalyticsGrades {
-  moyenneGenerale: number;
-  tauxReussite: number;
-  byMatiere: Record<string, { moyenne: number; min: number; max: number; totalNotes: number; tauxReussite: number }>;
-}
-
-export interface AnalyticsPayments {
-  totalAttendu: number;
-  totalPaye: number;
-  tauxRecouvrement: number;
-  impayes: number;
-}
-
-export interface AnalyticsCorrelation {
-  classe: string;
-  tauxPresence: number;
-  moyenneNotes: number;
-}
-
-export interface AnalyticsReport {
-  type: AnalyticsReportType;
-  attendance?: AnalyticsAttendance;
-  grades?: AnalyticsGrades;
-  payments?: AnalyticsPayments;
-  correlations?: AnalyticsCorrelation[];
-}
-
-export function getAnalyticsReportSecure(params: AnalyticsReportParams): Promise<{ success: boolean; report: AnalyticsReport }> {
-  return callFunction("getAnalyticsReport", params);
 }
 
 // =====================
