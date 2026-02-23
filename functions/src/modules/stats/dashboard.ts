@@ -71,11 +71,15 @@ export const getAdminDashboardStats = functions
         roleBreakdown[role] = (roleBreakdown[role] || 0) + 1;
       });
 
+      // totalProfesseurs = max(collection professeurs, users avec role "prof")
+      const profFromUsers = usersSnap?.docs.filter((d) => d.data().role === "prof").length ?? 0;
+      const totalProfesseurs = Math.max(profsSnap.size, profFromUsers);
+
       return {
         success: true,
         stats: {
           totalEleves: elevesSnap.size,
-          totalProfesseurs: profsSnap.size,
+          totalProfesseurs,
           totalClasses: classesSnap.size,
           totalMatieres: matieresSnap?.size ?? 0,
           totalSalles: sallesSet.size,
