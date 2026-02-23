@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
-import { cacheData, getCachedData } from "../utils/offlineCache";
+import { cacheData, getCachedData, clearCache } from "../utils/offlineCache";
 import { useDashboardWidgets } from "../hooks/useDashboardWidgets";
 import DashboardWidgetConfig from "../components/DashboardWidgetConfig";
 import {
@@ -41,6 +41,7 @@ export default function Dashboard() {
       // Run migration once to stamp schoolId on old documents (no-op if already done)
       if (!localStorage.getItem(MIGRATION_KEY)) {
         try { await runDataMigrationSecure(); } catch { /* silent */ }
+        clearCache("dashboard_stats"); // purge stale cache after migration
         localStorage.setItem(MIGRATION_KEY, "true");
       }
 
