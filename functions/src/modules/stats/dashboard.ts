@@ -24,10 +24,12 @@ export const getAdminDashboardStats = functions
         ]);
 
       // Queries supplementaires (non bloquantes)
-      const [matieresSnap, emploiSnap, usersSnap] = await Promise.all([
+      const [matieresSnap, emploiSnap, usersSnap, allProfsSnap] = await Promise.all([
         db.collection("matieres").where("schoolId", "==", schoolId).get().catch(() => null),
         db.collection("emploi_du_temps").where("schoolId", "==", schoolId).get().catch(() => null),
         db.collection("users").where("schoolId", "==", schoolId).get().catch(() => null),
+        // Fallback: profs sans schoolId (crees avant la migration multi-tenant)
+        db.collection("users").where("role", "==", "prof").get().catch(() => null),
       ]);
 
       let totalPaiementsRecus = 0;
@@ -72,8 +74,13 @@ export const getAdminDashboardStats = functions
       });
 
       // totalProfesseurs = max(collection professeurs, users avec role "prof")
+      // allProfsSnap couvre les profs sans schoolId (crees avant migration)
       const profFromUsers = usersSnap?.docs.filter((d) => d.data().role === "prof").length ?? 0;
-      const totalProfesseurs = Math.max(profsSnap.size, profFromUsers);
+      const profFromAllUsers = allProfsSnap?.docs.filter((d) => {
+        const sid = d.data().schoolId;
+        return !sid || sid === schoolId; // ancien doc sans schoolId OU schoolId correspondant
+      }).length ?? 0;
+      const totalProfesseurs = Math.max(profsSnap.size, profFromUsers, profFromAllUsers);
 
       return {
         success: true,
