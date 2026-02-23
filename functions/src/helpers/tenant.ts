@@ -15,13 +15,15 @@ const SCHOOL_COLLECTIONS = [
  * Stamp schoolId on all documents in all school-scoped collections
  * that don't already have one. Returns the number of migrated documents.
  */
-export async function migrateDataToSchool(schoolId: string): Promise<number> {
+export async function migrateDataToSchool(schoolId: string, force = false): Promise<number> {
   let totalMigrated = 0;
 
   for (const collName of SCHOOL_COLLECTIONS) {
     try {
       const snap = await db.collection(collName).get();
-      const toMigrate = snap.docs.filter((d) => !d.data().schoolId);
+      const toMigrate = force
+        ? snap.docs
+        : snap.docs.filter((d) => !d.data().schoolId);
       if (toMigrate.length === 0) continue;
 
       // Firestore batch limit = 500 writes
@@ -42,7 +44,9 @@ export async function migrateDataToSchool(schoolId: string): Promise<number> {
   // Migrate presences/{coursId}/appels subcollections (collectionGroup)
   try {
     const appelsSnap = await db.collectionGroup("appels").get();
-    const appelsToMigrate = appelsSnap.docs.filter((d) => !d.data().schoolId);
+    const appelsToMigrate = force
+      ? appelsSnap.docs
+      : appelsSnap.docs.filter((d) => !d.data().schoolId);
     const CHUNK = 400;
     for (let i = 0; i < appelsToMigrate.length; i += CHUNK) {
       const batch = db.batch();
@@ -56,7 +60,7 @@ export async function migrateDataToSchool(schoolId: string): Promise<number> {
     // Ignore if no appels exist
   }
 
-  // Also migrate users that don't have schoolId yet
+  // Also migrate users that don't have schoolId yet (never force-overwrite users)
   try {
     const usersSnap = await db.collection("users").get();
     const usersToMigrate = usersSnap.docs.filter((d) => !d.data().schoolId);
