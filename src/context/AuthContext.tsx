@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -20,6 +21,7 @@ import {
   serverTimestamp,
   onSnapshot,
   query,
+  where,
 } from "firebase/firestore";
 import { auth, db } from "../services/firebase";
 
@@ -140,14 +142,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [connectionLogs, setConnectionLogs] = useState<ConnectionLog[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const currentSessionIdRef = useRef<string | null>(null);
 
   // Ecouter les utilisateurs en ligne
   useEffect(() => {
     if (!user || (user.role !== "admin" && user.role !== "gestionnaire")) return;
 
-    // Ecouter TOUS les utilisateurs actifs
-    const unsub = onSnapshot(collection(db, "users"), (snap) => {
+    // Ecouter les utilisateurs actifs de la meme ecole
+    const usersQuery = user.schoolId
+      ? query(collection(db, "users"), where("schoolId", "==", user.schoolId))
+      : collection(db, "users");
+    const unsub = onSnapshot(usersQuery, (snap) => {
       const users: OnlineUser[] = snap.docs
         .filter((d) => d.data().isActive !== false)
         .map((d) => {
@@ -225,21 +230,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [user?.uid]);
 
-  // Auth state listener
+  // Auth state listener — registered once, uses ref for session ID to avoid re-subscription
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser || !firebaseUser.email) {
         // Deconnexion - mettre a jour le log
-        if (currentSessionId) {
+        if (currentSessionIdRef.current) {
           try {
-            const logRef = doc(db, "connection_logs", currentSessionId);
+            const logRef = doc(db, "connection_logs", currentSessionIdRef.current);
             await updateDoc(logRef, { logoutAt: serverTimestamp() });
           } catch {
             // Erreur silencieuse - log deconnexion non critique
           }
+          currentSessionIdRef.current = null;
         }
         setUser(null);
-        setCurrentSessionId(null);
         setLoading(false);
         return;
       }
@@ -273,8 +278,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setUser(appUser);
 
-        // Creer un log de connexion
-        if (!currentSessionId) {
+        // Creer un log de connexion (une seule fois par session)
+        if (!currentSessionIdRef.current) {
           try {
             const { device, browser } = getDeviceInfo();
             const { location, ip } = await getLocationInfo();
@@ -290,7 +295,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               location,
               ip,
             });
-            setCurrentSessionId(logDoc.id);
+            currentSessionIdRef.current = logDoc.id;
 
             // Mettre a jour lastSeen
             await updateDoc(userRef, { lastSeen: serverTimestamp() });
@@ -313,7 +318,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsub();
-  }, [currentSessionId]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* =========================
      ACTIONS
@@ -325,17 +330,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     // Mettre a jour le log avant deconnexion
-    if (currentSessionId) {
+    if (currentSessionIdRef.current) {
       try {
-        const logRef = doc(db, "connection_logs", currentSessionId);
+        const logRef = doc(db, "connection_logs", currentSessionIdRef.current);
         await updateDoc(logRef, { logoutAt: serverTimestamp() });
       } catch {
         // Erreur silencieuse - log deconnexion non critique
       }
+      currentSessionIdRef.current = null;
     }
     await signOut(auth);
     setUser(null);
-    setCurrentSessionId(null);
   };
 
   return (
