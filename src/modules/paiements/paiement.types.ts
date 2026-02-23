@@ -8,6 +8,8 @@ export interface Versement {
   montant: number;
   methode: MethodePaiement;
   date: Date | Timestamp;
+  createdBy?: string;
+  createdByName?: string;
 }
 
 export interface Paiement {
@@ -29,4 +31,11 @@ export interface Paiement {
 
   datePaiement?: Timestamp | Date;
   createdAt?: Timestamp | FieldValue;
+
+  // Traçabilité — qui a créé le paiement
+  createdBy?: string;
+  createdByName?: string;
+
+  // Multi-tenancy
+  schoolId?: string;
 }
