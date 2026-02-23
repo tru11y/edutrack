@@ -235,7 +235,7 @@ export default function Dashboard() {
           {[
             { label: "Classes", value: stats.totalClasses, color: colors.primary, link: "/classes" },
             { label: "Matières", value: stats.totalMatieres, color: colors.info, link: "/matieres" },
-            { label: "Salles", value: stats.totalSalles, color: colors.warning, link: "/emploi-du-temps" },
+            { label: "Emploi du temps", value: stats.totalSalles, color: colors.warning, link: "/emploi-du-temps" },
             { label: "Utilisateurs", value: stats.totalUsers, color: colors.success, link: "/utilisateurs" },
           ].map((kpi) => (
             <Link key={kpi.label} to={kpi.link} style={{
