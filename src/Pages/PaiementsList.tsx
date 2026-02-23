@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "../services/firebase";
 import { getAllPaiements, movePaiementToTrash } from "../modules/paiements/paiement.service";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast, ConfirmModal } from "../components/ui";
 import { useTenant } from "../context/TenantContext";
+import { useAuth } from "../context/AuthContext";
+import { useSchool } from "../context/SchoolContext";
 import { exportPaiementsExcelSecure } from "../services/cloudFunctions";
 import { downloadBase64File } from "../utils/download";
 import { exportToCSV } from "../utils/csvExport";
+import { exportRecuPaiementPDF } from "../modules/paiements/paiement.pdf";
 import type { Paiement } from "../modules/paiements/paiement.types";
 
 function toDate(val: unknown): Date | null {
@@ -31,9 +35,12 @@ export default function PaiementsList() {
   const { t } = useLanguage();
   const toast = useToast();
   const { schoolId } = useTenant();
+  const { user } = useAuth();
+  const { school } = useSchool();
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
   const [filterMois, setFilterMois] = useState("");
@@ -73,6 +80,53 @@ export default function PaiementsList() {
         }
       },
     });
+  };
+
+  const handleDownloadPDF = async (p: Paiement) => {
+    if (!p.id) return;
+    setPdfLoading(p.id);
+    try {
+      const generatedByName =
+        user?.prenom && user?.nom
+          ? `${user.prenom} ${user.nom}`.trim()
+          : user?.email || "Administration";
+
+      const filename = exportRecuPaiementPDF(p, {
+        eleveNom: p.eleveNom,
+        elevePrenom: "",
+        classe: "",
+        generatedByName,
+        adminNom: generatedByName,
+        schoolName: school?.schoolName,
+        schoolAdresse: school?.adresse,
+        schoolTelephone: school?.telephone,
+        schoolEmail: school?.email,
+      });
+
+      await addDoc(collection(db, "sauvegardes"), {
+        type: "recu_paiement",
+        fichier: filename,
+        paiementId: p.id,
+        reference: p.reference || null,
+        eleveId: p.eleveId,
+        eleveNom: p.eleveNom,
+        mois: p.mois,
+        montantPaye: p.montantPaye,
+        montantTotal: p.montantTotal,
+        statut: p.statut,
+        schoolId,
+        generatedAt: serverTimestamp(),
+        generatedBy: user?.uid || null,
+        generatedByName,
+      });
+
+      toast.success("Reçu PDF généré");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de la génération du PDF");
+    } finally {
+      setPdfLoading(null);
+    }
   };
 
   const mois = [...new Set(paiements.map((p) => p.mois))].sort().reverse();
@@ -187,6 +241,13 @@ export default function PaiementsList() {
                   <td style={{ padding: "16px 20px", textAlign: "center" }}><span style={{ padding: "4px 12px", background: p.statut === "paye" ? colors.successBg : p.statut === "partiel" ? colors.warningBg : colors.dangerBg, color: p.statut === "paye" ? colors.success : p.statut === "partiel" ? colors.warning : colors.danger, borderRadius: 20, fontSize: 12, fontWeight: 500 }}>{p.statut === "paye" ? "Paye" : p.statut === "partiel" ? "Partiel" : "Impaye"}</span></td>
                   <td style={{ padding: "16px 20px", textAlign: "center" }}>
                     <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+                      <button
+                        onClick={() => handleDownloadPDF(p)}
+                        disabled={pdfLoading === p.id}
+                        style={{ padding: "6px 12px", background: colors.infoBg, color: colors.info, border: "none", borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: pdfLoading === p.id ? "not-allowed" : "pointer", opacity: pdfLoading === p.id ? 0.7 : 1 }}
+                      >
+                        {pdfLoading === p.id ? "..." : "Reçu PDF"}
+                      </button>
                       <Link to={`/paiements/${p.id}/modifier`} style={{ padding: "6px 12px", background: colors.primaryBg, color: colors.primary, borderRadius: 6, fontSize: 12, fontWeight: 500, textDecoration: "none" }}>Modifier</Link>
                       <button onClick={() => handleDelete(p)} style={{ padding: "6px 12px", background: colors.dangerBg, color: colors.danger, border: "none", borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>Supprimer</button>
                     </div>
