@@ -232,7 +232,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Auth state listener — registered once, uses ref for session ID to avoid re-subscription
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      // Wrap in async IIFE with global catch so setLoading(false) always runs
+      (async () => {
+      try {
       if (!firebaseUser || !firebaseUser.email) {
         // Deconnexion - mettre a jour le log
         if (currentSessionIdRef.current) {
@@ -315,6 +318,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await signOut(auth);
       setUser(null);
       setLoading(false);
+      } catch (err) {
+        console.error("Auth state error:", err);
+        setUser(null);
+        setLoading(false);
+      }
+      })();
     });
 
     return () => unsub();

@@ -46,6 +46,11 @@ function normalizeEleve(data: Partial<Eleve>): Omit<Eleve, "id"> & { id?: string
     normalized.id = data.id;
   }
 
+  // Pass through schoolId if provided
+  if ((data as { schoolId?: string }).schoolId) {
+    normalized.schoolId = (data as { schoolId?: string }).schoolId;
+  }
+
   // Only include matricule if provided
   if (data.matricule !== undefined && data.matricule !== "") {
     normalized.matricule = data.matricule;
