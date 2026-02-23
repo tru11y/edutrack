@@ -18,7 +18,7 @@ export const runDataMigration = functions
 
     try {
       const schoolId = await getSchoolId(context.auth!.uid);
-      const totalMigrated = await migrateDataToSchool(schoolId);
+      const totalMigrated = await migrateDataToSchool(schoolId, true); // force overwrite wrong schoolIds
       return {
         success: true,
         schoolId,

@@ -16,7 +16,7 @@ import {
   type Recommendation,
 } from "../services/cloudFunctions";
 
-const MIGRATION_KEY = "edutrack_migrated_v1";
+const MIGRATION_KEY = "edutrack_migrated_v2";
 
 export default function Dashboard() {
   const { colors } = useTheme();
