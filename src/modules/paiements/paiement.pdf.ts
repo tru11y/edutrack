@@ -50,6 +50,20 @@ function rgbToHex(rgb: [number, number, number]): string {
   return `#${rgb[0].toString(16).padStart(2, "0")}${rgb[1].toString(16).padStart(2, "0")}${rgb[2].toString(16).padStart(2, "0")}`;
 }
 
+function detectImageFormat(url: string): string {
+  if (url.startsWith("data:")) {
+    const m = url.match(/^data:image\/(\w+);/);
+    if (m) {
+      const f = m[1].toUpperCase();
+      return f === "JPG" ? "JPEG" : f;
+    }
+  }
+  const lower = url.toLowerCase().split("?")[0];
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "JPEG";
+  if (lower.endsWith(".webp")) return "WEBP";
+  return "PNG"; // safest default — most logos are PNG
+}
+
 export interface RecuOptions {
   eleveNom: string;
   elevePrenom: string;
@@ -91,7 +105,7 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
   let logoAdded = false;
   if (options.schoolLogo) {
     try {
-      doc.addImage(options.schoolLogo, "JPEG", 14, 8, 26, 26);
+      doc.addImage(options.schoolLogo, detectImageFormat(options.schoolLogo), 14, 8, 26, 26);
       logoAdded = true;
     } catch {
       // logo load failed — skip

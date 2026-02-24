@@ -6,6 +6,7 @@ import { db, auth } from "../../services/firebase";
 import { toggleUserStatusSecure } from "../../services/cloudFunctions";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { logActivity } from "../../services/activityLogger";
 import { LoadingSpinner } from "../../components/ui/Skeleton";
 import { useToast, ConfirmModal } from "../../components/ui";
 import { GRADIENTS, TIMING } from "../../constants";
@@ -114,6 +115,7 @@ export default function Users() {
       }
 
       await setDoc(doc(db, "users", uid), userData);
+      logActivity({ action: "create", entity: "user", entityLabel: form.email, details: `Rôle: ${form.role}` });
       await loadUsers();
     } finally {
       await deleteApp(secondaryApp);
@@ -183,6 +185,7 @@ export default function Users() {
         setConfirmState((s) => ({ ...s, isOpen: false }));
         try {
           await deleteDoc(doc(db, "users", user.id));
+          logActivity({ action: "delete", entity: "user", entityId: user.id, entityLabel: user.email });
           await loadUsers();
           toast.success("Utilisateur supprime");
         } catch (err) {
@@ -212,6 +215,7 @@ export default function Users() {
     }
     try {
       await updateDoc(doc(db, "users", userId), updateData);
+      logActivity({ action: "update", entity: "user", entityId: userId, details: `Rôle: ${data.role}` });
       await loadUsers();
       showSuccessTemp("Utilisateur modifie avec succes");
     } catch (err) {

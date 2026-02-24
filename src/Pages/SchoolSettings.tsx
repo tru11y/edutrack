@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { doc, updateDoc, serverTimestamp, getDoc, setDoc } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../services/firebase";
+import { db } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useSchool } from "../context/SchoolContext";
+import { logActivity } from "../services/activityLogger";
 
 interface SchoolForm {
   schoolName: string;
@@ -33,7 +33,6 @@ export default function SchoolSettings() {
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
@@ -50,39 +49,38 @@ export default function SchoolSettings() {
 
   const handleLogoUpload = async (file: File) => {
     if (!file) return;
-    const schoolId = user?.schoolId || user?.uid || "default";
-    const storageRef = ref(storage, `logos/${schoolId}/logo`);
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({ type: "error", text: "Fichier trop volumineux (max 2 Mo)." });
+      return;
+    }
     setUploading(true);
-    setUploadProgress(0);
-
     try {
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      await new Promise<void>((resolve, reject) => {
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const pct = Math.round(
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-            );
-            setUploadProgress(pct);
-          },
-          (err) => {
-            console.error(err);
-            reject(err);
-          },
-          async () => {
-            const url = await getDownloadURL(uploadTask.snapshot.ref);
-            setForm((f) => ({ ...f, schoolLogo: url }));
-            resolve();
+      // Resize to max 300×300 and encode as PNG data URL (stored in Firestore, no Storage needed)
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          const MAX = 300;
+          let { width: w, height: h } = img;
+          if (w > MAX || h > MAX) {
+            if (w > h) { h = Math.round((h * MAX) / w); w = MAX; }
+            else { w = Math.round((w * MAX) / h); h = MAX; }
           }
-        );
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/png", 0.9));
+        };
+        img.onerror = reject;
+        img.src = objectUrl;
       });
+      setForm((f) => ({ ...f, schoolLogo: dataUrl }));
     } catch {
-      setMessage({ type: "error", text: "Erreur lors de l'upload du logo." });
+      setMessage({ type: "error", text: "Erreur lors de la lecture du logo." });
     } finally {
       setUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -116,6 +114,7 @@ export default function SchoolSettings() {
         }
       }
 
+      logActivity({ action: "update", entity: "school_settings", entityLabel: form.schoolName });
       setMessage({ type: "success", text: "Paramètres enregistrés avec succès." });
     } catch (err) {
       console.error(err);
@@ -302,14 +301,6 @@ export default function SchoolSettings() {
                 </svg>
                 {uploading ? `Upload ${uploadProgress}%…` : "Choisir un fichier"}
               </button>
-
-              {uploading && (
-                <div style={{ flex: 1, minWidth: 120 }}>
-                  <div style={{ height: 6, borderRadius: 3, background: colors.border, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${uploadProgress}%`, background: colors.primary, transition: "width 0.2s" }} />
-                  </div>
-                </div>
-              )}
 
               {form.schoolLogo && !uploading && (
                 <img
