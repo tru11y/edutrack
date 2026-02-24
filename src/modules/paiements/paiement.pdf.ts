@@ -13,7 +13,6 @@ function toDate(date: Date | Timestamp | undefined): Date {
 
 function fmt(n: number): string {
   const safe = isNaN(n) || n == null ? 0 : n;
-  // Use toLocaleString with fallback for environments that don't support fr-FR
   try {
     return safe.toLocaleString("fr-FR") + " FCFA";
   } catch {
@@ -24,31 +23,59 @@ function fmt(n: number): string {
 function formatMois(mois: string): string {
   if (!mois) return "—";
   try {
-    const d = new Date(mois + "-02"); // day 2 to avoid timezone issues
+    const d = new Date(mois + "-02");
     return d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   } catch {
     return mois;
   }
 }
 
+function hexToRgbPdf(hex: string): [number, number, number] {
+  const clean = (hex || "#1e50c8").replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return [isNaN(r) ? 30 : r, isNaN(g) ? 80 : g, isNaN(b) ? 200 : b];
+}
+
+function darkenRgb(rgb: [number, number, number], factor = 0.75): [number, number, number] {
+  return [
+    Math.round(Math.min(255, Math.max(0, rgb[0] * factor))),
+    Math.round(Math.min(255, Math.max(0, rgb[1] * factor))),
+    Math.round(Math.min(255, Math.max(0, rgb[2] * factor))),
+  ];
+}
+
+function rgbToHex(rgb: [number, number, number]): string {
+  return `#${rgb[0].toString(16).padStart(2, "0")}${rgb[1].toString(16).padStart(2, "0")}${rgb[2].toString(16).padStart(2, "0")}`;
+}
+
 export interface RecuOptions {
   eleveNom: string;
   elevePrenom: string;
   classe: string;
-  adminNom?: string;          // Responsable qui émet le reçu
-  generatedByName?: string;   // Nom complet de l'utilisateur qui génère le PDF
+  adminNom?: string;
+  generatedByName?: string;
   schoolName?: string;
   schoolAdresse?: string;
   schoolTelephone?: string;
   schoolEmail?: string;
+  primaryColor?: string;
+  schoolLogo?: string;
 }
 
-const BLUE: [number, number, number] = [30, 80, 200];
 const BLUE_LIGHT: [number, number, number] = [240, 244, 255];
 const GRAY: [number, number, number] = [80, 80, 80];
 const DARK: [number, number, number] = [20, 20, 30];
 
+function safeName(s: string): string {
+  return (s || "").replace(/[^a-zA-Z0-9]/g, "_").slice(0, 20);
+}
+
 export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions): string {
+  const PRIMARY = hexToRgbPdf(options.primaryColor || "#1e50c8");
+  const PRIMARY_DARK = darkenRgb(PRIMARY, 0.8);
+
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -57,23 +84,35 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
   const printDate = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
   const payDate = toDate(paiement.datePaiement).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 
-  // ── Bande en-tête bleue ────────────────────────────────────────────────────
-  doc.setFillColor(...BLUE);
+  // ── Bande en-tête colorée ──────────────────────────────────────────────────
+  doc.setFillColor(...PRIMARY);
   doc.rect(0, 0, W, 44, "F");
+
+  let logoAdded = false;
+  if (options.schoolLogo) {
+    try {
+      doc.addImage(options.schoolLogo, "JPEG", 14, 8, 26, 26);
+      logoAdded = true;
+    } catch {
+      // logo load failed — skip
+    }
+  }
+
+  const nameX = logoAdded ? 46 : 14;
 
   // Nom de l'école
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(17);
   doc.setFont("helvetica", "bold");
-  doc.text(schoolName, 14, 14);
+  doc.text(schoolName, nameX, 14);
 
   // Sous-infos école
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   let subY = 20;
-  if (options.schoolAdresse) { doc.text(options.schoolAdresse, 14, subY); subY += 5; }
+  if (options.schoolAdresse) { doc.text(options.schoolAdresse, nameX, subY); subY += 5; }
   const contactLine = [options.schoolTelephone, options.schoolEmail].filter(Boolean).join("  |  ");
-  if (contactLine) doc.text(contactLine, 14, subY);
+  if (contactLine) doc.text(contactLine, nameX, subY);
 
   // Titre reçu (droite)
   doc.setFontSize(19);
@@ -114,7 +153,7 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
     const x = 22 + i * colW;
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(...BLUE);
+    doc.setTextColor(...PRIMARY);
     doc.text(f.label, x, 67);
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
@@ -134,11 +173,10 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
   let y = 100;
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(...BLUE);
+  doc.setTextColor(...PRIMARY);
   doc.text("DÉTAIL FINANCIER", 14, y);
   y += 4;
 
-  // Always compute montantRestant fresh (stored value may be stale)
   const montantTotal = paiement.montantTotal || 0;
   const montantPaye = paiement.montantPaye || 0;
   const montantRestant = Math.max(0, montantTotal - montantPaye);
@@ -156,19 +194,14 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
       0: { cellWidth: "auto" },
       1: { cellWidth: 60, halign: "right", fontStyle: "bold" },
     },
-    headStyles: { fillColor: BLUE, textColor: [255, 255, 255], fontSize: 9, fontStyle: "bold" },
+    headStyles: { fillColor: PRIMARY, textColor: [255, 255, 255], fontSize: 9, fontStyle: "bold" },
     bodyStyles: { fontSize: 10, textColor: DARK },
     alternateRowStyles: { fillColor: [249, 250, 251] },
     didParseCell: (data) => {
-      // Highlight the "reste" row in red (if unpaid) or green (if fully paid)
       if (data.row.index === 2) {
         data.cell.styles.textColor = restantColor;
         data.cell.styles.fontStyle = "bold";
-        if (data.column.index === 0) {
-          data.cell.styles.fillColor = montantRestant > 0 ? [255, 240, 240] : [240, 255, 245];
-        } else {
-          data.cell.styles.fillColor = montantRestant > 0 ? [255, 240, 240] : [240, 255, 245];
-        }
+        data.cell.styles.fillColor = montantRestant > 0 ? [255, 240, 240] : [240, 255, 245];
       }
     },
     margin: { left: 14, right: 14 },
@@ -180,7 +213,7 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
   if (paiement.versements && paiement.versements.length > 0) {
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(...BLUE);
+    doc.setTextColor(...PRIMARY);
     doc.text("HISTORIQUE DES VERSEMENTS", 14, y);
     y += 4;
 
@@ -208,7 +241,7 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
         3: { cellWidth: 42 },
         4: { cellWidth: "auto" },
       },
-      headStyles: { fillColor: [50, 110, 220], textColor: [255, 255, 255], fontSize: 8.5, fontStyle: "bold" },
+      headStyles: { fillColor: PRIMARY_DARK, textColor: [255, 255, 255], fontSize: 8.5, fontStyle: "bold" },
       bodyStyles: { fontSize: 9, textColor: DARK },
       alternateRowStyles: { fillColor: [249, 250, 251] },
       margin: { left: 14, right: 14 },
@@ -224,20 +257,17 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
   }
 
   // ── Espace de signature ───────────────────────────────────────────────────
-  // Vérifie qu'on a assez de place, sinon on reste dans les limites
   const sigY = Math.min(y + 6, H - 50);
 
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.3);
 
-  // Cachet à gauche
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...GRAY);
   doc.text("Cachet et signature de l'administration :", 14, sigY);
   doc.roundedRect(14, sigY + 3, 70, 22, 2, 2, "S");
 
-  // Émis par à droite
   const emittedBy = options.generatedByName || options.adminNom || "Administration";
   doc.text("Reçu établi par :", W - 84, sigY);
   doc.setFont("helvetica", "bold");
@@ -248,7 +278,7 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
   doc.text(printDate, W - 84, sigY + 13);
 
   // ── Pied de page ──────────────────────────────────────────────────────────
-  doc.setFillColor(...BLUE);
+  doc.setFillColor(...PRIMARY);
   doc.rect(0, H - 12, W, 12, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(7.5);
@@ -257,7 +287,13 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
   doc.text(`Document généré le ${printDate}`, 14, H - 5);
   doc.text(`Réf : ${invoiceNum}`, W - 14, H - 5, { align: "right" });
 
-  const filename = `recu_${paiement.reference || paiement.id || "paiement"}_${paiement.mois}.pdf`;
+  // ── Nom de fichier lisible ─────────────────────────────────────────────────
+  const [yr, mo] = (paiement.mois || "").split("-");
+  const filename = `Recu_${safeName(options.elevePrenom)}_${safeName(options.eleveNom)}_${safeName(options.classe)}_${mo || "00"}-${yr || "0000"}.pdf`;
+
   doc.save(filename);
   return filename;
 }
+
+// Export hex helper for use in PDF color generation (used in primary color derivation)
+export { rgbToHex };

@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import React, { Suspense, lazy, useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { ThemeProvider } from "./context/ThemeContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { LanguageProvider } from "./context/LanguageContext";
-import { SchoolProvider } from "./context/SchoolContext";
+import { SchoolProvider, useSchool } from "./context/SchoolContext";
 import { TenantProvider } from "./context/TenantContext";
 import { ToastProvider } from "./components/ui/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -57,6 +57,28 @@ const Archives = lazy(() => import("./pages/Archives"));
 const PermissionManagement = lazy(() => import("./pages/PermissionManagement"));
 const SchoolSettings = lazy(() => import("./pages/SchoolSettings"));
 
+// Cours du soir
+const SoirDashboard = lazy(() => import("./modules/soir/SoirDashboard"));
+const SoirElevesList = lazy(() => import("./modules/soir/SoirElevesList"));
+const SoirEleveForm = lazy(() => import("./modules/soir/SoirEleveForm"));
+const SoirPresencesList = lazy(() => import("./modules/soir/SoirPresencesList"));
+const SoirPresenceAppel = lazy(() => import("./modules/soir/SoirPresenceAppel"));
+const SoirPaiementsList = lazy(() => import("./modules/soir/SoirPaiementsList"));
+const SoirPaiementForm = lazy(() => import("./modules/soir/SoirPaiementForm"));
+const SoirCahier = lazy(() => import("./modules/soir/SoirCahier"));
+const SoirCahierForm = lazy(() => import("./modules/soir/SoirCahierForm"));
+const SoirEmploiDuTemps = lazy(() => import("./modules/soir/SoirEmploiDuTemps"));
+
+
+// Syncs school primaryColor to ThemeContext
+function SchoolThemeSync() {
+  const { school } = useSchool();
+  const { setPrimaryColor } = useTheme();
+  useEffect(() => {
+    if (school.primaryColor) setPrimaryColor(school.primaryColor);
+  }, [school.primaryColor]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
 
 function OnlineQueueRetry() {
   useEffect(() => {
@@ -98,7 +120,19 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   if (user?.role !== "admin" && user?.role !== "gestionnaire") {
     return <Navigate to="/presences" replace />;
   }
+  // Soir gestionnaires/profs cannot access regular admin routes
+  if (user?.programme === "soir" && user?.role !== "admin") {
+    return <Navigate to="/cours-du-soir" replace />;
+  }
   return <>{children}</>;
+}
+
+// Allows access to soir routes only for admin or users with programme="soir"
+function SoirRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (user?.role === "admin") return <>{children}</>;
+  if (user?.programme === "soir") return <>{children}</>;
+  return <Navigate to="/" replace />;
 }
 
 
@@ -109,6 +143,9 @@ function ProfRedirect() {
   }
   if (user?.role === "parent") {
     return <Navigate to="/parent/dashboard" replace />;
+  }
+  if (user?.programme === "soir" && user?.role !== "admin") {
+    return <Navigate to="/cours-du-soir" replace />;
   }
   if (user?.role !== "admin" && user?.role !== "gestionnaire") {
     return <ProfDashboard />;
@@ -126,6 +163,7 @@ export default function App() {
             <TenantProvider>
             <ToastProvider>
               <BrowserRouter>
+                <SchoolThemeSync />
                 <OnboardingProvider>
                 <SkipToContent />
                 <OfflineBanner />
@@ -171,6 +209,20 @@ export default function App() {
                       <Route path="archives" element={<AdminRoute><Archives /></AdminRoute>} />
                       <Route path="admin/permissions" element={<AdminRoute><PermissionManagement /></AdminRoute>} />
                       <Route path="parametres" element={<AdminRoute><SchoolSettings /></AdminRoute>} />
+                      {/* Cours du soir */}
+                      <Route path="cours-du-soir" element={<SoirRoute><SoirDashboard /></SoirRoute>} />
+                      <Route path="cours-du-soir/eleves" element={<SoirRoute><SoirElevesList /></SoirRoute>} />
+                      <Route path="cours-du-soir/eleves/nouveau" element={<SoirRoute><SoirEleveForm /></SoirRoute>} />
+                      <Route path="cours-du-soir/eleves/:id/modifier" element={<SoirRoute><SoirEleveForm /></SoirRoute>} />
+                      <Route path="cours-du-soir/presences" element={<SoirRoute><SoirPresencesList /></SoirRoute>} />
+                      <Route path="cours-du-soir/presences/appel" element={<SoirRoute><SoirPresenceAppel /></SoirRoute>} />
+                      <Route path="cours-du-soir/paiements" element={<SoirRoute><SoirPaiementsList /></SoirRoute>} />
+                      <Route path="cours-du-soir/paiements/nouveau" element={<SoirRoute><SoirPaiementForm /></SoirRoute>} />
+                      <Route path="cours-du-soir/paiements/:id/modifier" element={<SoirRoute><SoirPaiementForm /></SoirRoute>} />
+                      <Route path="cours-du-soir/cahier" element={<SoirRoute><SoirCahier /></SoirRoute>} />
+                      <Route path="cours-du-soir/cahier/nouveau" element={<SoirRoute><SoirCahierForm /></SoirRoute>} />
+                      <Route path="cours-du-soir/cahier/:id/modifier" element={<SoirRoute><SoirCahierForm /></SoirRoute>} />
+                      <Route path="cours-du-soir/emploi-du-temps" element={<SoirRoute><SoirEmploiDuTemps /></SoirRoute>} />
                       {/* Student Portal */}
                       <Route path="eleve" element={<ElevePortalDashboard />} />
                       <Route path="eleve/notes" element={<EleveNotes />} />

@@ -9,7 +9,7 @@ interface EditUserModalProps {
   isAdmin: boolean;
   availableClasses: ClasseData[];
   onClose: () => void;
-  onSubmit: (userId: string, data: { nom: string; prenom: string; role: string; classesEnseignees: string[] }) => Promise<void>;
+  onSubmit: (userId: string, data: { nom: string; prenom: string; role: string; classesEnseignees: string[]; programme?: string }) => Promise<void>;
 }
 
 export function EditUserModal({ user, isAdmin, availableClasses, onClose, onSubmit }: EditUserModalProps) {
@@ -19,6 +19,7 @@ export function EditUserModal({ user, isAdmin, availableClasses, onClose, onSubm
     prenom: user.prenom || "",
     role: user.role,
     classesEnseignees: user.classesEnseignees || [],
+    programme: user.programme || "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -45,6 +46,7 @@ export function EditUserModal({ user, isAdmin, availableClasses, onClose, onSubm
         prenom: form.prenom.trim(),
         role: form.role,
         classesEnseignees: form.role === "prof" ? form.classesEnseignees : [],
+        programme: form.programme || undefined,
       });
       onClose();
     } catch (err) {
@@ -153,6 +155,23 @@ export function EditUserModal({ user, isAdmin, availableClasses, onClose, onSubm
               {isAdmin && <option value="admin">Administrateur</option>}
             </select>
           </div>
+
+          {(form.role === "gestionnaire" || form.role === "prof") && (
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8 }}>
+                Programme
+              </label>
+              <select
+                name="programme"
+                value={form.programme}
+                onChange={handleChange}
+                style={{ width: "100%", padding: "12px 14px", border: `1px solid ${colors.border}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: colors.bgInput, color: colors.text }}
+              >
+                <option value="">Enseignement régulier</option>
+                <option value="soir">Cours du soir</option>
+              </select>
+            </div>
+          )}
 
           {form.role === "prof" && (
             <ClassSelector availableClasses={availableClasses} selectedClasses={form.classesEnseignees} onToggle={toggleClass} />

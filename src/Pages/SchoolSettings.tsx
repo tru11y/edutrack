@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { doc, updateDoc, serverTimestamp, getDoc } from "firebase/firestore";
-import { db } from "../services/firebase";
+import { useState, useEffect, useRef } from "react";
+import { doc, updateDoc, serverTimestamp, getDoc, setDoc } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useSchool } from "../context/SchoolContext";
@@ -12,12 +13,14 @@ interface SchoolForm {
   email: string;
   anneeScolaire: string;
   schoolLogo: string;
+  primaryColor: string;
 }
 
 export default function SchoolSettings() {
   const { colors } = useTheme();
   const { user } = useAuth();
   const { school } = useSchool();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<SchoolForm>({
     schoolName: "",
@@ -26,8 +29,11 @@ export default function SchoolSettings() {
     email: "",
     anneeScolaire: "",
     schoolLogo: "",
+    primaryColor: "#6366f1",
   });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
@@ -38,12 +44,51 @@ export default function SchoolSettings() {
       email: school.email || "",
       anneeScolaire: school.anneeScolaire || "",
       schoolLogo: school.schoolLogo || "",
+      primaryColor: school.primaryColor || "#6366f1",
     });
   }, [school]);
 
+  const handleLogoUpload = async (file: File) => {
+    if (!file) return;
+    const schoolId = user?.schoolId || user?.uid || "default";
+    const storageRef = ref(storage, `logos/${schoolId}/logo`);
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const pct = Math.round(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            );
+            setUploadProgress(pct);
+          },
+          (err) => {
+            console.error(err);
+            reject(err);
+          },
+          async () => {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            setForm((f) => ({ ...f, schoolLogo: url }));
+            resolve();
+          }
+        );
+      });
+    } catch {
+      setMessage({ type: "error", text: "Erreur lors de l'upload du logo." });
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.schoolId && !user?.uid) return;
+    if (!user?.uid) return;
     setSaving(true);
     setMessage(null);
     try {
@@ -51,23 +96,24 @@ export default function SchoolSettings() {
         ? doc(db, "schools", user.schoolId)
         : doc(db, "config", "school");
 
-      // Check if the document exists
       const snap = await getDoc(docRef);
+      const payload = {
+        ...form,
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid,
+      };
+
       if (snap.exists()) {
-        await updateDoc(docRef, {
-          ...form,
-          updatedAt: serverTimestamp(),
-          updatedBy: user.uid,
-        });
+        await updateDoc(docRef, payload);
       } else {
-        // If it doesn't exist, we can't create it here without setDoc
-        // Fall back to config/school
+        // Fallback: create or update config/school
         const fallbackRef = doc(db, "config", "school");
-        await updateDoc(fallbackRef, {
-          ...form,
-          updatedAt: serverTimestamp(),
-          updatedBy: user.uid,
-        });
+        const fallbackSnap = await getDoc(fallbackRef);
+        if (fallbackSnap.exists()) {
+          await updateDoc(fallbackRef, payload);
+        } else {
+          await setDoc(fallbackRef, payload);
+        }
       }
 
       setMessage({ type: "success", text: "Paramètres enregistrés avec succès." });
@@ -180,29 +226,124 @@ export default function SchoolSettings() {
                 placeholder="Ex: 2025-2026"
               />
             </div>
+          </div>
+        </div>
 
-            <div>
-              <label style={labelStyle}>URL du logo</label>
+        {/* Branding Card */}
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 28, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: colors.text, margin: "0 0 20px", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: colors.primary, display: "inline-block" }} />
+            Personnalisation visuelle
+          </h2>
+
+          {/* Color picker */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Couleur principale</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <input
-                style={inputStyle}
-                value={form.schoolLogo}
-                onChange={(e) => setForm({ ...form, schoolLogo: e.target.value })}
-                placeholder="https://..."
+                type="color"
+                value={form.primaryColor}
+                onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
+                style={{ width: 48, height: 40, border: `1px solid ${colors.border}`, borderRadius: 8, cursor: "pointer", padding: 2, background: "none" }}
+              />
+              <input
+                style={{ ...inputStyle, width: "auto", flex: 1 }}
+                value={form.primaryColor}
+                onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
+                placeholder="#6366f1"
+                pattern="^#[0-9a-fA-F]{6}$"
+              />
+              <div
+                style={{
+                  width: 40, height: 40, borderRadius: 8,
+                  background: `linear-gradient(135deg, ${form.primaryColor} 0%, ${form.primaryColor}cc 100%)`,
+                  border: `1px solid ${colors.border}`,
+                  flexShrink: 0,
+                }}
               />
             </div>
+            <p style={{ fontSize: 12, color: colors.textMuted, margin: "6px 0 0" }}>
+              Cette couleur sera appliquée au thème de l'interface et aux reçus PDF.
+            </p>
           </div>
 
-          {form.schoolLogo && (
-            <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 13, color: colors.textMuted }}>Aperçu du logo :</span>
-              <img
-                src={form.schoolLogo}
-                alt="Logo"
-                style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 10, border: `1px solid ${colors.border}` }}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          {/* Logo upload */}
+          <div>
+            <label style={labelStyle}>Logo de l'école</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleLogoUpload(file);
+                }}
               />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                style={{
+                  padding: "10px 18px",
+                  background: uploading ? colors.bgHover : colors.primaryBg,
+                  color: uploading ? colors.textMuted : colors.primary,
+                  border: `1px solid ${colors.primary}40`,
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: uploading ? "not-allowed" : "pointer",
+                  display: "flex", alignItems: "center", gap: 8,
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 1v9M5 4l3-3 3 3M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {uploading ? `Upload ${uploadProgress}%…` : "Choisir un fichier"}
+              </button>
+
+              {uploading && (
+                <div style={{ flex: 1, minWidth: 120 }}>
+                  <div style={{ height: 6, borderRadius: 3, background: colors.border, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${uploadProgress}%`, background: colors.primary, transition: "width 0.2s" }} />
+                  </div>
+                </div>
+              )}
+
+              {form.schoolLogo && !uploading && (
+                <img
+                  src={form.schoolLogo}
+                  alt="Logo"
+                  style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 10, border: `1px solid ${colors.border}` }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              )}
             </div>
-          )}
+
+            {form.schoolLogo && (
+              <div style={{ marginTop: 10 }}>
+                <label style={labelStyle}>URL du logo (ou coller une URL directement)</label>
+                <input
+                  style={inputStyle}
+                  value={form.schoolLogo}
+                  onChange={(e) => setForm({ ...form, schoolLogo: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+            )}
+            {!form.schoolLogo && (
+              <div style={{ marginTop: 8 }}>
+                <label style={labelStyle}>Ou coller l'URL directement</label>
+                <input
+                  style={inputStyle}
+                  value={form.schoolLogo}
+                  onChange={(e) => setForm({ ...form, schoolLogo: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {message && (
@@ -220,11 +361,11 @@ export default function SchoolSettings() {
         <div style={{ display: "flex", gap: 12 }}>
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploading}
             style={{
-              padding: "12px 28px", background: saving ? colors.border : colors.primary,
+              padding: "12px 28px", background: (saving || uploading) ? colors.border : colors.primary,
               color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600,
-              cursor: saving ? "not-allowed" : "pointer",
+              cursor: (saving || uploading) ? "not-allowed" : "pointer",
             }}
           >
             {saving ? "Enregistrement..." : "Enregistrer les modifications"}

@@ -115,6 +115,8 @@ export default function PaiementsList() {
         schoolAdresse: school?.adresse,
         schoolTelephone: school?.telephone,
         schoolEmail: school?.email,
+        primaryColor: school?.primaryColor,
+        schoolLogo: school?.schoolLogo,
       });
 
       await addDoc(collection(db, "sauvegardes"), {
