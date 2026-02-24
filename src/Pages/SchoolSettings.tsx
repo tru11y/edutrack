@@ -14,6 +14,7 @@ interface SchoolForm {
   anneeScolaire: string;
   schoolLogo: string;
   primaryColor: string;
+  backupWebhookUrl: string;
 }
 
 export default function SchoolSettings() {
@@ -30,6 +31,7 @@ export default function SchoolSettings() {
     anneeScolaire: "",
     schoolLogo: "",
     primaryColor: "#6366f1",
+    backupWebhookUrl: "",
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -44,6 +46,7 @@ export default function SchoolSettings() {
       anneeScolaire: school.anneeScolaire || "",
       schoolLogo: school.schoolLogo || "",
       primaryColor: school.primaryColor || "#6366f1",
+      backupWebhookUrl: (school as unknown as { backupWebhookUrl?: string }).backupWebhookUrl || "",
     });
   }, [school]);
 
@@ -335,6 +338,29 @@ export default function SchoolSettings() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Backup Webhook Card */}
+        <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 28, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: colors.text, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: colors.primary, display: "inline-block" }} />
+            Sauvegarde automatique
+          </h2>
+          <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 14px" }}>
+            Configurez un webhook pour recevoir la sauvegarde hebdomadaire sur OneDrive ou Google Drive.
+            Obtenez votre URL depuis <strong>Microsoft Power Automate</strong> (OneDrive/SharePoint) ou un <strong>Google Apps Script</strong>.
+          </p>
+          <label style={labelStyle}>URL Webhook de sauvegarde</label>
+          <input
+            style={inputStyle}
+            type="url"
+            value={form.backupWebhookUrl}
+            onChange={(e) => setForm({ ...form, backupWebhookUrl: e.target.value })}
+            placeholder="https://prod-xx.logic.azure.com/... ou https://script.google.com/..."
+          />
+          <p style={{ fontSize: 12, color: colors.textMuted, margin: "6px 0 0" }}>
+            Les sauvegardes sont envoyées automatiquement chaque lundi à 06h00 (WAT). Vous pouvez aussi déclencher manuellement depuis <strong>Sauvegardes</strong> dans la navigation.
+          </p>
         </div>
 
         {message && (
