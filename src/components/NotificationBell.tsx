@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   collection,
   query,
   where,
   orderBy,
   limit,
-  onSnapshot,
+  getDocs,
   updateDoc,
   doc,
   writeBatch,
@@ -50,30 +50,29 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const fetchNotifications = useCallback(async () => {
     if (!user?.uid) return;
     if (user.role !== "admin" && user.role !== "gestionnaire") return;
-
-    const q = query(
-      collection(db, "notifications"),
-      where("recipientId", "==", user.uid),
-      where("status", "==", "unread"),
-      orderBy("createdAt", "desc"),
-      limit(20)
-    );
-
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        setNotifications(
-          snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notification))
-        );
-      },
-      () => {}
-    );
-
-    return unsub;
+    try {
+      const q = query(
+        collection(db, "notifications"),
+        where("recipientId", "==", user.uid),
+        where("status", "==", "unread"),
+        orderBy("createdAt", "desc"),
+        limit(20)
+      );
+      const snap = await getDocs(q);
+      setNotifications(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notification)));
+    } catch {
+      // silent — non-critical
+    }
   }, [user?.uid, user?.role]);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
