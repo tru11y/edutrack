@@ -1,35 +1,81 @@
-# Workflow Rules & Lessons Learned
+# EduTrack — Lessons & Workflow Rules
 
-## Multi-Tenancy
+## Workflow Rules (set by user)
 
-### Root cause of dashboard 0s
-Docs created after the initial migration had no `schoolId` field. Because all queries now filter by `schoolId`, these docs were invisible.
+### 1. Plan Mode Default
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+- If something goes sideways, STOP and re-plan immediately
+- Write detailed specs upfront to reduce ambiguity
 
-### Fix pattern: auto-migrate on first dashboard load
-In `getAdminDashboardStats` (and any stats function), call `migrateDataToSchool(schoolId)` right after resolving `schoolId`. This is a no-op once all docs have `schoolId`, so it adds negligible overhead after the first run.
+### 2. Subagent Strategy
+- Offload research, exploration, parallel analysis to subagents
+- One focused task per subagent — keep main context clean
 
-```ts
-const schoolId = await getSchoolId(context.auth!.uid);
-try { await migrateDataToSchool(schoolId); } catch { /* silent */ }
-```
+### 3. Self-Improvement Loop
+- After ANY user correction: update tasks/lessons.md with the pattern
+- Write rules that prevent the same mistake recurring
+- Review lessons at session start
 
-### Single source of truth for schoolId
-`getSchoolId(uid)` in `helpers/tenant.ts` is the canonical way to resolve schoolId in Cloud Functions. Never read it from client data or derive it elsewhere.
+### 4. Verification Before Done
+- Never mark complete without proving it works
+- Ask: "Would a staff engineer approve this?"
+- Run builds, check logs, demonstrate correctness
 
-## Cleanup Rules
+### 5. Demand Elegance (Balanced)
+- Non-trivial changes: "is there a more elegant way?"
+- Hacky fix? Implement the elegant solution instead
+- Skip for simple obvious fixes — don't over-engineer
 
-### Remove features before shipping
-- Never ship UI for unimplemented or future-only features (landing page, superadmin panel, billing).
-- Remove them from `App.tsx` lazy imports and routes at the same time as removing the pages.
+### 6. Autonomous Bug Fixing
+- Bug report → just fix it, no hand-holding
+- Zero context switching required from user
 
-### Migration button anti-pattern
-Exposing a "run migration" button in the UI puts the burden on the user to notice and fix their data. Auto-migrate server-side instead (idempotent, silent, happens on first authenticated call).
+---
 
-## Build Verification
+## Task Management Protocol
+1. Plan First → tasks/todo.md with checkable items
+2. Verify Plan before implementing
+3. Track Progress: mark items complete as you go
+4. Explain Changes: high-level summary at each step
+5. Capture Lessons: update this file after corrections
 
-Run in this order after changes:
-1. `cd functions && npm run build` — catch TypeScript errors in Cloud Functions
-2. `npx vite build` — catch TypeScript/import errors in frontend
-3. `npx firebase deploy --only functions:getAdminDashboardStats,hosting` — deploy only affected resources
-4. Load dashboard → verify counts appear on first load (no manual action needed)
-5. Navigate to `/landing`, `/pricing`, `/superadmin` → confirm redirect to `/`
+---
+
+## Core Principles
+- Simplicity First: minimal code impact
+- No Laziness: find root causes, senior developer standards
+- Minimal Impact: only touch what is necessary
+
+---
+
+## Lessons Learned
+
+### L1 — Auth Listener Re-subscription Race Condition
+**Mistake**: `[currentSessionId]` in useEffect dependency for onAuthStateChanged caused the listener to re-register every login.
+**Fix**: useRef instead of useState for session tracking. Dependency array = [].
+**Rule**: Auth listeners must NEVER re-subscribe due to internal state. Use refs for internal tracking.
+
+### L2 — schoolId Missing on New Documents After Migration
+**Mistake**: addDoc calls in EleveForm, Classes.tsx didn't include schoolId → new docs invisible to schoolId-filtered queries.
+**Fix**: Every addDoc must include schoolId from useTenant(). normalizeEleve passes through schoolId.
+**Rule**: Any Firestore document creation MUST include schoolId. Pass via useTenant() in components, or as parameter in services.
+
+### L3 — Auth Callback Not Resilient
+**Mistake**: getDoc() in onAuthStateChanged had no try/catch → if it threw, setLoading(false) never called → infinite loading.
+**Fix**: Wrap entire async IIFE in try/catch, always call setUser(null) + setLoading(false) on failure.
+**Rule**: Firebase async callbacks must call state setters in BOTH success AND failure paths.
+
+### L4 — Migration Must Be Transparent
+**Mistake**: Required manual "Lancer la migration" button click.
+**Fix**: Dashboard auto-runs migration once via localStorage key edutrack_migrated_v2. Silent.
+**Rule**: Internal data migration never requires user action. Use localStorage or Firestore flags.
+
+### L5 — YAGNI: Remove What's Not Needed Now
+**Mistake**: Kept speculative SaaS features (landing pages, superadmin, billing, transport, library, HR, LMS).
+**Fix**: Deleted all orphaned files, removed routes.
+**Rule**: Don't build or keep features the user hasn't asked for. Removing a feature = delete the file.
+
+### L6 — Windows Git Path Casing
+**Mistake**: Edited files via lowercase src/pages/ path; git staged nothing (tracked as src/Pages/).
+**Fix**: Always use exact casing from `git status` when staging.
+**Rule**: On Windows, confirm file casing with git status before git add.

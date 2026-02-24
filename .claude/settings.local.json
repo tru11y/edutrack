@@ -46,7 +46,8 @@
       "Bash(head:*)",
       "Bash(cat:*)",
       "Bash(export:*)",
-      "Bash(cd C:\\\\Users\\\\PC\\\\OneDrive - Epitech\\\\amy\\\\owge\\\\edutrack:*)"
+      "Bash(cd C:\\\\Users\\\\PC\\\\OneDrive - Epitech\\\\amy\\\\owge\\\\edutrack:*)",
+      "Bash(cd \"C:\\\\Users\\\\PC\\\\OneDrive - Epitech\\\\amy\\\\owge\\\\edutrack\" && npx firebase functions:delete \\\\\n  compareBulletinVersions generateBulletin generateBulletinsClasse \\\\\n  getAdvancedStats getAnalyticsReport getAuditLogs getBulletinVersions getClasseComparison \\\\\n  getNotificationConfig getNotifications markNotificationRead processNotificationQueue \\\\\n  promoteClasse sendBulkNotification sendNotification \\\\\n  triggerAbsenceNotification triggerImpayeNotification updateNotificationConfig \\\\\n  --region europe-west1 --force 2>&1)"
     ]
   }
 }
