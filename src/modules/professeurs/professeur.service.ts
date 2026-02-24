@@ -58,12 +58,24 @@ export async function createProfesseurWithAccount(
 ====================== */
 
 export async function getAllProfesseurs(schoolId?: string): Promise<Professeur[]> {
-  const q = schoolId ? query(profsRef, where("schoolId", "==", schoolId)) : profsRef;
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({
-    id: d.id,
-    ...(d.data() as Professeur),
-  }));
+  if (schoolId) {
+    const snap = await getDocs(query(profsRef, where("schoolId", "==", schoolId)));
+    if (snap.docs.length > 0) {
+      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Professeur) }));
+    }
+    // Fallback: prof docs without schoolId (pre-migration)
+    const fallback = await getDocs(query(profsRef, where("schoolId", "in", [null, ""])));
+    if (fallback.docs.length > 0) {
+      return fallback.docs.map((d) => ({ id: d.id, ...(d.data() as Professeur) }));
+    }
+    // Last resort: all profs (single-tenant)
+    const all = await getDocs(profsRef);
+    return all.docs
+      .filter((d) => { const sid = d.data().schoolId; return !sid || sid === schoolId; })
+      .map((d) => ({ id: d.id, ...(d.data() as Professeur) }));
+  }
+  const snap = await getDocs(profsRef);
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Professeur) }));
 }
 
 export async function getProfesseurById(id: string): Promise<Professeur | null> {
