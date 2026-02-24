@@ -101,43 +101,49 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
   const payDate = toDate(paiement.datePaiement).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 
   // ── Bande en-tête colorée ──────────────────────────────────────────────────
+  const HEADER_H = 50;
   doc.setFillColor(...PRIMARY);
-  doc.rect(0, 0, W, 44, "F");
+  doc.rect(0, 0, W, HEADER_H, "F");
+
+  // Ligne de séparation visuelle centre (semi-transparente via rect blanc à 20%)
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.3);
+  doc.line(W / 2, 8, W / 2, HEADER_H - 8);
 
   let logoAdded = false;
   if (options.schoolLogo) {
     try {
-      doc.addImage(options.schoolLogo, detectImageFormat(options.schoolLogo), 14, 8, 26, 26);
+      doc.addImage(options.schoolLogo, detectImageFormat(options.schoolLogo), 14, 9, 24, 24);
       logoAdded = true;
     } catch {
       // logo load failed — skip
     }
   }
 
-  const nameX = logoAdded ? 46 : 14;
+  // Zone gauche : école (jusqu'au milieu de la page)
+  const nameX = logoAdded ? 42 : 14;
+  const leftMaxW = W / 2 - nameX - 8; // espace disponible avant le séparateur
 
-  // Nom de l'école
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(17);
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text(schoolName, nameX, 14);
+  doc.text(schoolName, nameX, 17, { maxWidth: leftMaxW });
 
-  // Sous-infos école
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setFont("helvetica", "normal");
-  let subY = 20;
-  if (options.schoolAdresse) { doc.text(options.schoolAdresse, nameX, subY); subY += 5; }
+  let subY = 26;
+  if (options.schoolAdresse) { doc.text(options.schoolAdresse, nameX, subY, { maxWidth: leftMaxW }); subY += 5; }
   const contactLine = [options.schoolTelephone, options.schoolEmail].filter(Boolean).join("  |  ");
-  if (contactLine) doc.text(contactLine, nameX, subY);
+  if (contactLine) doc.text(contactLine, nameX, subY, { maxWidth: leftMaxW });
 
-  // Titre reçu (droite)
-  doc.setFontSize(19);
+  // Zone droite : titre du document (à partir du milieu)
+  doc.setFontSize(15);
   doc.setFont("helvetica", "bold");
-  doc.text("REÇU DE PAIEMENT", W - 14, 14, { align: "right" });
-  doc.setFontSize(9);
+  doc.text("REÇU DE PAIEMENT", W - 14, 19, { align: "right" });
+  doc.setFontSize(8.5);
   doc.setFont("helvetica", "normal");
-  doc.text(`Réf : ${invoiceNum}`, W - 14, 23, { align: "right" });
-  doc.text(`Émis le : ${printDate}`, W - 14, 29, { align: "right" });
+  doc.text(`Réf : ${invoiceNum}`, W - 14, 29, { align: "right" });
+  doc.text(`Émis le : ${printDate}`, W - 14, 36, { align: "right" });
 
   // ── Bandeau de statut coloré sous l'en-tête ───────────────────────────────
   const statutColors: Record<string, [number, number, number]> = {
@@ -148,16 +154,16 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
   const statutLabels: Record<string, string> = { paye: "PAYÉ", partiel: "PARTIEL", impaye: "IMPAYÉ" };
   const sc = statutColors[paiement.statut] || GRAY;
   doc.setFillColor(...sc);
-  doc.rect(0, 44, W, 8, "F");
+  doc.rect(0, HEADER_H, W, 8, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8.5);
   doc.setFont("helvetica", "bold");
   const statutLabel = statutLabels[paiement.statut] || paiement.statut.toUpperCase();
-  doc.text(`STATUT : ${statutLabel}`, W / 2, 49.5, { align: "center" });
+  doc.text(`STATUT : ${statutLabel}`, W / 2, HEADER_H + 5.5, { align: "center" });
 
   // ── Bloc élève ────────────────────────────────────────────────────────────
   doc.setFillColor(...BLUE_LIGHT);
-  doc.roundedRect(14, 58, W - 28, 32, 3, 3, "F");
+  doc.roundedRect(14, 64, W - 28, 32, 3, 3, "F");
 
   const colW = (W - 28) / 3;
   const fields = [
@@ -170,23 +176,23 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...PRIMARY);
-    doc.text(f.label, x, 67);
+    doc.text(f.label, x, 73);
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...DARK);
-    doc.text(f.value, x, 76);
+    doc.text(f.value, x, 82);
   });
 
   doc.setFontSize(8.5);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...GRAY);
-  doc.text(`Date de paiement : ${payDate}`, 22, 85);
+  doc.text(`Date de paiement : ${payDate}`, 22, 91);
   if (paiement.createdByName) {
-    doc.text(`Saisi par : ${paiement.createdByName}`, W - 22, 85, { align: "right" });
+    doc.text(`Saisi par : ${paiement.createdByName}`, W - 22, 91, { align: "right" });
   }
 
   // ── Résumé financier ──────────────────────────────────────────────────────
-  let y = 100;
+  let y = 106;
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...PRIMARY);
