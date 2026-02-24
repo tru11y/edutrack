@@ -176,6 +176,9 @@ const translations = {
     programmeRegulier: "Enseignement régulier",
     // Activity logs
     activite: "Journal d'activité",
+    // IA + Backup
+    ia: "Intelligence Artificielle",
+    sauvegarde: "Sauvegardes",
   },
   en: {
     // Navigation
@@ -349,6 +352,9 @@ const translations = {
     programmeRegulier: "Regular program",
     // Activity logs
     activite: "Activity log",
+    // IA + Backup
+    ia: "AI Intelligence",
+    sauvegarde: "Backups",
   },
 };
 

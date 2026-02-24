@@ -39,28 +39,55 @@ export const getRecommendations = functions
       const totalClasses = classesSnap.size;
 
       // ─── FINANCIER ─────────────────────────────────────────────────────────
-      let totalDu = 0, totalPaye = 0, impayeCount = 0;
+      let totalDu = 0, totalPaye = 0, impayeCount = 0, partielCount = 0;
+      let oldDu = 0, oldPaye = 0;
+      const nowMs = Date.now();
+      const threeMonthsAgo = nowMs - 90 * 24 * 3600 * 1000;
+      const sixMonthsAgo   = nowMs - 180 * 24 * 3600 * 1000;
+
       paiementsSnap.docs.forEach((d) => {
         const p = d.data();
-        totalDu += p.montantTotal || 0;
-        totalPaye += p.montantPaye || 0;
-        if (p.statut === "impaye") impayeCount++;
+        totalDu   += p.montantTotal || 0;
+        totalPaye += p.montantPaye  || 0;
+        if (p.statut === "impaye")  impayeCount++;
+        if (p.statut === "partiel") partielCount++;
+
+        // Tendance : comparer les 3 derniers mois vs les 3 précédents
+        const ts = p.createdAt?.toDate?.()?.getTime() ?? 0;
+        if (ts > threeMonthsAgo) {
+          // recent — already counted
+        } else if (ts > sixMonthsAgo) {
+          oldDu   += p.montantTotal || 0;
+          oldPaye += p.montantPaye  || 0;
+        }
       });
       const tauxRecouvrement = totalDu > 0 ? (totalPaye / totalDu) * 100 : 100;
+      const tauxOld = oldDu > 0 ? (oldPaye / oldDu) * 100 : 100;
+      const tendanceFinanciere = tauxOld > 0 ? tauxRecouvrement - tauxOld : 0;
 
       if (tauxRecouvrement < 60) {
         recs.push({
           category: "financier", priority: "haute",
           titre: `Taux de recouvrement critique : ${Math.round(tauxRecouvrement)}%`,
-          detail: `${impayeCount} paiement(s) impayé(s) représentant ${Math.round(totalDu - totalPaye).toLocaleString()} FCFA de créances. En dessous de 60%, la trésorerie est en danger.`,
+          detail: `${impayeCount} paiement(s) impayé(s) représentant ${Math.round(totalDu - totalPaye).toLocaleString()} FCFA de créances.${tendanceFinanciere < -5 ? ` Tendance en baisse (${Math.round(tendanceFinanciere)}% vs période précédente).` : ""}`,
           action: "Envoyer des rappels aux parents concernés via la messagerie et planifier des entretiens.",
         });
       } else if (tauxRecouvrement < 80) {
         recs.push({
           category: "financier", priority: "moyenne",
           titre: `Recouvrement à améliorer : ${Math.round(tauxRecouvrement)}%`,
-          detail: `${impayeCount} paiement(s) en attente. L'objectif recommandé est 85% minimum.`,
+          detail: `${impayeCount} impayé(s) + ${partielCount} partiel(s). Objectif recommandé : 85 % minimum.${tendanceFinanciere > 5 ? ` Bonne tendance (+${Math.round(tendanceFinanciere)}% ce trimestre).` : ""}`,
           action: "Mettre en place un échéancier de paiement pour les familles en difficulté.",
+        });
+      }
+
+      // Alerte paiements partiels persistants
+      if (partielCount >= 5) {
+        recs.push({
+          category: "financier", priority: "moyenne",
+          titre: `${partielCount} paiements partiels en attente`,
+          detail: `Des familles versent partiellement chaque mois sans solder. Ce montant s'accumule et fragilise la trésorerie.`,
+          action: "Identifier les familles avec des paiements partiels répétés et proposer un plan d'apurement.",
         });
       }
 

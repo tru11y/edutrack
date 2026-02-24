@@ -112,3 +112,6 @@ export { runDataMigration } from "./modules/migration/migration.run";
 
 // Recommandations IA
 export { getRecommendations } from "./modules/recommendations/recommendations";
+
+// Sauvegarde
+export { exportSchoolBackup, weeklyBackup } from "./modules/backup/backup.export";

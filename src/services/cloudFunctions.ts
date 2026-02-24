@@ -735,6 +735,18 @@ export function runDataMigrationSecure(): Promise<{ success: boolean; totalMigra
   return callFunction("runDataMigration", undefined);
 }
 
+// Sauvegarde
+export interface BackupResult {
+  backupId: string;
+  totalDocs: number;
+  collectionCounts: Record<string, number>;
+  exportedAt: string;
+  webhookSent: boolean;
+}
+export function exportSchoolBackupSecure(): Promise<{ success: boolean } & BackupResult> {
+  return callFunction("exportSchoolBackup", undefined);
+}
+
 // Recommandations IA
 export interface Recommendation {
   category: "academique" | "financier" | "organisationnel" | "marketing";
