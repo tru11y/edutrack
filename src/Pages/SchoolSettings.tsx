@@ -299,7 +299,7 @@ export default function SchoolSettings() {
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M8 1v9M5 4l3-3 3 3M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                {uploading ? `Upload ${uploadProgress}%…` : "Choisir un fichier"}
+                {uploading ? "Traitement en cours…" : "Choisir un fichier"}
               </button>
 
               {form.schoolLogo && !uploading && (
