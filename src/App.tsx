@@ -56,6 +56,7 @@ const ParentPaiement = lazy(() => import("./modules/parent/ParentPaiement"));
 const Archives = lazy(() => import("./pages/Archives"));
 const PermissionManagement = lazy(() => import("./pages/PermissionManagement"));
 const SchoolSettings = lazy(() => import("./pages/SchoolSettings"));
+const ActivityLogs = lazy(() => import("./pages/ActivityLogs"));
 
 // Cours du soir
 const SoirDashboard = lazy(() => import("./modules/soir/SoirDashboard"));
@@ -209,6 +210,7 @@ export default function App() {
                       <Route path="archives" element={<AdminRoute><Archives /></AdminRoute>} />
                       <Route path="admin/permissions" element={<AdminRoute><PermissionManagement /></AdminRoute>} />
                       <Route path="parametres" element={<AdminRoute><SchoolSettings /></AdminRoute>} />
+                      <Route path="activite" element={<AdminRoute><ActivityLogs /></AdminRoute>} />
                       {/* Cours du soir */}
                       <Route path="cours-du-soir" element={<SoirRoute><SoirDashboard /></SoirRoute>} />
                       <Route path="cours-du-soir/eleves" element={<SoirRoute><SoirElevesList /></SoirRoute>} />

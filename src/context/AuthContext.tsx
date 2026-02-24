@@ -24,6 +24,7 @@ import {
   where,
 } from "firebase/firestore";
 import { auth, db } from "../services/firebase";
+import { cacheActorMeta } from "../services/activityLogger";
 
 /* =========================
    TYPES
@@ -282,6 +283,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         setUser(appUser);
+
+        // Cache actor metadata for activity logger
+        cacheActorMeta(
+          data.prenom && data.nom ? `${data.prenom} ${data.nom}` : firebaseUser.email || "",
+          appUser.role,
+          data.schoolId || ""
+        );
 
         // Creer un log de connexion (une seule fois par session)
         if (!currentSessionIdRef.current) {

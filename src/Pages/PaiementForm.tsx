@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, useParams, Link } from "react-router-dom"
 import { getAllEleves } from "../modules/eleves/eleve.service";
 import { getPaiementsByEleve, getPaiementById, updatePaiement } from "../modules/paiements/paiement.service";
 import { createPaiementSecure, ajouterVersementSecure, getCloudFunctionErrorMessage } from "../services/cloudFunctions";
+import { logActivity } from "../services/activityLogger";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import type { Eleve } from "../modules/eleves/eleve.types";
@@ -175,6 +176,8 @@ export default function PaiementForm() {
           montantPaye: form.montantPaye,
           datePaiement: form.datePaiement,
         });
+        const eleve = eleves.find((e) => e.id === form.eleveId);
+        logActivity({ action: "payment_add", entity: "paiement", entityLabel: eleve ? `${eleve.prenom} ${eleve.nom}` : form.eleveId, details: `${form.montantTotal} FCFA — ${form.mois}` });
       } else if (mode === "versement" && selectedPaiement) {
         if (form.montantPaye <= 0) { setError("Montant invalide"); return; }
         if (!selectedPaiement.id) { setError("Paiement invalide"); return; }

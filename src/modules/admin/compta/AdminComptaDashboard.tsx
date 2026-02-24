@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useTheme } from "../../../context/ThemeContext";
 import { useTenant } from "../../../context/TenantContext";
 import {
-  getComptaStatsSecure,
   getDepensesSecure,
   getSalairesSecure,
   createDepenseSecure,
@@ -67,18 +66,21 @@ export default function AdminComptaDashboard() {
     setLoading(true);
     setError("");
 
-    const [paiementsRes, profsRes, statsRes, depensesRes, salairesRes] = await Promise.allSettled([
+    const [paiementsRes, profsRes, depensesRes, salairesRes] = await Promise.allSettled([
       getAllPaiements(schoolId),
       getAllProfesseurs(),
-      getComptaStatsSecure(mois),
       getDepensesSecure(mois),
       getSalairesSecure(mois),
     ]);
 
     const errors: string[] = [];
+    let filteredPaiements: Paiement[] = [];
+    let fetchedDepenses: Depense[] = [];
+    let fetchedSalaires: Salaire[] = [];
 
     if (paiementsRes.status === "fulfilled") {
-      setPaiements(paiementsRes.value.filter((p) => p.mois === mois));
+      filteredPaiements = paiementsRes.value.filter((p) => p.mois === mois);
+      setPaiements(filteredPaiements);
     } else {
       console.error("getAllPaiements failed:", paiementsRes.reason);
       errors.push("paiements");
@@ -91,26 +93,35 @@ export default function AdminComptaDashboard() {
       errors.push("professeurs");
     }
 
-    if (statsRes.status === "fulfilled") {
-      setStats(statsRes.value.stats);
-    } else {
-      console.error("getComptaStats failed:", statsRes.reason);
-      errors.push("stats");
-    }
-
     if (depensesRes.status === "fulfilled") {
-      setDepenses(depensesRes.value.depenses);
+      fetchedDepenses = depensesRes.value.depenses;
+      setDepenses(fetchedDepenses);
     } else {
       console.error("getDepenses failed:", depensesRes.reason);
       errors.push("depenses");
     }
 
     if (salairesRes.status === "fulfilled") {
-      setSalaires(salairesRes.value.salaires);
+      fetchedSalaires = salairesRes.value.salaires;
+      setSalaires(fetchedSalaires);
     } else {
       console.error("getSalaires failed:", salairesRes.reason);
       errors.push("salaires");
     }
+
+    // Compute stats client-side — no extra Cloud Function call needed
+    const totalPaiementsRecus = filteredPaiements.reduce((sum, p) => sum + (p.montantPaye || 0), 0);
+    const totalDepenses = fetchedDepenses.reduce((sum, d) => sum + (d.montant || 0), 0);
+    const totalSalaires = fetchedSalaires
+      .filter((s) => s.statut === "paye")
+      .reduce((sum, s) => sum + (s.montant || 0), 0);
+    setStats({
+      totalPaiementsRecus,
+      totalDepenses,
+      totalSalaires,
+      resultatNet: totalPaiementsRecus - (totalDepenses + totalSalaires),
+      mois,
+    });
 
     if (errors.length > 0) {
       setError(`Erreur sur: ${errors.join(", ")}. Verifiez que les Cloud Functions sont deployees.`);

@@ -174,6 +174,8 @@ const translations = {
     soirEmploiDuTemps: "Emploi du temps (soir)",
     programmeSoir: "Cours du soir",
     programmeRegulier: "Enseignement régulier",
+    // Activity logs
+    activite: "Journal d'activité",
   },
   en: {
     // Navigation
@@ -345,6 +347,8 @@ const translations = {
     soirEmploiDuTemps: "Schedule (evening)",
     programmeSoir: "Evening classes",
     programmeRegulier: "Regular program",
+    // Activity logs
+    activite: "Activity log",
   },
 };
 
