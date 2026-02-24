@@ -78,7 +78,7 @@ const EMPTY_FORM = {
   type: "renforcement" as "renforcement" | "soir",
 };
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7h–19h
+const HOURS = Array.from({ length: 24 }, (_, i) => i); // 0h–23h
 const MAT_COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899", "#14b8a6", "#f97316", "#06b6d4"];
 
 export default function EmploiDuTemps() {
@@ -161,7 +161,7 @@ export default function EmploiDuTemps() {
 
   // Grid helpers
   const timeToMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
-  const timeToPos = (time: string) => { const [h, m] = time.split(":").map(Number); return ((h - 7) + m / 60) * 60; };
+  const timeToPos = (time: string) => { const [h, m] = time.split(":").map(Number); return (h + m / 60) * 60; };
 
   const checkDragConflicts = useCallback((jour: string, heureDebut: string, heureFin: string, excludeId?: string) => {
     const s1 = timeToMin(heureDebut), e1 = timeToMin(heureFin);

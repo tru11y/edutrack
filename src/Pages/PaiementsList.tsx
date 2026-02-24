@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Timestamp, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { Timestamp, addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { getAllPaiements, movePaiementToTrash } from "../modules/paiements/paiement.service";
 import { useTheme } from "../context/ThemeContext";
@@ -91,10 +91,24 @@ export default function PaiementsList() {
           ? `${user.prenom} ${user.nom}`.trim()
           : user?.email || "Administration";
 
+      // Fetch eleve to get prénom and classe
+      let elevePrenom = "";
+      let classe = "";
+      if (p.eleveId) {
+        try {
+          const eleveSnap = await getDoc(doc(db, "eleves", p.eleveId));
+          if (eleveSnap.exists()) {
+            const eleveData = eleveSnap.data();
+            elevePrenom = eleveData.prenom || "";
+            classe = eleveData.classe || "";
+          }
+        } catch { /* use empty strings if fetch fails */ }
+      }
+
       const filename = exportRecuPaiementPDF(p, {
         eleveNom: p.eleveNom,
-        elevePrenom: "",
-        classe: "",
+        elevePrenom,
+        classe,
         generatedByName,
         adminNom: generatedByName,
         schoolName: school?.schoolName,
