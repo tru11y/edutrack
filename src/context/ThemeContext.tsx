@@ -2,6 +2,23 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 
 type Theme = "light" | "dark";
 
+function hexToRgb(hex: string): [number, number, number] {
+  const clean = (hex || "#6366f1").replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return [isNaN(r) ? 99 : r, isNaN(g) ? 102 : g, isNaN(b) ? 241 : b];
+}
+
+function darkenHex(hex: string, factor = 0.85): string {
+  const [r, g, b] = hexToRgb(hex);
+  const toHex = (n: number) =>
+    Math.round(Math.min(255, Math.max(0, n * factor)))
+      .toString(16)
+      .padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
 // Couleurs du theme
 export const themeColors = {
   light: {
@@ -16,7 +33,7 @@ export const themeColors = {
     textSecondary: "#475569",
     textMuted: "#64748b",
     textLight: "#94a3b8",
-    // Couleurs d'accent
+    // Couleurs d'accent (overridden dynamically)
     primary: "#6366f1",
     primaryBg: "#eef2ff",
     primaryHover: "#4f46e5",
@@ -53,7 +70,7 @@ export const themeColors = {
     textSecondary: "#cbd5e1",
     textMuted: "#94a3b8",
     textLight: "#64748b",
-    // Couleurs d'accent (plus douces pour le mode sombre)
+    // Couleurs d'accent (plus douces pour le mode sombre, overridden dynamically)
     primary: "#818cf8",
     primaryBg: "#312e81",
     primaryHover: "#6366f1",
@@ -85,6 +102,8 @@ interface ThemeContextType {
   toggleTheme: () => void;
   isDark: boolean;
   colors: typeof themeColors.light;
+  primaryColor: string;
+  setPrimaryColor: (hex: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -97,7 +116,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return "light";
   });
 
-  const colors = theme === "dark" ? themeColors.dark : themeColors.light;
+  const [primaryColor, setPrimaryColor] = useState("#6366f1");
+
+  const base = theme === "dark" ? themeColors.dark : themeColors.light;
+  const darker = darkenHex(primaryColor, 0.75);
+  const colors = {
+    ...base,
+    primary: primaryColor,
+    primaryBg: `${primaryColor}1a`,
+    primaryHover: darkenHex(primaryColor, 0.85),
+    gradientPrimary: `linear-gradient(135deg, ${primaryColor} 0%, ${darker} 100%)`,
+    shadowPrimary: `0 4px 14px -3px ${primaryColor}66`,
+  };
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -109,7 +139,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === "dark", colors }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === "dark", colors, primaryColor, setPrimaryColor }}>
       {children}
     </ThemeContext.Provider>
   );

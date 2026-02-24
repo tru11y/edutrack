@@ -193,7 +193,7 @@ export default function Users() {
     });
   };
 
-  const handleEditUser = async (userId: string, data: { nom: string; prenom: string; role: string; classesEnseignees: string[] }) => {
+  const handleEditUser = async (userId: string, data: { nom: string; prenom: string; role: string; classesEnseignees: string[]; programme?: string }) => {
     const updateData: Record<string, unknown> = {
       nom: data.nom,
       prenom: data.prenom,
@@ -204,6 +204,11 @@ export default function Users() {
       updateData.classesEnseignees = data.classesEnseignees;
     } else {
       updateData.classesEnseignees = [];
+    }
+    if (data.programme) {
+      updateData.programme = data.programme;
+    } else {
+      updateData.programme = null;
     }
     try {
       await updateDoc(doc(db, "users", userId), updateData);

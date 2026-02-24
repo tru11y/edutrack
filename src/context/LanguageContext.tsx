@@ -165,6 +165,15 @@ const translations = {
     assignments: "Devoirs",
     books: "Livres",
     routes: "Routes",
+    // Cours du soir
+    coursduSoir: "Cours du soir",
+    soirEleves: "Élèves (soir)",
+    soirPresences: "Présences (soir)",
+    soirPaiements: "Paiements (soir)",
+    soirCahier: "Cahier (soir)",
+    soirEmploiDuTemps: "Emploi du temps (soir)",
+    programmeSoir: "Cours du soir",
+    programmeRegulier: "Enseignement régulier",
   },
   en: {
     // Navigation
@@ -327,6 +336,15 @@ const translations = {
     assignments: "Assignments",
     books: "Books",
     routes: "Routes",
+    // Cours du soir
+    coursduSoir: "Evening classes",
+    soirEleves: "Students (evening)",
+    soirPresences: "Attendance (evening)",
+    soirPaiements: "Payments (evening)",
+    soirCahier: "Textbook (evening)",
+    soirEmploiDuTemps: "Schedule (evening)",
+    programmeSoir: "Evening classes",
+    programmeRegulier: "Regular program",
   },
 };
 

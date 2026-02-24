@@ -12,6 +12,7 @@ export interface UserData {
   prenom?: string;
   createdAt?: unknown;
   classesEnseignees?: string[];
+  programme?: "regular" | "soir";
 }
 
 export interface UserFormData {

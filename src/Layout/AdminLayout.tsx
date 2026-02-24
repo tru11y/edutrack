@@ -12,6 +12,7 @@ import GlobalSearch from "../components/GlobalSearch";
 import Breadcrumb from "../components/Breadcrumb";
 import PageTransition from "../components/PageTransition";
 import SubscriptionBanner from "../components/SubscriptionBanner";
+import NotificationBell from "../components/NotificationBell";
 
 interface NavItem {
   to: string;
@@ -19,6 +20,7 @@ interface NavItem {
   icon: string;
   end?: boolean;
   roles: ("admin" | "gestionnaire" | "prof" | "eleve" | "parent")[];
+  programme?: "soir" | "regular";
 }
 
 const navItems: NavItem[] = [
@@ -36,6 +38,13 @@ const navItems: NavItem[] = [
   { to: "/comptabilite", labelKey: "accounting", icon: "wallet", roles: ["admin"] },
   { to: "/corbeille", labelKey: "trash", icon: "trash", roles: ["admin", "gestionnaire"] },
   { to: "/parametres", labelKey: "parametres" as TranslationKey, icon: "settings", roles: ["admin"] },
+  // Cours du soir
+  { to: "/cours-du-soir", labelKey: "coursduSoir" as TranslationKey, icon: "moon", end: true, roles: ["admin", "gestionnaire", "prof"], programme: "soir" },
+  { to: "/cours-du-soir/eleves", labelKey: "soirEleves" as TranslationKey, icon: "users", roles: ["admin", "gestionnaire", "prof"], programme: "soir" },
+  { to: "/cours-du-soir/presences", labelKey: "soirPresences" as TranslationKey, icon: "check", roles: ["admin", "gestionnaire", "prof"], programme: "soir" },
+  { to: "/cours-du-soir/paiements", labelKey: "soirPaiements" as TranslationKey, icon: "card", roles: ["admin", "gestionnaire"], programme: "soir" },
+  { to: "/cours-du-soir/cahier", labelKey: "soirCahier" as TranslationKey, icon: "book", roles: ["admin", "gestionnaire", "prof"], programme: "soir" },
+  { to: "/cours-du-soir/emploi-du-temps", labelKey: "soirEmploiDuTemps" as TranslationKey, icon: "book", roles: ["admin", "gestionnaire"], programme: "soir" },
   // Eleve portal
   { to: "/eleve", labelKey: "dashboard", icon: "dashboard", end: true, roles: ["eleve"] },
   { to: "/eleve/notes", labelKey: "evaluations", icon: "grade", roles: ["eleve"] },
@@ -70,6 +79,7 @@ const icons: Record<string, React.ReactNode> = {
   close: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
   sun: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.5"/><path d="M10 1V3M10 17V19M1 10H3M17 10H19M4.22 4.22L5.64 5.64M14.36 14.36L15.78 15.78M4.22 15.78L5.64 14.36M14.36 5.64L15.78 4.22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   moon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M17.5 10.5C17.5 14.64 14.14 18 10 18C5.86 18 2.5 14.64 2.5 10.5C2.5 6.36 5.86 3 10 3C10.28 3 10.56 3.02 10.83 3.05C9.47 4.22 8.6 5.96 8.6 7.9C8.6 11.48 11.52 14.4 15.1 14.4C15.93 14.4 16.72 14.25 17.45 13.97C17.48 14.14 17.5 14.32 17.5 14.5V10.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  moonFill: <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M17.5 10.5C17.5 14.64 14.14 18 10 18C5.86 18 2.5 14.64 2.5 10.5C2.5 6.36 5.86 3 10 3C10.28 3 10.56 3.02 10.83 3.05C9.47 4.22 8.6 5.96 8.6 7.9C8.6 11.48 11.52 14.4 15.1 14.4C15.93 14.4 16.72 14.25 17.45 13.97C17.48 14.14 17.5 14.32 17.5 14.5V10.5Z"/></svg>,
   globe: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/><path d="M2 8H14M8 2C6 4 6 12 8 14M8 2C10 4 10 12 8 14" stroke="currentColor" strokeWidth="1.5"/></svg>,
 };
 
@@ -155,7 +165,19 @@ export default function AdminLayout() {
     navigate("/login");
   };
 
-  const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole as "admin" | "gestionnaire" | "prof" | "eleve" | "parent"));
+  const userProgramme = user?.programme;
+  const filteredNavItems = navItems.filter((item) => {
+    if (!item.roles.includes(userRole as "admin" | "gestionnaire" | "prof" | "eleve" | "parent")) return false;
+    // Admins see everything
+    if (user?.role === "admin") return true;
+    // Soir nav items
+    if (item.programme === "soir") {
+      return userProgramme === "soir";
+    }
+    // Regular nav items: soir gestionnaire/prof don't see them
+    if (userProgramme === "soir" && (user?.role === "gestionnaire" || user?.role === "prof")) return false;
+    return true;
+  });
   const sidebarWidth = 260;
 
   const accent = isProf ? themeColors.success : themeColors.primary;
@@ -204,6 +226,7 @@ export default function AdminLayout() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <GlobalSearch />
+            <NotificationBell />
             <button onClick={toggleTheme} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 4 }}>
               {isDark ? icons.sun : icons.moon}
             </button>
@@ -246,8 +269,15 @@ export default function AdminLayout() {
             )}
           </div>
 
+          {/* Notification Bell (desktop) */}
+          {!isMobile && (
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+              <NotificationBell />
+            </div>
+          )}
+
           {/* Theme & Language Toggle */}
-          <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             <button onClick={toggleTheme} style={{ flex: 1, padding: "8px", background: colors.bgHover, border: `1px solid ${colors.border}`, borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: colors.textMuted, fontSize: 12 }}>
               {isDark ? icons.sun : icons.moon}
               {isDark ? t("lightMode") : t("darkMode")}
@@ -294,7 +324,16 @@ export default function AdminLayout() {
         {/* Navigation */}
         <nav aria-label="Navigation principale" style={{ flex: 1, padding: "20px 12px", overflowY: "auto" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {filteredNavItems.map((item) => (
+            {filteredNavItems.map((item, idx) => (
+              <span key={item.to}>
+              {/* Section separator for soir: show before first soir item if admin sees both */}
+              {user?.role === "admin" && item.programme === "soir" && (idx === 0 || filteredNavItems[idx - 1]?.programme !== "soir") && (
+                <div style={{ padding: "12px 14px 6px", fontSize: 10, fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.8px", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ flex: 1, height: 1, background: colors.border }} />
+                  COURS DU SOIR
+                  <span style={{ flex: 1, height: 1, background: colors.border }} />
+                </div>
+              )}
               <NavLink key={item.to} to={item.to} end={item.end} data-tour={item.labelKey} style={({ isActive }) => ({
                 display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10,
                 fontSize: 14, fontWeight: 500, color: isActive ? colors.accent : colors.textMuted,
@@ -308,6 +347,7 @@ export default function AdminLayout() {
                   </span>
                 )}
               </NavLink>
+              </span>
             ))}
           </div>
         </nav>
