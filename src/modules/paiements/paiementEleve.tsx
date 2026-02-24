@@ -113,6 +113,8 @@ export default function PaiementEleve() {
                           schoolAdresse: school?.adresse,
                           schoolTelephone: school?.telephone,
                           schoolEmail: school?.email,
+                          primaryColor: school?.primaryColor,
+                          schoolLogo: school?.schoolLogo,
                         })
                       }
                       style={{

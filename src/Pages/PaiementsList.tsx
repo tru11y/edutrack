@@ -93,6 +93,7 @@ export default function PaiementsList() {
 
       // Fetch eleve to get prénom and classe
       let elevePrenom = "";
+      let eleveNomFamille = p.eleveNom; // fallback: full name stored in payment
       let classe = "";
       if (p.eleveId) {
         try {
@@ -100,13 +101,14 @@ export default function PaiementsList() {
           if (eleveSnap.exists()) {
             const eleveData = eleveSnap.data();
             elevePrenom = eleveData.prenom || "";
+            eleveNomFamille = eleveData.nom || p.eleveNom;
             classe = eleveData.classe || "";
           }
         } catch { /* use empty strings if fetch fails */ }
       }
 
       const filename = exportRecuPaiementPDF(p, {
-        eleveNom: p.eleveNom,
+        eleveNom: eleveNomFamille,
         elevePrenom,
         classe,
         generatedByName,

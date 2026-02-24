@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Timestamp, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { Timestamp, addDoc, collection, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { getAllPaiements } from "./paiement.service";
 import { exportRecuPaiementPDF } from "./paiement.pdf";
@@ -48,25 +48,44 @@ export default function AdminPaiementsList() {
   }, [schoolId]);
 
   async function handleDownloadPDF(p: Paiement) {
-    // Reconstituer prénom/nom depuis eleveNom
-    const parts = (p.eleveNom || "").split(" ");
-    const elevePrenom = parts[0] || "";
-    const eleveNom = parts.slice(1).join(" ") || elevePrenom;
-
     const generatedByName = user?.prenom && user?.nom
       ? `${user.prenom} ${user.nom}`.trim()
       : user?.email || "Administration";
 
+    // Fetch eleve to get prenom, nom de famille, classe
+    let elevePrenom = "";
+    let eleveNom = p.eleveNom; // fallback
+    let classe = "";
+    if (p.eleveId) {
+      try {
+        const snap = await getDoc(doc(db, "eleves", p.eleveId));
+        if (snap.exists()) {
+          const d = snap.data();
+          elevePrenom = d.prenom || "";
+          eleveNom = d.nom || p.eleveNom;
+          classe = d.classe || "";
+        }
+      } catch { /* ignore */ }
+    }
+    // Fallback: split full name if no Firestore data
+    if (!elevePrenom) {
+      const parts = (p.eleveNom || "").split(" ");
+      elevePrenom = parts[0] || "";
+      eleveNom = parts.slice(1).join(" ") || elevePrenom;
+    }
+
     const filename = exportRecuPaiementPDF(p, {
       elevePrenom,
       eleveNom,
-      classe: "",
+      classe,
       adminNom: generatedByName,
       generatedByName,
       schoolName: school?.schoolName,
       schoolAdresse: school?.adresse,
       schoolTelephone: school?.telephone,
       schoolEmail: school?.email,
+      primaryColor: school?.primaryColor,
+      schoolLogo: school?.schoolLogo,
     });
 
     // Sauvegarder la trace du reçu généré dans Firestore

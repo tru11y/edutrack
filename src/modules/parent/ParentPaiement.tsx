@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useSchool } from "../../context/SchoolContext";
 import { getPaiementsByEleve } from "../paiements/paiement.service";
+import { getEleveById } from "../eleves/eleve.service";
 import { exportRecuPaiementPDF } from "../paiements/paiement.pdf";
 import type { Paiement } from "../paiements/paiement.types";
+import type { Eleve } from "../eleves/eleve.types";
 
 export default function ParentPaiements() {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const { school } = useSchool();
   const [paiements, setPaiements] = useState<Paiement[]>([]);
+  const [eleve, setEleve] = useState<Eleve | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,8 +28,12 @@ export default function ParentPaiements() {
       return;
     }
 
-    getPaiementsByEleve(eleveId).then((p) => {
+    Promise.all([
+      getPaiementsByEleve(eleveId),
+      getEleveById(eleveId),
+    ]).then(([p, e]) => {
       setPaiements(p);
+      setEleve(e);
       setLoading(false);
     });
   }, [user]);
@@ -167,9 +176,15 @@ export default function ParentPaiements() {
                 <button
                   onClick={() =>
                     exportRecuPaiementPDF(p, {
-                      eleveNom: user?.email?.split("@")[0] || "Eleve",
-                      elevePrenom: "",
-                      classe: "N/A",
+                      eleveNom: eleve?.nom || user?.email?.split("@")[0] || "Eleve",
+                      elevePrenom: eleve?.prenom || "",
+                      classe: eleve?.classe || "",
+                      schoolName: school?.schoolName,
+                      schoolAdresse: school?.adresse,
+                      schoolTelephone: school?.telephone,
+                      schoolEmail: school?.email,
+                      primaryColor: school?.primaryColor,
+                      schoolLogo: school?.schoolLogo,
                     })
                   }
                   style={{
