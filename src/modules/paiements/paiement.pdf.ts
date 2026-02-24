@@ -14,9 +14,11 @@ function toDate(date: Date | Timestamp | undefined): Date {
 function fmt(n: number): string {
   const safe = isNaN(n) || n == null ? 0 : n;
   try {
-    return safe.toLocaleString("fr-FR") + " FCFA";
+    // fr-FR uses \u202F (narrow no-break space) as thousands separator — jsPDF can't render it.
+    // Replace with plain ASCII space so amounts display correctly in the PDF.
+    return safe.toLocaleString("fr-FR").replace(/\u00A0|\u202F/g, " ") + " FCFA";
   } catch {
-    return safe.toLocaleString() + " FCFA";
+    return String(safe) + " FCFA";
   }
 }
 
