@@ -12,7 +12,23 @@ function toDate(date: Date | Timestamp | undefined): Date {
 }
 
 function fmt(n: number): string {
-  return n.toLocaleString("fr-FR") + " FCFA";
+  const safe = isNaN(n) || n == null ? 0 : n;
+  // Use toLocaleString with fallback for environments that don't support fr-FR
+  try {
+    return safe.toLocaleString("fr-FR") + " FCFA";
+  } catch {
+    return safe.toLocaleString() + " FCFA";
+  }
+}
+
+function formatMois(mois: string): string {
+  if (!mois) return "—";
+  try {
+    const d = new Date(mois + "-02"); // day 2 to avoid timezone issues
+    return d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  } catch {
+    return mois;
+  }
 }
 
 export interface RecuOptions {
@@ -90,9 +106,9 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
 
   const colW = (W - 28) / 3;
   const fields = [
-    { label: "ÉLÈVE", value: `${options.elevePrenom} ${options.eleveNom}`.trim() || "—" },
+    { label: "ÉLÈVE", value: `${options.elevePrenom} ${options.eleveNom}`.trim() || options.eleveNom || "—" },
     { label: "CLASSE", value: options.classe || "—" },
-    { label: "MOIS CONCERNÉ", value: paiement.mois || "—" },
+    { label: "MOIS CONCERNÉ", value: formatMois(paiement.mois) },
   ];
   fields.forEach((f, i) => {
     const x = 22 + i * colW;
@@ -122,13 +138,19 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
   doc.text("DÉTAIL FINANCIER", 14, y);
   y += 4;
 
+  // Always compute montantRestant fresh (stored value may be stale)
+  const montantTotal = paiement.montantTotal || 0;
+  const montantPaye = paiement.montantPaye || 0;
+  const montantRestant = Math.max(0, montantTotal - montantPaye);
+  const restantColor: [number, number, number] = montantRestant > 0 ? [220, 38, 38] : [22, 163, 74];
+
   autoTable(doc, {
     startY: y,
     head: [["Description", "Montant"]],
     body: [
-      ["Montant total dû", fmt(paiement.montantTotal)],
-      ["Montant payé", fmt(paiement.montantPaye)],
-      ["Montant restant", fmt(paiement.montantRestant)],
+      ["Montant total dû", fmt(montantTotal)],
+      ["Montant payé", fmt(montantPaye)],
+      [montantRestant > 0 ? "Montant restant à payer" : "Solde restant", fmt(montantRestant)],
     ],
     columnStyles: {
       0: { cellWidth: "auto" },
@@ -137,6 +159,18 @@ export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions):
     headStyles: { fillColor: BLUE, textColor: [255, 255, 255], fontSize: 9, fontStyle: "bold" },
     bodyStyles: { fontSize: 10, textColor: DARK },
     alternateRowStyles: { fillColor: [249, 250, 251] },
+    didParseCell: (data) => {
+      // Highlight the "reste" row in red (if unpaid) or green (if fully paid)
+      if (data.row.index === 2) {
+        data.cell.styles.textColor = restantColor;
+        data.cell.styles.fontStyle = "bold";
+        if (data.column.index === 0) {
+          data.cell.styles.fillColor = montantRestant > 0 ? [255, 240, 240] : [240, 255, 245];
+        } else {
+          data.cell.styles.fillColor = montantRestant > 0 ? [255, 240, 240] : [240, 255, 245];
+        }
+      }
+    },
     margin: { left: 14, right: 14 },
   });
 
