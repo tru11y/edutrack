@@ -5,6 +5,9 @@ import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
 import { useTenant } from "../../context/TenantContext";
 import { useAuth } from "../../context/AuthContext";
+import { useSchool } from "../../context/SchoolContext";
+import { exportRecuPaiementPDF } from "../paiements/paiement.pdf";
+import type { Paiement } from "../paiements/paiement.types";
 
 interface SoirPaiement {
   id: string;
@@ -36,6 +39,7 @@ export default function SoirPaiementsList() {
   const { colors } = useTheme();
   const { schoolId } = useTenant();
   const { user } = useAuth();
+  const { school } = useSchool();
   const [paiements, setPaiements] = useState<SoirPaiement[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -129,12 +133,40 @@ export default function SoirPaiementsList() {
                   </td>
                   <td style={{ padding: "12px 16px", color: colors.textMuted, fontSize: 12 }}>{formatDate(p.datePaiement)}</td>
                   <td style={{ padding: "12px 16px" }}>
-                    {canManage && (
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <Link to={`/cours-du-soir/paiements/${p.id}/modifier`} style={{ padding: "4px 12px", background: colors.primaryBg, color: colors.primary, borderRadius: 6, fontSize: 12, fontWeight: 500, textDecoration: "none" }}>Modifier</Link>
-                        <button onClick={() => handleDelete(p.id)} style={{ padding: "4px 12px", background: colors.dangerBg, color: colors.danger, borderRadius: 6, fontSize: 12, fontWeight: 500, border: "none", cursor: "pointer" }}>Supprimer</button>
-                      </div>
-                    )}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        onClick={() =>
+                          exportRecuPaiementPDF(
+                            {
+                              ...p,
+                              montantRestant: Math.max(0, (p.montantTotal || 0) - (p.montantPaye || 0)),
+                            } as Paiement,
+                            {
+                              eleveNom: p.eleveNom,
+                              elevePrenom: p.elevePrenom || "",
+                              classe: p.classe || "Cours du soir",
+                              adminNom: user?.prenom && user?.nom ? `${user.prenom} ${user.nom}`.trim() : user?.email || "Administration",
+                              generatedByName: user?.prenom && user?.nom ? `${user.prenom} ${user.nom}`.trim() : user?.email || "Administration",
+                              schoolName: school?.schoolName,
+                              schoolAdresse: school?.adresse,
+                              schoolTelephone: school?.telephone,
+                              schoolEmail: school?.email,
+                              primaryColor: school?.primaryColor,
+                              schoolLogo: school?.schoolLogo,
+                            }
+                          )
+                        }
+                        style={{ padding: "4px 12px", background: colors.infoBg, color: colors.info, borderRadius: 6, fontSize: 12, fontWeight: 500, border: "none", cursor: "pointer" }}
+                      >
+                        Reçu PDF
+                      </button>
+                      {canManage && (
+                        <>
+                          <Link to={`/cours-du-soir/paiements/${p.id}/modifier`} style={{ padding: "4px 12px", background: colors.primaryBg, color: colors.primary, borderRadius: 6, fontSize: 12, fontWeight: 500, textDecoration: "none" }}>Modifier</Link>
+                          <button onClick={() => handleDelete(p.id)} style={{ padding: "4px 12px", background: colors.dangerBg, color: colors.danger, borderRadius: 6, fontSize: 12, fontWeight: 500, border: "none", cursor: "pointer" }}>Supprimer</button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
