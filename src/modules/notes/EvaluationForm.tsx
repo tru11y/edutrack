@@ -181,7 +181,7 @@ export default function EvaluationForm() {
           </button>
           <button type="submit" disabled={saving} style={{
             padding: "10px 20px", borderRadius: 8, border: "none",
-            background: colors.primary, color: "#fff", cursor: saving ? "not-allowed" : "pointer",
+            background: colors.primary, color: colors.onGradient, cursor: saving ? "not-allowed" : "pointer",
             fontSize: 14, fontWeight: 500, opacity: saving ? 0.7 : 1,
           }}>
             {saving ? "Enregistrement..." : isEdit ? "Modifier" : "Creer"}

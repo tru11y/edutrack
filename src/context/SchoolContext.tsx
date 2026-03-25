@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useAuth } from "./AuthContext";
@@ -59,8 +59,10 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     return () => unsub();
   }, [user?.schoolId]);
 
+  const value = useMemo(() => ({ school, loading }), [school, loading]);
+
   return (
-    <SchoolContext.Provider value={{ school, loading }}>
+    <SchoolContext.Provider value={value}>
       {children}
     </SchoolContext.Provider>
   );

@@ -5,6 +5,7 @@ import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { useTenant } from "../../context/TenantContext";
+import { logger } from "@/utils/logger";
 
 interface Stats {
   totalEleves: number;
@@ -83,7 +84,7 @@ export default function SoirDashboard() {
           paiementsRecents: recents,
         });
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }

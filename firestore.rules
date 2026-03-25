@@ -6,42 +6,34 @@ service cloud.firestore {
     // FONCTIONS DE SECURITE
     // ========================================
 
-    // Verifier si l'utilisateur est connecte
     function signedIn() {
       return request.auth != null;
     }
 
-    // Obtenir le document utilisateur courant
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // Verifier si l'utilisateur est admin
     function isAdmin() {
       return signedIn() && getUserData().role == "admin";
     }
 
-    // Verifier si l'utilisateur est admin ou gestionnaire
     function isAdminOrGestionnaire() {
       return signedIn() && getUserData().role in ["admin", "gestionnaire"];
     }
 
-    // Verifier si l'utilisateur est prof
     function isProf() {
       return signedIn() && getUserData().role == "prof";
     }
 
-    // Verifier si l'utilisateur est eleve
     function isEleve() {
       return signedIn() && getUserData().role == "eleve";
     }
 
-    // Verifier si l'utilisateur est parent
     function isParent() {
       return signedIn() && getUserData().role == "parent";
     }
 
-    // Verifier si l'utilisateur est staff (admin, gestionnaire, prof)
     function isStaff() {
       return signedIn() && getUserData().role in ["admin", "gestionnaire", "prof"];
     }
@@ -50,22 +42,18 @@ service cloud.firestore {
     // FONCTIONS MULTI-TENANT
     // ========================================
 
-    // Obtenir le schoolId de l'utilisateur courant
     function getUserSchoolId() {
       return getUserData().schoolId;
     }
 
-    // Verifier qu'un document appartient a l'ecole de l'utilisateur
     function belongsToUserSchool() {
       return resource.data.schoolId == getUserSchoolId();
     }
 
-    // Verifier qu'un nouveau document a le bon schoolId
     function createdWithUserSchool() {
       return request.resource.data.schoolId == getUserSchoolId();
     }
 
-    // Verifier si l'utilisateur est un super admin
     function isSuperAdmin() {
       return signedIn() && exists(/databases/$(database)/documents/superadmins/$(request.auth.uid));
     }
@@ -76,134 +64,135 @@ service cloud.firestore {
 
     // USERS - Seuls les admins peuvent creer/modifier des utilisateurs
     match /users/{userId} {
-      // Lecture: staff peut voir tous, les autres seulement eux-memes
       allow read: if isStaff() || request.auth.uid == userId;
-
-      // Creation: admin uniquement
       allow create: if isAdmin();
-
-      // Modification: admin peut tout modifier, les autres seulement leur lastSeen
       allow update: if isAdmin() ||
         (request.auth.uid == userId &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeen']));
-
-      // Suppression: admin uniquement
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeen', 'nom', 'prenom', 'telephone', 'fcmTokens']));
       allow delete: if isAdmin();
     }
 
     // ELEVES - Staff peut gerer, parents/eleves lecture limitee
+    // SECURITE: Isolation multi-tenant stricte sur ecriture
     match /eleves/{eleveId} {
-      // Lecture: staff complet, parent si enfant, eleve si lui-meme
-      allow read: if isStaff() ||
+      allow read: if (isStaff() && belongsToUserSchool()) ||
         (isParent() && eleveId in getUserData().enfantsIds) ||
         (isEleve() && getUserData().eleveId == eleveId);
-
-      // Ecriture: admin et gestionnaire uniquement
-      allow write: if isAdminOrGestionnaire();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
+      allow update: if isAdminOrGestionnaire() && belongsToUserSchool();
+      allow delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // PROFESSEURS - Staff peut gerer
+    // PROFESSEURS
     match /professeurs/{profId} {
-      allow read: if isStaff() ||
+      allow read: if (isStaff() && belongsToUserSchool()) ||
         (isProf() && getUserData().professeurId == profId);
-      allow write: if isAdminOrGestionnaire();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
+      allow update, delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // COURS - Staff peut gerer, eleves/parents lecture de leur classe
+    // COURS - Isolation multi-tenant
     match /cours/{coursId} {
-      allow read: if isStaff() ||
-        (isEleve() && resource.data.classe == get(/databases/$(database)/documents/eleves/$(getUserData().eleveId)).data.classe) ||
-        isParent();
-      allow write: if isStaff();
+      allow read: if (isStaff() && belongsToUserSchool()) ||
+        (isEleve() && resource.data.classe == get(/databases/$(database)/documents/eleves/$(getUserData().eleveId)).data.classe && belongsToUserSchool()) ||
+        (isParent() && belongsToUserSchool());
+      allow create: if isStaff() && createdWithUserSchool();
+      allow update, delete: if isStaff() && belongsToUserSchool();
     }
 
-    // PRESENCES - Staff peut gerer, eleves/parents lecture limitee
+    // PRESENCES - Isolation multi-tenant
     match /presences/{coursId} {
-      allow read: if isStaff();
-      allow create: if isStaff();
-      allow update: if isStaff();
-      allow delete: if isAdminOrGestionnaire();
+      allow read: if isStaff() && belongsToUserSchool();
+      allow create: if isStaff() && createdWithUserSchool();
+      allow update: if isStaff() && belongsToUserSchool();
+      allow delete: if isAdminOrGestionnaire() && belongsToUserSchool();
 
-      // Subcollection appels (Pattern B: /presences/{coursId}/appels/{eleveId})
       match /appels/{eleveId} {
-        allow read: if isStaff() ||
+        allow read: if (isStaff() && get(/databases/$(database)/documents/presences/$(coursId)).data.schoolId == getUserSchoolId()) ||
           (isEleve() && getUserData().eleveId == eleveId) ||
           (isParent() && eleveId in getUserData().enfantsIds);
-        allow write: if isStaff();
+        allow write: if isStaff() && get(/databases/$(database)/documents/presences/$(coursId)).data.schoolId == getUserSchoolId();
       }
     }
 
-    // PAIEMENTS - Donnees sensibles, acces tres restreint
+    // PAIEMENTS - Donnees sensibles, isolation multi-tenant stricte
     match /paiements/{paiementId} {
-      // Lecture: admin/gestionnaire complet, parent si son enfant
-      allow read: if isAdminOrGestionnaire() ||
+      allow read: if (isAdminOrGestionnaire() && belongsToUserSchool()) ||
         (isParent() && resource.data.eleveId in getUserData().enfantsIds);
-
-      // Ecriture: admin et gestionnaire uniquement
-      allow write: if isAdminOrGestionnaire();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
+      allow update, delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // DISCIPLINE - Staff peut gerer
+    // DISCIPLINE - Isolation multi-tenant
     match /discipline/{docId} {
-      allow read: if isStaff() ||
+      allow read: if (isStaff() && belongsToUserSchool()) ||
         (isParent() && resource.data.eleveId in getUserData().enfantsIds) ||
         (isEleve() && resource.data.eleveId == getUserData().eleveId);
-      allow write: if isStaff();
+      allow create: if isStaff() && createdWithUserSchool();
+      allow update, delete: if isStaff() && belongsToUserSchool();
     }
 
-    // DISCIPLINE LOGS - Admin/gestionnaire uniquement
     match /discipline_logs/{docId} {
-      allow read, write: if isAdminOrGestionnaire();
+      allow read, write: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // CAHIER DE TEXTE - Staff peut lire, ecriture par prof/admin
+    // CAHIER DE TEXTE - Isolation multi-tenant
     match /cahier/{docId} {
-      allow read: if isStaff();
-      // Prof peut creer/modifier ses propres entrees, admin peut tout modifier
-      allow create: if isStaff();
-      allow update: if isAdmin() || (isProf() && resource.data.profId == request.auth.uid);
-      allow delete: if isAdminOrGestionnaire();
+      allow read: if isStaff() && belongsToUserSchool();
+      allow create: if isStaff() && createdWithUserSchool();
+      allow update: if (isAdmin() && belongsToUserSchool()) ||
+        (isProf() && resource.data.profId == request.auth.uid && belongsToUserSchool());
+      allow delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // MESSAGES - Tous peuvent lire/ecrire leurs messages
+    // MESSAGES - SECURITE: lecture restreinte aux participants uniquement
+    // Fix: avant c'etait "allow read: if signedIn()" — n'importe qui pouvait lire tous les messages
     match /messages/{messageId} {
-      allow read: if signedIn();
+      allow read: if signedIn() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid ||
+        (resource.data.participants != null && request.auth.uid in resource.data.participants)
+      );
       allow create: if signedIn();
-      // Seul l'auteur ou admin peut supprimer
       allow delete: if isAdmin() || resource.data.senderId == request.auth.uid;
-      // Modification: seul admin ou auteur, et seulement certains champs
-      allow update: if (isAdmin() || resource.data.senderId == request.auth.uid) &&
+      allow update: if (isAdmin() || resource.data.senderId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt', 'deletedAt']);
     }
 
-    // ALERTS - Admin/gestionnaire peuvent gerer, tous peuvent lire
+    // ALERTS - Isolation multi-tenant
+    // Fix: avant c'etait "allow read: if signedIn()" sans schoolId
     match /alerts/{alertId} {
-      allow read: if signedIn();
-      allow write: if isAdminOrGestionnaire();
+      allow read: if signedIn() && belongsToUserSchool();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
+      allow update, delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // CLASSES - Staff peut gerer, tous peuvent lire
+    // CLASSES - Isolation multi-tenant
+    // Fix: avant c'etait "allow read: if signedIn()" sans schoolId
     match /classes/{classeId} {
-      allow read: if signedIn();
-      allow write: if isAdminOrGestionnaire();
+      allow read: if signedIn() && belongsToUserSchool();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
+      allow update, delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // CORBEILLE - Admin uniquement
+    // CORBEILLE - Admin uniquement, isolation multi-tenant
     match /corbeille/{docId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin() && belongsToUserSchool();
+      allow create: if isAdmin() && createdWithUserSchool();
+      allow update, delete: if isAdmin() && belongsToUserSchool();
     }
 
-    // CONNECTION LOGS - Admin/gestionnaire lecture, systeme ecriture
+    // CONNECTION LOGS - Isolation multi-tenant stricte
+    // Fix: avant les logs de toutes les ecoles etaient lisibles par tout admin
     match /connection_logs/{logId} {
-      // Lecture: admin/gestionnaire uniquement
-      allow read: if isAdminOrGestionnaire();
-      // Ecriture: utilisateur connecte peut creer son propre log
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
-      // Mise a jour: seulement pour ajouter logoutAt sur son propre log
+      allow read: if isAdminOrGestionnaire() && resource.data.schoolId == getUserSchoolId();
+      allow create: if signedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.schoolId == getUserSchoolId();
       allow update: if signedIn() && resource.data.userId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['logoutAt']);
-      // Suppression: admin uniquement
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() && resource.data.schoolId == getUserSchoolId();
     }
 
     // ONLINE USERS - Chaque utilisateur gere sa propre entree
@@ -213,26 +202,30 @@ service cloud.firestore {
       allow delete: if signedIn() && (request.auth.uid == userId || isAdmin());
     }
 
-    // DEPENSES - Admin/gestionnaire uniquement
+    // DEPENSES - Admin/gestionnaire, isolation multi-tenant
     match /depenses/{depenseId} {
-      allow read, write: if isAdminOrGestionnaire();
+      allow read: if isAdminOrGestionnaire() && belongsToUserSchool();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
+      allow update, delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // SALAIRES - Admin/gestionnaire uniquement
+    // SALAIRES - Admin/gestionnaire, isolation multi-tenant
     match /salaires/{salaireId} {
-      allow read, write: if isAdminOrGestionnaire();
+      allow read: if isAdminOrGestionnaire() && belongsToUserSchool();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
+      allow update, delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // AUDIT LOGS - Admin/gestionnaire lecture, ecriture par CF
+    // AUDIT LOGS - Lecture admin, ecriture par Cloud Functions uniquement
     match /audit_logs/{logId} {
-      allow read: if isAdminOrGestionnaire();
+      allow read: if isAdminOrGestionnaire() && resource.data.schoolId == getUserSchoolId();
       allow write: if false;
     }
 
-    // SAUVEGARDES — historique des reçus générés
+    // SAUVEGARDES
     match /sauvegardes/{docId} {
-      allow read: if isAdminOrGestionnaire();
-      allow create: if isAdminOrGestionnaire() && request.resource.data.schoolId == getUserSchoolId();
+      allow read: if isAdminOrGestionnaire() && resource.data.schoolId == getUserSchoolId();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
       allow update, delete: if false;
     }
 
@@ -242,34 +235,38 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // MATIERES - Staff peut lire, admin/gestionnaire peut gerer
+    // MATIERES - Isolation multi-tenant
+    // Fix: avant c'etait "allow read: if signedIn()" sans schoolId
     match /matieres/{matiereId} {
-      allow read: if signedIn();
-      allow write: if isAdminOrGestionnaire();
+      allow read: if signedIn() && belongsToUserSchool();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
+      allow update, delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // EMPLOI DU TEMPS
+    // EMPLOI DU TEMPS - Isolation multi-tenant
+    // Fix: avant c'etait "allow read: if signedIn()" sans schoolId
     match /emploi_du_temps/{creneauId} {
-      allow read: if signedIn();
-      allow write: if isAdminOrGestionnaire();
+      allow read: if signedIn() && belongsToUserSchool();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
+      allow update, delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // EVALUATIONS - Staff peut gerer, eleves/parents lecture de leur classe
+    // EVALUATIONS - Isolation multi-tenant
     match /evaluations/{evaluationId} {
-      allow read: if isStaff() ||
-        (isEleve() && resource.data.classe == get(/databases/$(database)/documents/eleves/$(getUserData().eleveId)).data.classe) ||
-        isParent();
-      allow create, update: if isStaff();
-      allow delete: if isAdminOrGestionnaire();
+      allow read: if (isStaff() && belongsToUserSchool()) ||
+        (isEleve() && resource.data.classe == get(/databases/$(database)/documents/eleves/$(getUserData().eleveId)).data.classe && belongsToUserSchool()) ||
+        (isParent() && belongsToUserSchool());
+      allow create, update: if isStaff() && belongsToUserSchool();
+      allow delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
-    // NOTES - Staff peut gerer, eleves/parents lecture limitee
+    // NOTES - Isolation multi-tenant
     match /notes/{noteId} {
-      allow read: if isStaff() ||
+      allow read: if (isStaff() && belongsToUserSchool()) ||
         (isEleve() && resource.data.eleveId == getUserData().eleveId) ||
         (isParent() && resource.data.eleveId in getUserData().enfantsIds);
-      allow create, update: if isStaff();
-      allow delete: if isAdminOrGestionnaire();
+      allow create, update: if isStaff() && belongsToUserSchool();
+      allow delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
     // NOTIFICATIONS - Chacun voit ses notifications
@@ -281,24 +278,22 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // NOTIFICATION CONFIG - Admin uniquement
     match /notification_config/{docId} {
-      allow read: if isAdmin();
-      allow write: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
-    // BULLETINS - Staff peut gerer, eleves/parents lecture limitee
+    // BULLETINS - Isolation multi-tenant
     match /bulletins/{bulletinId} {
-      allow read: if isStaff() ||
+      allow read: if (isStaff() && belongsToUserSchool()) ||
         (isEleve() && resource.data.eleveId == getUserData().eleveId) ||
         (isParent() && resource.data.eleveId in getUserData().enfantsIds);
-      allow create, update: if isStaff();
-      allow delete: if isAdmin();
+      allow create, update: if isStaff() && belongsToUserSchool();
+      allow delete: if isAdmin() && belongsToUserSchool();
     }
 
     // ARCHIVES - Admin lecture seule (ecriture par CF)
     match /archives/{annee}/{collection}/{docId} {
-      allow read: if isAdmin();
+      allow read: if isAdmin() && getUserSchoolId() != null;
       allow write: if false;
     }
 
@@ -312,20 +307,20 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // SCHOOL SUBSCRIPTIONS - Super admin tout, admin de l'ecole lecture
+    // SCHOOL SUBSCRIPTIONS
     match /school_subscriptions/{schoolId} {
       allow read: if isSuperAdmin() ||
         (isAdminOrGestionnaire() && getUserData().schoolId == schoolId);
       allow write: if isSuperAdmin();
     }
 
-    // SUPER ADMINS - Lecture seule par les super admins eux-memes
+    // SUPER ADMINS - Lecture seule par les super admins
     match /superadmins/{uid} {
       allow read: if isSuperAdmin();
       allow write: if false;
     }
 
-    // ADMISSIONS - Soumission publique (schoolId requis), admin de l'ecole gere
+    // ADMISSIONS - Soumission publique, admin de l'ecole gere
     match /admissions/{admissionId} {
       allow create: if request.resource.data.keys().hasAll(['schoolId', 'nom', 'prenom'])
         && request.resource.data.schoolId is string
@@ -334,52 +329,55 @@ service cloud.firestore {
         resource.data.schoolId == getUserData().schoolId;
     }
 
-    // TRANSPORT ROUTES - Admin/gestionnaire de l'ecole
+    // TRANSPORT ROUTES
     match /transport_routes/{routeId} {
       allow read: if isStaff() && belongsToUserSchool();
       allow write: if isAdminOrGestionnaire() &&
         (resource == null || belongsToUserSchool());
     }
 
-    // LIBRARY / EMPRUNTS - Staff gere, eleves lecture de leurs emprunts
+    // BIBLIOTHEQUE - Isolation multi-tenant
+    // Fix: avant c'etait "allow read: if signedIn()" sans schoolId
     match /livres/{livreId} {
-      allow read: if signedIn();
-      allow write: if isAdminOrGestionnaire();
+      allow read: if signedIn() && belongsToUserSchool();
+      allow create: if isAdminOrGestionnaire() && createdWithUserSchool();
+      allow update, delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
     match /emprunts/{empruntId} {
-      allow read: if isStaff() ||
+      allow read: if (isStaff() && belongsToUserSchool()) ||
         (isEleve() && resource.data.eleveId == getUserData().eleveId) ||
         (isParent() && resource.data.eleveId in getUserData().enfantsIds);
-      allow write: if isStaff();
+      allow create: if isStaff() && createdWithUserSchool();
+      allow update, delete: if isStaff() && belongsToUserSchool();
     }
 
-    // LMS DEVOIRS / SUBMISSIONS
+    // LMS DEVOIRS / SUBMISSIONS - Isolation multi-tenant
     match /devoirs/{devoirId} {
-      allow read: if isStaff() ||
-        (isEleve() && resource.data.classe == get(/databases/$(database)/documents/eleves/$(getUserData().eleveId)).data.classe) ||
-        isParent();
-      allow create, update: if isStaff();
-      allow delete: if isAdminOrGestionnaire();
+      allow read: if (isStaff() && belongsToUserSchool()) ||
+        (isEleve() && resource.data.classe == get(/databases/$(database)/documents/eleves/$(getUserData().eleveId)).data.classe && belongsToUserSchool()) ||
+        (isParent() && belongsToUserSchool());
+      allow create, update: if isStaff() && belongsToUserSchool();
+      allow delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
     match /submissions/{submissionId} {
-      allow read: if isStaff() ||
+      allow read: if (isStaff() && belongsToUserSchool()) ||
         (isEleve() && resource.data.eleveId == getUserData().eleveId);
       allow create: if isEleve() && request.resource.data.eleveId == request.auth.uid;
-      allow update: if isStaff();
-      allow delete: if isAdminOrGestionnaire();
+      allow update: if isStaff() && belongsToUserSchool();
+      allow delete: if isAdminOrGestionnaire() && belongsToUserSchool();
     }
 
     // HR - LEAVE REQUESTS
     match /leave_requests/{requestId} {
-      allow read: if isAdminOrGestionnaire() ||
+      allow read: if isAdminOrGestionnaire() && belongsToUserSchool() ||
         (isStaff() && resource.data.userId == request.auth.uid);
       allow create: if isStaff() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdminOrGestionnaire() ||
+      allow update: if (isAdminOrGestionnaire() && belongsToUserSchool()) ||
         (isStaff() && resource.data.userId == request.auth.uid &&
          resource.data.statut == "en_attente");
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() && belongsToUserSchool();
     }
   }
 }

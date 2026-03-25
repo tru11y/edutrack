@@ -7,6 +7,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useOnboarding } from "../components/onboarding/OnboardingProvider";
 import { requestPushPermission, saveFCMToken, removeFCMToken } from "../services/pushNotifications";
+import { logger } from "@/utils/logger";
 
 interface UserProfile { nom?: string; prenom?: string; email?: string; telephone?: string; role?: string; }
 
@@ -28,7 +29,7 @@ export default function Profil() {
   useEffect(() => {
     if (!user?.uid) return;
     const loadProfile = async () => {
-      try { const snap = await getDoc(doc(db, "users", user.uid)); if (snap.exists()) { const data = snap.data() as UserProfile; setProfile(data); setForm({ nom: data.nom || "", prenom: data.prenom || "", telephone: data.telephone || "" }); } } catch (err) { console.error(err); } finally { setLoading(false); }
+      try { const snap = await getDoc(doc(db, "users", user.uid)); if (snap.exists()) { const data = snap.data() as UserProfile; setProfile(data); setForm({ nom: data.nom || "", prenom: data.prenom || "", telephone: data.telephone || "" }); } } catch (err) { logger.error(err); } finally { setLoading(false); }
     };
     loadProfile();
   }, [user?.uid]);
@@ -37,7 +38,7 @@ export default function Profil() {
 
   const handleSave = async () => {
     if (!user?.uid) return;
-    try { setSaving(true); setMessage({ type: "", text: "" }); await updateDoc(doc(db, "users", user.uid), { nom: form.nom.trim(), prenom: form.prenom.trim(), telephone: form.telephone.trim(), updatedAt: serverTimestamp() }); setProfile({ ...profile, nom: form.nom.trim(), prenom: form.prenom.trim(), telephone: form.telephone.trim() }); setEditing(false); setMessage({ type: "success", text: "Profil mis a jour" }); } catch (err) { console.error(err); setMessage({ type: "error", text: "Erreur" }); } finally { setSaving(false); }
+    try { setSaving(true); setMessage({ type: "", text: "" }); await updateDoc(doc(db, "users", user.uid), { nom: form.nom.trim(), prenom: form.prenom.trim(), telephone: form.telephone.trim(), updatedAt: serverTimestamp() }); setProfile({ ...profile, nom: form.nom.trim(), prenom: form.prenom.trim(), telephone: form.telephone.trim() }); setEditing(false); setMessage({ type: "success", text: "Profil mis a jour" }); } catch (err) { logger.error(err); setMessage({ type: "error", text: "Erreur" }); } finally { setSaving(false); }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -52,7 +53,7 @@ export default function Profil() {
       await reauthenticateWithCredential(currentUser, credential);
       await updatePassword(currentUser, passwordForm.newPassword);
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); setShowPasswordForm(false); setMessage({ type: "success", text: "Mot de passe modifie" });
-    } catch (err: unknown) { console.error(err); setMessage({ type: "error", text: err instanceof Error && err.message.includes("wrong-password") ? "Mot de passe incorrect" : "Erreur" }); } finally { setChangingPassword(false); }
+    } catch (err: unknown) { logger.error(err); setMessage({ type: "error", text: err instanceof Error && err.message.includes("wrong-password") ? "Mot de passe incorrect" : "Erreur" }); } finally { setChangingPassword(false); }
   };
 
   if (loading) {

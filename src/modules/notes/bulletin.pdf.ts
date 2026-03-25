@@ -1,8 +1,8 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import type { Bulletin } from "./notes.types";
 
-export function exportBulletinPDF(bulletin: Bulletin, eleveNom: string) {
+export async function exportBulletinPDF(bulletin: Bulletin, eleveNom: string) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
 
   // Header

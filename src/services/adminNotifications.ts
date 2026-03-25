@@ -1,5 +1,6 @@
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
+import { logger } from "@/utils/logger";
 
 export async function notifyAdmins(
   schoolId: string | null,
@@ -42,6 +43,6 @@ export async function notifyAdmins(
     await Promise.all(writes);
   } catch (err) {
     // Notifications are non-critical — fail silently
-    console.warn("notifyAdmins failed:", err);
+    logger.warn("notifyAdmins failed:", err);
   }
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs, query, limit } from "firebase/firestore";
+import { collection, getDocs, query, limit, where } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -40,8 +40,15 @@ export default function GlobalSearch() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.role === "admin" || user?.role === "gestionnaire";
+  const schoolId = user?.schoolId;
 
-  // Load data once on first open
+  // Reset cache si l'utilisateur change d'ecole ou se reconnecte
+  useEffect(() => {
+    setLoaded(false);
+    setAllData([]);
+  }, [user?.uid, schoolId]);
+
+  // Load data once on first open — filtre par schoolId pour isolation multi-tenant
   useEffect(() => {
     if (!open || loaded) return;
 
@@ -49,9 +56,12 @@ export default function GlobalSearch() {
       const items: SearchResult[] = [];
 
       try {
-        // Eleves
         if (isAdmin) {
-          const elevesSnap = await getDocs(query(collection(db, "eleves"), limit(500)));
+          // Eleves filtrés par schoolId
+          const elevesConstraints = schoolId
+            ? [where("schoolId", "==", schoolId), limit(300)]
+            : [limit(300)];
+          const elevesSnap = await getDocs(query(collection(db, "eleves"), ...elevesConstraints));
           elevesSnap.docs.forEach((doc) => {
             const d = doc.data();
             items.push({
@@ -63,8 +73,11 @@ export default function GlobalSearch() {
             });
           });
 
-          // Users
-          const usersSnap = await getDocs(query(collection(db, "users"), limit(200)));
+          // Users filtrés par schoolId
+          const usersConstraints = schoolId
+            ? [where("schoolId", "==", schoolId), limit(100)]
+            : [limit(100)];
+          const usersSnap = await getDocs(query(collection(db, "users"), ...usersConstraints));
           usersSnap.docs.forEach((doc) => {
             const d = doc.data();
             items.push({
@@ -84,7 +97,7 @@ export default function GlobalSearch() {
       }
     };
     loadAll();
-  }, [open, loaded, isAdmin]);
+  }, [open, loaded, isAdmin, schoolId]);
 
   // Filter results
   useEffect(() => {
@@ -137,6 +150,9 @@ export default function GlobalSearch() {
       {/* Search trigger */}
       <button
         onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 100); }}
+        aria-label="Ouvrir la recherche (Ctrl+K)"
+        aria-expanded={open}
+        aria-haspopup="dialog"
         style={{
           display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
           background: colors.bgHover, border: `1px solid ${colors.border}`, borderRadius: 8,
@@ -157,7 +173,11 @@ export default function GlobalSearch() {
           background: "rgba(0,0,0,0.4)", zIndex: 999,
           display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 100,
         }}>
-          <div style={{
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Recherche"
+            style={{
             background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`,
             width: "100%", maxWidth: 520, boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
             overflow: "hidden",

@@ -8,6 +8,7 @@ import { useToast, ConfirmModal } from "../components/ui";
 import type { CahierEntry } from "../modules/cahier/cahier.types";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { logger } from "@/utils/logger";
 
 type CahierDisplay = CahierEntry & { id: string };
 
@@ -102,7 +103,7 @@ export default function CahierList() {
 
       setCahiers(data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
@@ -128,7 +129,7 @@ export default function CahierList() {
           await loadCahiers();
           toast.success("Entree deplacee dans la corbeille");
         } catch (err) {
-          console.error(err);
+          logger.error(err);
           toast.error("Erreur lors de la suppression");
         }
       },

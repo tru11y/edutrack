@@ -102,8 +102,8 @@ export default function PaiementEleve() {
                   </td>
                   <td style={{ padding: 12, textAlign: "right" }}>
                     <button
-                      onClick={() =>
-                        exportRecuPaiementPDF(p, {
+                      onClick={async () => {
+                        await exportRecuPaiementPDF(p, {
                           eleveNom: eleve.nom,
                           elevePrenom: eleve.prenom,
                           classe: eleve.classe || "",
@@ -115,8 +115,8 @@ export default function PaiementEleve() {
                           schoolEmail: school?.email,
                           primaryColor: school?.primaryColor,
                           schoolLogo: school?.schoolLogo,
-                        })
-                      }
+                        });
+                      }}
                       style={{
                         padding: "6px 12px",
                         background: colors.infoBg,

@@ -7,6 +7,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useToast, ConfirmModal } from "../components/ui";
 import type { Eleve } from "../modules/eleves/eleve.types";
 import type { Paiement } from "../modules/paiements/paiement.types";
+import { logger } from "@/utils/logger";
 
 export default function EleveDetail() {
   const { colors } = useTheme();
@@ -30,7 +31,7 @@ export default function EleveDetail() {
         setPaiements(paiementsData);
         setLoading(false);
       })
-      .catch((err) => { console.error(err); setLoading(false); });
+      .catch((err) => { logger.error(err); setLoading(false); });
   }, [id]);
 
   const handleDesactiver = () => {
@@ -55,7 +56,7 @@ export default function EleveDetail() {
           await moveEleveToTrash(id);
           navigate("/eleves");
         } catch (err) {
-          console.error(err);
+          logger.error(err);
           toast.error("Erreur lors de la suppression");
         }
       },

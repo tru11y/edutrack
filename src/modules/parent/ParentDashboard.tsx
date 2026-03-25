@@ -5,6 +5,7 @@ import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { CircularProgress } from "../../components/charts";
+import { logger } from "@/utils/logger";
 
 interface Enfant {
   id: string;
@@ -84,7 +85,7 @@ export default function ParentDashboard() {
 
         setEnfants(results);
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }

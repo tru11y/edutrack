@@ -1,5 +1,3 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import type { Timestamp } from "firebase/firestore";
 import type { Paiement } from "./paiement.types";
 
@@ -88,7 +86,9 @@ function safeName(s: string): string {
   return (s || "").replace(/[^a-zA-Z0-9]/g, "_").slice(0, 20);
 }
 
-export function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions): string {
+export async function exportRecuPaiementPDF(paiement: Paiement, options: RecuOptions): Promise<string> {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const PRIMARY = hexToRgbPdf(options.primaryColor || "#1e50c8");
   const PRIMARY_DARK = darkenRgb(PRIMARY, 0.8);
 

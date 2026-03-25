@@ -107,7 +107,7 @@ export default function Archives() {
             onClick={() => newArchiveYear ? setConfirmOpen(true) : null}
             disabled={!newArchiveYear || archiving}
             style={{
-              padding: "10px 20px", background: colors.warning, color: "#fff",
+              padding: "10px 20px", background: colors.warning, color: colors.onGradient,
               border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500,
               cursor: !newArchiveYear ? "not-allowed" : "pointer",
               opacity: !newArchiveYear ? 0.5 : 1,

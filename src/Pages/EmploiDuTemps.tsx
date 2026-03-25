@@ -1,8 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { db } from "../services/firebase";
 import { useTenant } from "../context/TenantContext";
 import { useTheme } from "../context/ThemeContext";
@@ -14,6 +11,7 @@ import { JOURS } from "../constants";
 import type { Creneau } from "../modules/emploi-du-temps/emploi.types";
 import type { Jour } from "../constants";
 import type { Professeur } from "../modules/professeurs/professeur.types";
+import { logger } from "@/utils/logger";
 
 interface ClasseOption { id: string; nom: string; }
 interface MatiereOption { id: string; nom: string; }
@@ -140,7 +138,7 @@ export default function EmploiDuTemps() {
       setClasses(classesSnap.docs.map((d) => ({ id: d.id, nom: (d.data() as { nom: string }).nom })).sort((a, b) => a.nom.localeCompare(b.nom)));
       setMatieres(matieresSnap.docs.map((d) => ({ id: d.id, nom: (d.data() as { nom: string }).nom })).sort((a, b) => a.nom.localeCompare(b.nom)));
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
@@ -251,7 +249,9 @@ export default function EmploiDuTemps() {
   };
 
   // ── EXPORT PDF ────────────────────────────────────────────────────────────
-  const exportPDF = () => {
+  const exportPDF = async () => {
+    const { default: jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     const classe = filterClasse || "Toutes les classes";
     doc.setFontSize(14); doc.setFont("helvetica", "bold");
@@ -282,7 +282,8 @@ export default function EmploiDuTemps() {
   };
 
   // ── EXPORT EXCEL ──────────────────────────────────────────────────────────
-  const exportExcel = () => {
+  const exportExcel = async () => {
+    const XLSX = await import("xlsx");
     const rows = creneauxFiltres.map((c) => ({
       Jour: c.jour.charAt(0).toUpperCase() + c.jour.slice(1),
       "Heure début": c.heureDebut,
@@ -303,8 +304,9 @@ export default function EmploiDuTemps() {
   const parseExcelFile = (file: File) => {
     setImportFile(file);
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const XLSX = await import("xlsx");
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -425,7 +427,7 @@ export default function EmploiDuTemps() {
             <button onClick={() => setShowImport(!showImport)} style={{ padding: "9px 14px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M12 5.5V2.5H3V5.5M7.5 13.5V5.5M4.5 8.5L7.5 5.5L10.5 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>Importer
             </button>
-            <button onClick={() => { setShowForm(!showForm); setError(""); }} style={{ padding: "9px 16px", background: colors.primary, color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => { setShowForm(!showForm); setError(""); }} style={{ padding: "9px 16px", background: colors.primary, color: colors.onGradient, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               {showForm ? "Annuler" : "+ Créneau"}
             </button>
           </div>
@@ -513,7 +515,7 @@ export default function EmploiDuTemps() {
                 </table>
               </div>
               <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                <button onClick={handleImportConfirm} disabled={importing} style={{ padding: "9px 20px", background: colors.primary, color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: importing ? "not-allowed" : "pointer", opacity: importing ? 0.7 : 1 }}>
+                <button onClick={handleImportConfirm} disabled={importing} style={{ padding: "9px 20px", background: colors.primary, color: colors.onGradient, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: importing ? "not-allowed" : "pointer", opacity: importing ? 0.7 : 1 }}>
                   {importing ? "Import en cours..." : `Importer ${importPreview.length} créneau(x)`}
                 </button>
                 <button onClick={() => { setImportPreview([]); setImportFile(null); }} style={{ padding: "9px 16px", background: colors.bgSecondary, color: colors.textMuted, border: "none", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>
@@ -597,7 +599,7 @@ export default function EmploiDuTemps() {
               </select>
             </div>
           </div>
-          <button type="submit" disabled={saving} style={{ padding: "10px 24px", background: colors.primary, color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+          <button type="submit" disabled={saving} style={{ padding: "10px 24px", background: colors.primary, color: colors.onGradient, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
             {saving ? "Enregistrement..." : "Enregistrer le créneau"}
           </button>
         </form>

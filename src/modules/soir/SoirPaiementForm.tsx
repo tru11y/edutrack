@@ -5,6 +5,7 @@ import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { useTenant } from "../../context/TenantContext";
+import { logger } from "@/utils/logger";
 
 interface SoirEleve {
   id: string;
@@ -124,7 +125,7 @@ export default function SoirPaiementForm() {
       }
       navigate("/cours-du-soir/paiements");
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError("Erreur lors de la sauvegarde.");
     } finally {
       setSaving(false);
@@ -202,7 +203,7 @@ export default function SoirPaiementForm() {
           )}
 
           <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-            <button type="submit" disabled={saving} style={{ flex: 1, padding: 14, background: saving ? colors.border : colors.primary, color: "#fff", border: "none", borderRadius: 10, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
+            <button type="submit" disabled={saving} style={{ flex: 1, padding: 14, background: saving ? colors.border : colors.primary, color: colors.onGradient, border: "none", borderRadius: 10, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
               {saving ? "Enregistrement..." : isEditing ? "Enregistrer" : "Créer le paiement"}
             </button>
             <button type="button" onClick={() => navigate("/cours-du-soir/paiements")} style={{ flex: 1, padding: 14, background: colors.bgHover, color: colors.textMuted, border: "none", borderRadius: 10, fontWeight: 600, cursor: "pointer" }}>

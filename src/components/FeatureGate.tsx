@@ -32,7 +32,7 @@ export default function FeatureGate({ feature, children, fallback }: FeatureGate
       </p>
       <a href="/billing" style={{
         display: "inline-block", padding: "10px 24px", background: colors.primary,
-        color: "#fff", borderRadius: 8, textDecoration: "none", fontWeight: 500, fontSize: 14,
+        color: colors.onGradient, borderRadius: 8, textDecoration: "none", fontWeight: 500, fontSize: 14,
       }}>
         Mettre a niveau
       </a>

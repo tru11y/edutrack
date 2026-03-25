@@ -5,6 +5,7 @@ import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { getNotesByEleveSecure, type NoteResult } from "../../services/cloudFunctions";
+import { logger } from "@/utils/logger";
 
 interface EleveInfo {
   nom: string;
@@ -56,7 +57,7 @@ export default function ElevePortalDashboard() {
       }
       setPresenceStats({ present, absent, retard });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }

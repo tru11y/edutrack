@@ -4,6 +4,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
 import { useTenant } from "../../context/TenantContext";
+import { logger } from "@/utils/logger";
 
 interface PresenceEntry {
   id: string;
@@ -44,7 +45,7 @@ export default function SoirPresencesList() {
         });
         setEntries(data.sort((a, b) => b.date.localeCompare(a.date)));
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }
@@ -62,7 +63,7 @@ export default function SoirPresencesList() {
           <h1 style={{ fontSize: 24, fontWeight: 800, color: colors.text, margin: "0 0 4px" }}>Présences — Cours du soir</h1>
           <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>{filtered.length} session(s)</p>
         </div>
-        <Link to="/cours-du-soir/presences/appel" style={{ padding: "10px 20px", background: colors.primary, color: "#fff", borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
+        <Link to="/cours-du-soir/presences/appel" style={{ padding: "10px 20px", background: colors.primary, color: colors.onGradient, borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
           Faire l'appel
         </Link>
       </div>

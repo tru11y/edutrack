@@ -8,6 +8,7 @@ import { exportElevesExcelSecure } from "../services/cloudFunctions";
 import { downloadBase64File } from "../utils/download";
 import { exportToCSV } from "../utils/csvExport";
 import type { Eleve } from "../modules/eleves/eleve.types";
+import { logger } from "@/utils/logger";
 
 export default function ElevesList() {
   const { colors } = useTheme();
@@ -32,7 +33,7 @@ export default function ElevesList() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
+        logger.error(err);
         setLoading(false);
       });
   }, []);

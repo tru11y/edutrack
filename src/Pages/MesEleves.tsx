@@ -11,6 +11,7 @@ import { ClassSelect } from "../components/ui/Select";
 import EmptyState, { EmptyStateIcons } from "../components/ui/EmptyState";
 import { SkeletonStudentCard } from "../components/ui/Skeleton";
 import StatusBadge from "../components/ui/StatusBadge";
+import { logger } from "@/utils/logger";
 
 export default function MesEleves() {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export default function MesEleves() {
         const data = await getAllEleves();
         setEleves(data.filter((e) => e.statut === "actif"));
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }

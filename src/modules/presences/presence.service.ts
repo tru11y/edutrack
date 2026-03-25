@@ -11,6 +11,7 @@ import {
 import { db } from "../../services/firebase";
 import type { PresenceCoursPayload, PresenceItem } from "./presence.types";
 import { estFacturable } from "./facturation.logic";
+import { logger } from "@/utils/logger";
 
 const presencesRef = collection(db, "presences");
 
@@ -155,7 +156,7 @@ export async function getAllPresences(): Promise<PresenceDocument[]> {
         }
       }
     } catch (err) {
-      console.error(`Erreur lecture presence doc ${d.id}:`, err);
+      logger.error(`Erreur lecture presence doc ${d.id}:`, err);
     }
   }
 

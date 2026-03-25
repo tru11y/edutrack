@@ -6,6 +6,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { useTenant } from "../../context/TenantContext";
 import { ALL_SOIR_CLASSES } from "./soir.constants";
+import { logger } from "@/utils/logger";
 
 interface SoirEleve {
   id: string;
@@ -50,7 +51,7 @@ export default function SoirPresenceAppel() {
       data.forEach((e) => { init[e.id] = "present"; });
       setPresences(init);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
@@ -87,7 +88,7 @@ export default function SoirPresenceAppel() {
       setSaved(true);
       setTimeout(() => navigate("/cours-du-soir/presences"), 1500);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setSaving(false);
     }
@@ -162,9 +163,9 @@ export default function SoirPresenceAppel() {
                   {e.prenom} {e.nom}
                 </span>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button style={buttonStyle("present", presences[e.id])} onClick={() => toggle(e.id, "present")}>Présent</button>
-                  <button style={buttonStyle("retard", presences[e.id])} onClick={() => toggle(e.id, "retard")}>Retard</button>
-                  <button style={buttonStyle("absent", presences[e.id])} onClick={() => toggle(e.id, "absent")}>Absent</button>
+                  <button style={buttonStyle("present", presences[e.id])} onClick={() => toggle(e.id, "present")} aria-pressed={presences[e.id] === "present"}>Présent</button>
+                  <button style={buttonStyle("retard", presences[e.id])} onClick={() => toggle(e.id, "retard")} aria-pressed={presences[e.id] === "retard"}>Retard</button>
+                  <button style={buttonStyle("absent", presences[e.id])} onClick={() => toggle(e.id, "absent")} aria-pressed={presences[e.id] === "absent"}>Absent</button>
                 </div>
               </div>
             ))}
@@ -180,7 +181,7 @@ export default function SoirPresenceAppel() {
             <button
               onClick={handleSave}
               disabled={saving || saved}
-              style={{ flex: 1, padding: 14, background: saved ? colors.success : saving ? colors.border : colors.primary, color: "#fff", border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: saving ? "not-allowed" : "pointer" }}
+              style={{ flex: 1, padding: 14, background: saved ? colors.success : saving ? colors.border : colors.primary, color: colors.onGradient, border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: saving ? "not-allowed" : "pointer" }}
             >
               {saving ? "Enregistrement..." : saved ? "Enregistré ✓" : "Enregistrer l'appel"}
             </button>

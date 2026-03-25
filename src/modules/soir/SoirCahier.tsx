@@ -5,6 +5,7 @@ import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
 import { useTenant } from "../../context/TenantContext";
 import { useAuth } from "../../context/AuthContext";
+import { logger } from "@/utils/logger";
 
 interface CahierEntry {
   id: string;
@@ -35,7 +36,7 @@ export default function SoirCahier() {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() } as CahierEntry));
       setEntries(data.sort((a, b) => (b.date || "").localeCompare(a.date || "")));
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,7 @@ export default function SoirCahier() {
           <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>{filtered.length} entrée(s)</p>
         </div>
         {canManage && (
-          <Link to="/cours-du-soir/cahier/nouveau" style={{ padding: "10px 20px", background: colors.primary, color: "#fff", borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
+          <Link to="/cours-du-soir/cahier/nouveau" style={{ padding: "10px 20px", background: colors.primary, color: colors.onGradient, borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
             + Ajouter une entrée
           </Link>
         )}

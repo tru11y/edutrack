@@ -1,8 +1,8 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import type { CahierEntry } from "./cahier.types";
 
-export function exportCahierTextePDF(cahier: CahierEntry) {
+export async function exportCahierTextePDF(cahier: CahierEntry) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
 
   doc.setFontSize(14);

@@ -43,7 +43,16 @@ export default function Button({
 
   return (
     <button
-      style={{ ...baseStyle, ...variantStyles[variant], ...style }}
+      style={{ ...baseStyle, ...variantStyles[variant], outline: "none", ...style }}
+      onFocus={(e) => {
+        e.currentTarget.style.outline = `2px solid ${colors.primary}`;
+        e.currentTarget.style.outlineOffset = "2px";
+        props.onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.outline = "none";
+        props.onBlur?.(e);
+      }}
       {...props}
     >
       {children}

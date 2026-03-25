@@ -5,6 +5,7 @@ import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
 import { useTenant } from "../../context/TenantContext";
 import { useAuth } from "../../context/AuthContext";
+import { logger } from "@/utils/logger";
 
 interface SoirEleve {
   id: string;
@@ -34,7 +35,7 @@ export default function SoirElevesList() {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() } as SoirEleve));
       setEleves(data.sort((a, b) => a.nom.localeCompare(b.nom)));
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
@@ -74,7 +75,7 @@ export default function SoirElevesList() {
           <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>{filtered.length} élève(s)</p>
         </div>
         {canManage && (
-          <Link to="/cours-du-soir/eleves/nouveau" style={{ padding: "10px 20px", background: colors.primary, color: "#fff", borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
+          <Link to="/cours-du-soir/eleves/nouveau" style={{ padding: "10px 20px", background: colors.primary, color: colors.onGradient, borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
             + Ajouter
           </Link>
         )}

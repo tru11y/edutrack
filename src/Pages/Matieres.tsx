@@ -106,7 +106,7 @@ export default function Matieres() {
   const btnPrimary = {
     padding: "10px 20px",
     background: colors.primary,
-    color: "#fff",
+    color: colors.onGradient,
     border: "none",
     borderRadius: 8,
     fontSize: 14,

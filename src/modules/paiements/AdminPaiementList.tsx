@@ -10,6 +10,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import { useSchool } from "../../context/SchoolContext";
 import { useTenant } from "../../context/TenantContext";
 import type { Paiement } from "./paiement.types";
+import { logger } from "@/utils/logger";
 
 function toDate(val: unknown): Date | null {
   if (!val) return null;
@@ -29,6 +30,7 @@ function formatDate(val: unknown): string {
 export default function AdminPaiementsList() {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const thStyle: React.CSSProperties = { padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" };
   const { t } = useLanguage();
   const { school } = useSchool();
   const { schoolId } = useTenant();
@@ -74,7 +76,7 @@ export default function AdminPaiementsList() {
       eleveNom = parts.slice(1).join(" ") || elevePrenom;
     }
 
-    const filename = exportRecuPaiementPDF(p, {
+    const filename = await exportRecuPaiementPDF(p, {
       elevePrenom,
       eleveNom,
       classe,
@@ -108,7 +110,7 @@ export default function AdminPaiementsList() {
       });
     } catch (err) {
       // Non-bloquant — la génération du PDF a déjà réussi
-      console.warn("Sauvegarde du reçu non enregistrée :", err);
+      logger.warn("Sauvegarde du reçu non enregistrée :", err);
     }
   }
 
@@ -157,7 +159,7 @@ export default function AdminPaiementsList() {
             style={{
               padding: "10px 20px",
               background: colors.primary,
-              color: "#fff",
+              color: colors.onGradient,
               borderRadius: 10,
               textDecoration: "none",
               fontSize: 14,
@@ -375,15 +377,6 @@ export default function AdminPaiementsList() {
   );
 }
 
-const thStyle: React.CSSProperties = {
-  padding: "12px 20px",
-  textAlign: "left",
-  fontSize: 11,
-  fontWeight: 700,
-  color: "#6b7280",
-  textTransform: "uppercase",
-  letterSpacing: "0.5px",
-};
 
 function StatCard({ label, value, color, bg, colors }: { label: string; value: string; color: string; bg: string; colors: ReturnType<typeof import("../../context/ThemeContext").useTheme>["colors"] }) {
   return (

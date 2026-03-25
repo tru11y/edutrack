@@ -12,6 +12,7 @@ import { useToast, ConfirmModal } from "../../components/ui";
 import { GRADIENTS, TIMING } from "../../constants";
 import { UserCard, UserStatsGrid, CreateUserModal, EditUserModal } from "./components";
 import type { UserData, ClasseData, UserFormData } from "./types";
+import { logger } from "@/utils/logger";
 
 export default function Users() {
   const { user: currentUser } = useAuth();
@@ -49,7 +50,7 @@ export default function Users() {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as UserData[];
       setUsers(data.sort((a, b) => (a.email || "").localeCompare(b.email || "")));
     } catch (err) {
-      console.error("Erreur chargement users:", err);
+      logger.error("Erreur chargement users:", err);
       setLoadError(err instanceof Error ? err.message : "Erreur de chargement");
     } finally {
       setLoading(false);
@@ -62,7 +63,7 @@ export default function Users() {
       const data = snap.docs.map((d) => ({ id: d.id, nom: d.data().nom })) as ClasseData[];
       setAvailableClasses(data.sort((a, b) => a.nom.localeCompare(b.nom)));
     } catch (err) {
-      console.error("Erreur chargement classes:", err);
+      logger.error("Erreur chargement classes:", err);
     }
   }, []);
 
@@ -143,7 +144,7 @@ export default function Users() {
       await toggleUserStatusSecure({ userId: user.id, isActive: !user.isActive });
       await loadUsers();
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error("Erreur lors de la mise a jour");
     }
   };
@@ -168,7 +169,7 @@ export default function Users() {
             });
             toast.success("Demande de suppression envoyee");
           } catch (err) {
-            console.error(err);
+            logger.error(err);
             toast.error("Erreur lors de l'envoi de la demande");
           }
         },
@@ -189,7 +190,7 @@ export default function Users() {
           await loadUsers();
           toast.success("Utilisateur supprime");
         } catch (err) {
-          console.error(err);
+          logger.error(err);
           toast.error("Erreur lors de la suppression");
         }
       },
@@ -219,7 +220,7 @@ export default function Users() {
       await loadUsers();
       showSuccessTemp("Utilisateur modifie avec succes");
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       throw new Error("Erreur lors de la modification");
     }
   };

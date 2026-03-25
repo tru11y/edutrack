@@ -14,6 +14,7 @@ import { banEleveByProf } from "../eleves/eleve.ban.service";
 
 import type { PresenceItem } from "./presence.types";
 import type { Eleve } from "../eleves/eleve.types";
+import { logger } from "@/utils/logger";
 
 interface Props {
   coursId: string;
@@ -256,7 +257,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erreur lors de l'enregistrement";
       setSaveError(message);
-      console.error("Erreur sauvegarde appel:", err);
+      logger.error("Erreur sauvegarde appel:", err);
     } finally {
       setLoading(false);
     }

@@ -7,6 +7,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useTenant } from "../context/TenantContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast, ConfirmModal } from "../components/ui";
+import { logger } from "@/utils/logger";
 
 interface UserData {
   id: string;
@@ -64,7 +65,7 @@ export default function Messages() {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as UserData[];
       setUsers(data.filter((u) => u.isActive !== false));
     }, (err) => {
-      console.error("Erreur users:", err);
+      logger.error("Erreur users:", err);
     });
 
     return () => unsubUsers();
@@ -104,7 +105,7 @@ export default function Messages() {
         localStorage.setItem(readKey, JSON.stringify([...allIds]));
       }
     }, (err) => {
-      console.error("Erreur messages:", err);
+      logger.error("Erreur messages:", err);
       setLoading(false);
     });
 
@@ -158,7 +159,7 @@ export default function Messages() {
       setSelectedFiles([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError("Erreur lors de l'envoi. Verifiez votre connexion.");
     } finally {
       setSending(false);
@@ -214,7 +215,7 @@ export default function Messages() {
           await deleteDoc(doc(db, "messages", messageId));
           toast.success("Message supprime");
         } catch (err) {
-          console.error(err);
+          logger.error(err);
           toast.error("Erreur lors de la suppression du message");
         }
       },

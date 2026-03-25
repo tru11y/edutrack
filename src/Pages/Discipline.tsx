@@ -120,12 +120,12 @@ export default function Discipline() {
     });
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const mapped = records.map((r) => ({
       ...r,
       createdAt: r.createdAt ? { toDate: () => new Date(r.createdAt!) } : undefined,
     }));
-    exportDisciplinePDF(mapped as never);
+    await exportDisciplinePDF(mapped as never);
   };
 
   const classes = [...new Set(eleves.map((e) => e.classe).filter(Boolean))].sort();
@@ -144,7 +144,7 @@ export default function Discipline() {
   const btnPrimary = {
     padding: "10px 20px",
     background: colors.primary,
-    color: "#fff",
+    color: colors.onGradient,
     border: "none",
     borderRadius: 8,
     fontSize: 14,
@@ -251,7 +251,7 @@ export default function Discipline() {
               <tr><td colSpan={8} style={{ padding: 32, textAlign: "center", color: colors.textMuted }}>Aucun incident enregistre.</td></tr>
             )}
             {records.map((r, idx) => {
-              const typeInfo = TYPE_LABELS[r.type] || { label: r.type, color: "#6b7280" };
+              const typeInfo = TYPE_LABELS[r.type] || { label: r.type, color: colors.textMuted };
               return (
                 <tr key={r.id} style={{ borderTop: idx > 0 ? `1px solid ${colors.borderLight}` : "none" }}>
                   <td style={{ padding: 12, color: colors.text, fontSize: 13 }}>

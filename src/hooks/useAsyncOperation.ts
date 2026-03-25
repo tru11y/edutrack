@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { logger } from "../utils/logger";
 
 interface UseAsyncOperationResult<T> {
   execute: (operation: () => Promise<T>) => Promise<T | undefined>;
@@ -23,7 +24,7 @@ export function useAsyncOperation<T = void>(): UseAsyncOperationResult<T> {
       const result = await operation();
       return result;
     } catch (err) {
-      console.error("Operation error:", err);
+      logger.error("Operation error:", err);
       const message = err instanceof Error ? err.message : "Une erreur est survenue";
       setError(message);
       return undefined;

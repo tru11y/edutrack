@@ -49,11 +49,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             if (!error) {
               e.currentTarget.style.borderColor = colors.primary;
               e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primary}20`;
+              e.currentTarget.style.outline = `2px solid ${colors.primary}`;
+              e.currentTarget.style.outlineOffset = "2px";
             }
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = error ? colors.danger : colors.border;
             e.currentTarget.style.boxShadow = "none";
+            e.currentTarget.style.outline = "none";
           }}
           {...props}
         />
@@ -109,6 +112,7 @@ export function SearchInput({
         height="18"
         viewBox="0 0 24 24"
         fill="none"
+        aria-hidden="true"
         style={{
           position: "absolute",
           left: 14,
@@ -139,15 +143,20 @@ export function SearchInput({
         onFocus={(e) => {
           e.currentTarget.style.borderColor = colors.primary;
           e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primary}20`;
+          e.currentTarget.style.outline = `2px solid ${colors.primary}`;
+          e.currentTarget.style.outlineOffset = "2px";
         }}
         onBlur={(e) => {
           e.currentTarget.style.borderColor = colors.border;
           e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.outline = "none";
         }}
       />
       {value && (
         <button
           onClick={() => onChange("")}
+          aria-label="Effacer la recherche"
+          type="button"
           style={{
             position: "absolute",
             right: 10,

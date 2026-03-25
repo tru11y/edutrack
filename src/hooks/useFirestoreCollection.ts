@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { collection, getDocs, query, QueryConstraint } from "firebase/firestore";
 import { db } from "../services/firebase";
+import { logger } from "../utils/logger";
 
 interface UseFirestoreCollectionOptions<T> {
   collectionName: string;
@@ -61,7 +62,7 @@ export function useFirestoreCollection<T extends { id: string }>({
 
       setData(items);
     } catch (err) {
-      console.error(`Erreur chargement ${collectionName}:`, err);
+      logger.error(`Erreur chargement ${collectionName}:`, err);
       setError(err instanceof Error ? err.message : "Erreur de chargement");
     } finally {
       setLoading(false);

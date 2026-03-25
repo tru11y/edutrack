@@ -7,6 +7,7 @@ import { getCahierById, updateCahierEntry } from "../modules/cahier/cahier.servi
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import type { Eleve } from "../modules/eleves/eleve.types";
+import { logger } from "@/utils/logger";
 
 export default function CahierForm() {
   const { colors } = useTheme();
@@ -54,7 +55,7 @@ export default function CahierForm() {
           }
         }
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }
@@ -125,7 +126,7 @@ export default function CahierForm() {
       }
       navigate("/cahier");
     } catch (err: unknown) {
-      console.error(err);
+      logger.error(err);
       setError(err instanceof Error ? err.message : "Erreur");
     } finally {
       setSaving(false);

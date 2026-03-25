@@ -1,6 +1,3 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
 interface CahierExportRow {
   date: string;
   classe: string;
@@ -11,10 +8,12 @@ interface CahierExportRow {
   devoirs?: string;
 }
 
-export function exportCahierToPDF(entries: CahierExportRow[], options?: {
+export async function exportCahierToPDF(entries: CahierExportRow[], options?: {
   titre?: string;
   periode?: string;
 }) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
 
   const titre = options?.titre || "Cahier de texte";

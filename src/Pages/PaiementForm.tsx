@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import type { Eleve } from "../modules/eleves/eleve.types";
 import type { Paiement, MethodePaiement } from "../modules/paiements/paiement.types";
+import { logger } from "@/utils/logger";
 
 export default function PaiementForm() {
   const { colors } = useTheme();
@@ -102,7 +103,7 @@ export default function PaiementForm() {
           }
         }
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }
@@ -114,7 +115,7 @@ export default function PaiementForm() {
     if (form.eleveId && !isEditing) {
       getPaiementsByEleve(form.eleveId)
         .then((data) => setPaiementsExistants(data.filter((p) => p.statut !== "paye")))
-        .catch(console.error);
+        .catch((e) => logger.error(e));
     } else {
       setPaiementsExistants([]);
     }
@@ -190,7 +191,7 @@ export default function PaiementForm() {
       }
       navigate("/paiements");
     } catch (err: unknown) {
-      console.error(err);
+      logger.error(err);
       setError(getCloudFunctionErrorMessage(err));
     } finally {
       setSaving(false);

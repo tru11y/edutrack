@@ -1,7 +1,9 @@
 import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "../context/ThemeContext";
 
 export default function SkipToContent() {
   const { t } = useLanguage();
+  const { colors } = useTheme();
 
   return (
     <a
@@ -15,8 +17,8 @@ export default function SkipToContent() {
         overflow: "hidden",
         zIndex: 9999,
         padding: "12px 24px",
-        background: "#6366f1",
-        color: "#fff",
+        background: colors.primary,
+        color: colors.onGradient,
         fontSize: 14,
         fontWeight: 600,
         borderRadius: "0 0 8px 0",

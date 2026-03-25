@@ -17,6 +17,7 @@ import { ClassSelect } from "../components/ui/Select";
 import StatusBadge from "../components/ui/StatusBadge";
 import EmptyState, { EmptyStateIcons } from "../components/ui/EmptyState";
 import { SkeletonPresenceCard } from "../components/ui/Skeleton";
+import { logger } from "@/utils/logger";
 
 interface PresenceDoc extends PresenceCoursPayload { id: string; }
 
@@ -37,7 +38,7 @@ export default function PresencesList() {
       setPresences(presenceData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       setEleves(eleveData);
       setLoading(false);
-    }).catch((err) => { console.error(err); setLoading(false); });
+    }).catch((err) => { logger.error(err); setLoading(false); });
   }, []);
 
   const getEleveName = (eleveId: string): string => {

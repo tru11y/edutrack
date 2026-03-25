@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../services/firebase";
+import { logger } from "@/utils/logger";
 
 export default function CreateProfesseur() {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ export default function CreateProfesseur() {
 
       navigate("/admin/professeurs");
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       setError("Erreur lors de la création du professeur");
     } finally {
       setLoading(false);

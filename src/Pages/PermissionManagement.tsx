@@ -10,6 +10,7 @@ import {
   getCloudFunctionErrorMessage,
 } from "../services/cloudFunctions";
 import {
+import { logger } from "@/utils/logger";
   ALL_PERMISSIONS,
   PERMISSION_LABELS,
   DEFAULT_PERMISSIONS_BY_ROLE,
@@ -53,7 +54,7 @@ export default function PermissionManagement() {
           .sort((a, b) => a.role.localeCompare(b.role) || a.nom.localeCompare(b.nom));
         setUsers(rows);
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }
@@ -161,7 +162,7 @@ export default function PermissionManagement() {
                       onClick={() => savePermissions(user.id)}
                       disabled={saving === user.id}
                       style={{
-                        padding: "6px 16px", background: colors.primary, color: "#fff",
+                        padding: "6px 16px", background: colors.primary, color: colors.onGradient,
                         border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500,
                         cursor: saving === user.id ? "not-allowed" : "pointer",
                         opacity: saving === user.id ? 0.7 : 1,

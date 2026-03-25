@@ -6,6 +6,7 @@ import { useTenant } from "../context/TenantContext";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { JOURS } from "../constants";
+import { logger } from "@/utils/logger";
 
 interface TodayCreneau {
   heureDebut: string;
@@ -62,7 +63,7 @@ export default function ProfDashboard() {
           setStudentsCount(count);
         }
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }

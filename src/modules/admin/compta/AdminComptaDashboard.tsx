@@ -19,6 +19,7 @@ import PaiementsTab from "./components/PaiementsTab";
 import DepensesTab from "./components/DepensesTab";
 import SalairesTab from "./components/SalairesTab";
 import JournalTab from "./components/JournalTab";
+import { logger } from "@/utils/logger";
 
 type Tab = "paiements" | "depenses" | "salaires" | "journal";
 
@@ -82,14 +83,14 @@ export default function AdminComptaDashboard() {
       filteredPaiements = paiementsRes.value.filter((p) => p.mois === mois);
       setPaiements(filteredPaiements);
     } else {
-      console.error("getAllPaiements failed:", paiementsRes.reason);
+      logger.error("getAllPaiements failed:", paiementsRes.reason);
       errors.push("paiements");
     }
 
     if (profsRes.status === "fulfilled") {
       setProfs(profsRes.value);
     } else {
-      console.error("getAllProfesseurs failed:", profsRes.reason);
+      logger.error("getAllProfesseurs failed:", profsRes.reason);
       errors.push("professeurs");
     }
 
@@ -97,7 +98,7 @@ export default function AdminComptaDashboard() {
       fetchedDepenses = depensesRes.value.depenses;
       setDepenses(fetchedDepenses);
     } else {
-      console.error("getDepenses failed:", depensesRes.reason);
+      logger.error("getDepenses failed:", depensesRes.reason);
       errors.push("depenses");
     }
 
@@ -105,7 +106,7 @@ export default function AdminComptaDashboard() {
       fetchedSalaires = salairesRes.value.salaires;
       setSalaires(fetchedSalaires);
     } else {
-      console.error("getSalaires failed:", salairesRes.reason);
+      logger.error("getSalaires failed:", salairesRes.reason);
       errors.push("salaires");
     }
 
@@ -142,7 +143,7 @@ export default function AdminComptaDashboard() {
       setDepenseForm({ libelle: "", categorie: "Fournitures", montant: 0, date: new Date().toISOString().split("T")[0] });
       await loadData();
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError("Erreur lors de la creation de la depense.");
     } finally {
       setSubmitting(false);
@@ -154,7 +155,7 @@ export default function AdminComptaDashboard() {
       isOpen: true, title: "Supprimer la depense", message: "Supprimer cette depense ?", variant: "danger",
       onConfirm: async () => {
         setConfirmState((s) => ({ ...s, isOpen: false }));
-        try { await deleteDepenseSecure(id); await loadData(); toast.success("Depense supprimee"); } catch (err) { console.error(err); toast.error("Erreur lors de la suppression"); }
+        try { await deleteDepenseSecure(id); await loadData(); toast.success("Depense supprimee"); } catch (err) { logger.error(err); toast.error("Erreur lors de la suppression"); }
       },
     });
   };
@@ -171,7 +172,7 @@ export default function AdminComptaDashboard() {
       setSalaireForm({ profId: "", mois: getCurrentMonth(), montant: 0, statut: "non_paye" });
       await loadData();
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError("Erreur lors de la creation du salaire.");
     } finally {
       setSubmitting(false);
@@ -181,7 +182,7 @@ export default function AdminComptaDashboard() {
   const handleToggleSalaireStatut = async (salaire: Salaire) => {
     const newStatut = salaire.statut === "paye" ? "non_paye" : "paye";
     const datePaiement = newStatut === "paye" ? new Date().toISOString().split("T")[0] : undefined;
-    try { await updateSalaireStatutSecure(salaire.id, newStatut, datePaiement); await loadData(); } catch (err) { console.error(err); }
+    try { await updateSalaireStatutSecure(salaire.id, newStatut, datePaiement); await loadData(); } catch (err) { logger.error(err); }
   };
 
   if (loading) {

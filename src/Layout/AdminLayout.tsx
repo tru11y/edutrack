@@ -345,10 +345,10 @@ export default function AdminLayout() {
                 fontSize: 14, fontWeight: 500, color: isActive ? colors.accent : colors.textMuted,
                 background: isActive ? colors.accentBg : "transparent", textDecoration: "none", transition: "all 0.15s"
               })} aria-current={location.pathname === item.to || (item.end && location.pathname === item.to) ? "page" : undefined}>
-                <span style={{ display: "flex", alignItems: "center" }}>{icons[item.icon]}</span>
+                <span aria-hidden="true" style={{ display: "flex", alignItems: "center" }}>{icons[item.icon]}</span>
                 <span style={{ flex: 1 }}>{t(item.labelKey)}</span>
                 {item.labelKey === "messages" && unreadMessages > 0 && (
-                  <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: colors.danger, color: "#fff", fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                  <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: colors.danger, color: colors.onGradient, fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
                     {unreadMessages > 99 ? "99+" : unreadMessages}
                   </span>
                 )}

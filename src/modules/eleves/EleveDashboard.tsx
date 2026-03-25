@@ -4,6 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs } from "firebase/firesto
 import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { logger } from "@/utils/logger";
 
 interface EleveInfo {
   nom: string;
@@ -70,7 +71,7 @@ export default function EleveDashboard() {
 
         setStats({ presences, absences, retards, tauxPresence, montantDu });
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }

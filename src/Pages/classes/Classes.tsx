@@ -14,6 +14,7 @@ import { ClassCard, ClassForm, GenderStatsCard, MatieresModal, ScheduleModal } f
 import type { Eleve } from "../../modules/eleves/eleve.types";
 import type { Professeur } from "../../modules/professeurs/professeur.types";
 import type { ClasseData, Matiere, ScheduleSlot } from "./types";
+import { logger } from "@/utils/logger";
 
 export default function Classes() {
   const { colors } = useTheme();
@@ -69,7 +70,7 @@ export default function Classes() {
 
       setClasses(allClasses.sort((a, b) => a.nom.localeCompare(b.nom)));
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }

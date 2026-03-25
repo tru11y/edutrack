@@ -8,6 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useSchool } from "../../context/SchoolContext";
 import { exportRecuPaiementPDF } from "../paiements/paiement.pdf";
 import type { Paiement } from "../paiements/paiement.types";
+import { logger } from "@/utils/logger";
 
 interface SoirPaiement {
   id: string;
@@ -55,7 +56,7 @@ export default function SoirPaiementsList() {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() } as SoirPaiement));
       setPaiements(data.sort((a, b) => b.mois.localeCompare(a.mois)));
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
@@ -86,7 +87,7 @@ export default function SoirPaiementsList() {
           <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>{filtered.length} paiement(s)</p>
         </div>
         {canManage && (
-          <Link to="/cours-du-soir/paiements/nouveau" style={{ padding: "10px 20px", background: colors.primary, color: "#fff", borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
+          <Link to="/cours-du-soir/paiements/nouveau" style={{ padding: "10px 20px", background: colors.primary, color: colors.onGradient, borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
             + Nouveau paiement
           </Link>
         )}
@@ -135,8 +136,8 @@ export default function SoirPaiementsList() {
                   <td style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <button
-                        onClick={() =>
-                          exportRecuPaiementPDF(
+                        onClick={async () => {
+                          await exportRecuPaiementPDF(
                             {
                               ...p,
                               montantRestant: Math.max(0, (p.montantTotal || 0) - (p.montantPaye || 0)),
@@ -154,8 +155,8 @@ export default function SoirPaiementsList() {
                               primaryColor: school?.primaryColor,
                               schoolLogo: school?.schoolLogo,
                             }
-                          )
-                        }
+                          );
+                        }}
                         style={{ padding: "4px 12px", background: colors.infoBg, color: colors.info, borderRadius: 6, fontSize: 12, fontWeight: 500, border: "none", cursor: "pointer" }}
                       >
                         Reçu PDF

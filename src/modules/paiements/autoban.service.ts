@@ -1,4 +1,4 @@
-import { collection, getDocs, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { updateEleveSystem } from "../eleves/eleve.service";
 import { notifyAdmin } from "../notifications/alert.service";
@@ -59,15 +59,15 @@ export function doitEtreBanni(moisImpayes: number): boolean {
  * Exécute le processus d'auto-ban pour tous les élèves
  * avec 2+ mois de paiements en retard
  */
-export async function executerAutoBan(): Promise<{
+export async function executerAutoBan(schoolId: string): Promise<{
   bannis: string[];
   avertis: string[];
 }> {
   const now = new Date();
   const moisActuel = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const paiementsSnap = await getDocs(collection(db, "paiements"));
-  const elevesSnap = await getDocs(collection(db, "eleves"));
+  const paiementsSnap = await getDocs(query(collection(db, "paiements"), where("schoolId", "==", schoolId)));
+  const elevesSnap = await getDocs(query(collection(db, "eleves"), where("schoolId", "==", schoolId)));
 
   const paiements: PaiementData[] = paiementsSnap.docs.map((d) => ({
     id: d.id,
@@ -121,7 +121,7 @@ export async function executerAutoBan(): Promise<{
 /**
  * Obtient les élèves à risque de ban (1 mois de retard)
  */
-export async function getElevesRisqueBan(): Promise<
+export async function getElevesRisqueBan(schoolId: string): Promise<
   Array<{
     id: string;
     nom: string;
@@ -133,8 +133,8 @@ export async function getElevesRisqueBan(): Promise<
   const now = new Date();
   const moisActuel = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const paiementsSnap = await getDocs(collection(db, "paiements"));
-  const elevesSnap = await getDocs(collection(db, "eleves"));
+  const paiementsSnap = await getDocs(query(collection(db, "paiements"), where("schoolId", "==", schoolId)));
+  const elevesSnap = await getDocs(query(collection(db, "eleves"), where("schoolId", "==", schoolId)));
 
   const paiements: PaiementData[] = paiementsSnap.docs.map((d) => ({
     id: d.id,

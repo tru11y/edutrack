@@ -124,7 +124,7 @@ export default function EvaluationsList() {
             {exporting ? "Export..." : "Exporter"}
           </button>
           <Link to="/evaluations/nouvelle" style={{
-            padding: "10px 20px", background: colors.primary, color: "#fff", borderRadius: 8,
+            padding: "10px 20px", background: colors.primary, color: colors.onGradient, borderRadius: 8,
             textDecoration: "none", fontSize: 14, fontWeight: 500,
           }}>
             + Nouvelle evaluation

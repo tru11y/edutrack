@@ -25,7 +25,7 @@ interface Notification {
 }
 
 const BellIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
     <path
       d="M15 7C15 5.67 14.47 4.4 13.54 3.46C12.6 2.53 11.33 2 10 2C8.67 2 7.4 2.53 6.46 3.46C5.53 4.4 5 5.67 5 7C5 12 2.5 13.5 2.5 13.5H17.5C17.5 13.5 15 12 15 7Z"
       stroke="currentColor"
@@ -119,6 +119,9 @@ export default function NotificationBell() {
     <div ref={ref} style={{ position: "relative" }}>
       <button
         onClick={() => setOpen((o) => !o)}
+        aria-label={unreadCount > 0 ? `Notifications — ${unreadCount} non lue${unreadCount > 1 ? "s" : ""}` : "Notifications"}
+        aria-expanded={open}
+        aria-haspopup="true"
         title="Notifications"
         style={{
           background: "none",
@@ -135,6 +138,7 @@ export default function NotificationBell() {
         <BellIcon />
         {unreadCount > 0 && (
           <span
+            aria-hidden="true"
             style={{
               position: "absolute",
               top: 0,
@@ -142,8 +146,8 @@ export default function NotificationBell() {
               minWidth: 16,
               height: 16,
               borderRadius: 8,
-              background: "#ef4444",
-              color: "#fff",
+              background: colors.danger,
+              color: colors.onGradient,
               fontSize: 9,
               fontWeight: 700,
               display: "flex",
@@ -188,8 +192,8 @@ export default function NotificationBell() {
                 <span
                   style={{
                     marginLeft: 8,
-                    background: "#ef4444",
-                    color: "#fff",
+                    background: colors.danger,
+                    color: colors.onGradient,
                     borderRadius: 10,
                     padding: "1px 7px",
                     fontSize: 11,

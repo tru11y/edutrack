@@ -6,6 +6,7 @@ import { createEleve, getEleveById, updateEleve } from "../modules/eleves/eleve.
 import { useTheme } from "../context/ThemeContext";
 import { useTenant } from "../context/TenantContext";
 import type { ParentContact } from "../modules/eleves/eleve.types";
+import { logger } from "@/utils/logger";
 
 export default function EleveForm() {
   const navigate = useNavigate();
@@ -150,7 +151,7 @@ export default function EleveForm() {
 
       navigate("/eleves");
     } catch (err: unknown) {
-      console.error(err);
+      logger.error(err);
       setError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement");
     } finally {
       setLoading(false);

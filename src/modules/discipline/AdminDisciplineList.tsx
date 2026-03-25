@@ -16,8 +16,8 @@ export default function AdminDisciplineList() {
     });
   }, []);
 
-  const handleExport = () => {
-    exportDisciplinePDF(data);
+  const handleExport = async () => {
+    await exportDisciplinePDF(data);
   };
 
   if (loading) return <div className="p-6" style={{ color: colors.text }}>Chargement…</div>;

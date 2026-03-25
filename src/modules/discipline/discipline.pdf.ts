@@ -1,8 +1,8 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import type { DisciplineRecord } from "./discipline.types";
 
-export function exportDisciplinePDF(records: DisciplineRecord[]) {
+export async function exportDisciplinePDF(records: DisciplineRecord[]) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
 
   doc.setFontSize(14);

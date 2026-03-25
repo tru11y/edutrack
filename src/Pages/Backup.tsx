@@ -8,8 +8,6 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useSchool } from "../context/SchoolContext";
 import { exportSchoolBackupSecure } from "../services/cloudFunctions";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 const EXPORT_COLLECTIONS = [
   "eleves", "paiements", "presences", "cours",
@@ -137,6 +135,8 @@ export default function Backup() {
         ? Math.round((present / (present + absent)) * 100)
         : 100;
 
+      const { default: jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
       const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const W = doc.internal.pageSize.getWidth();
       const printDate = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
@@ -269,7 +269,7 @@ export default function Backup() {
           <button
             onClick={handleExportNow}
             disabled={exporting}
-            style={{ padding: "10px 20px", background: colors.primary, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "#fff", cursor: exporting ? "wait" : "pointer" }}
+            style={{ padding: "10px 20px", background: colors.primary, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, color: colors.onGradient, cursor: exporting ? "wait" : "pointer" }}
           >
             {exporting ? "Sauvegarde en cours…" : "☁ Exporter maintenant"}
           </button>
@@ -335,7 +335,7 @@ export default function Backup() {
           <button
             onClick={handleSaveWebhook}
             disabled={savingWebhook}
-            style={{ padding: "10px 18px", background: colors.primary, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", whiteSpace: "nowrap" }}
+            style={{ padding: "10px 18px", background: colors.primary, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, color: colors.onGradient, cursor: "pointer", whiteSpace: "nowrap" }}
           >
             {savingWebhook ? "…" : "Enregistrer"}
           </button>

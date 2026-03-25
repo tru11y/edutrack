@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -178,12 +179,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsub();
   }, [user?.uid, user?.role]);
 
-  // Ecouter les logs de connexion
+  // Ecouter les logs de connexion — filtres par schoolId pour isolation multi-tenant
   useEffect(() => {
     if (!user || (user.role !== "admin" && user.role !== "gestionnaire")) return;
 
+    const logsQuery = user.schoolId
+      ? query(collection(db, "connection_logs"), where("schoolId", "==", user.schoolId))
+      : query(collection(db, "connection_logs"));
+
     const unsub = onSnapshot(
-      query(collection(db, "connection_logs")),
+      logsQuery,
       (snap) => {
         const logs: ConnectionLog[] = snap.docs
           .map((d) => {
@@ -302,6 +307,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               userEmail: firebaseUser.email,
               userName: data.prenom && data.nom ? `${data.prenom} ${data.nom}` : firebaseUser.email?.split("@")[0],
               userRole: appUser.role,
+              schoolId: data.schoolId || null,
               loginAt: serverTimestamp(),
               device,
               browser,
@@ -329,7 +335,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setLoading(false);
       } catch (err) {
-        console.error("Auth state error:", err);
+        if (import.meta.env.DEV) console.error("Auth state error:", err);
         setUser(null);
         setLoading(false);
       }
@@ -362,8 +368,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const value = useMemo(
+    () => ({ user, loading, login, logout, onlineUsers, connectionLogs }),
+    [user, loading, onlineUsers, connectionLogs] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, onlineUsers, connectionLogs }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

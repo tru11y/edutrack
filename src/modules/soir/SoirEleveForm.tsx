@@ -6,6 +6,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { useTenant } from "../../context/TenantContext";
 import { ALL_SOIR_CLASSES } from "./soir.constants";
+import { logger } from "@/utils/logger";
 
 interface SoirEleveFormData {
   nom: string;
@@ -77,7 +78,7 @@ export default function SoirEleveForm() {
       }
       navigate("/cours-du-soir/eleves");
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError("Erreur lors de la sauvegarde.");
     } finally {
       setSaving(false);
@@ -168,7 +169,7 @@ export default function SoirEleveForm() {
             <button
               type="submit"
               disabled={saving}
-              style={{ flex: 1, padding: 14, background: saving ? colors.border : colors.primary, color: "#fff", border: "none", borderRadius: 10, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}
+              style={{ flex: 1, padding: 14, background: saving ? colors.border : colors.primary, color: colors.onGradient, border: "none", borderRadius: 10, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}
             >
               {saving ? "Enregistrement..." : isEditing ? "Enregistrer" : "Ajouter l'élève"}
             </button>

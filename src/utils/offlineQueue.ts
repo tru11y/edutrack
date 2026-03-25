@@ -1,4 +1,5 @@
 const QUEUE_KEY = "edutrack_offline_queue";
+const MAX_QUEUE_SIZE = 100;
 
 export interface QueuedOperation {
   id: string;
@@ -16,23 +17,35 @@ function getQueue(): QueuedOperation[] {
   }
 }
 
-function saveQueue(queue: QueuedOperation[]): void {
+function saveQueue(queue: QueuedOperation[]): boolean {
   try {
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    return true;
   } catch {
-    // localStorage full
+    return false;
   }
 }
 
-export function enqueueOperation(functionName: string, data: unknown): void {
+/**
+ * Ajoute une opération à la queue offline.
+ * Retourne false si la queue est pleine ou si le stockage est indisponible.
+ */
+export function enqueueOperation(functionName: string, data: unknown): boolean {
   const queue = getQueue();
+
+  if (queue.length >= MAX_QUEUE_SIZE) {
+    // Queue pleine — on ne perd pas de données silencieusement
+    return false;
+  }
+
   queue.push({
     id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     functionName,
     data,
     timestamp: Date.now(),
   });
-  saveQueue(queue);
+
+  return saveQueue(queue);
 }
 
 export function getQueueLength(): number {

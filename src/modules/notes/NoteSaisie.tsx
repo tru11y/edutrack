@@ -153,7 +153,7 @@ export default function NoteSaisie() {
           </button>
           <button onClick={handleSave} disabled={saving} style={{
             padding: "8px 16px", borderRadius: 8, border: "none",
-            background: colors.primary, color: "#fff", cursor: saving ? "not-allowed" : "pointer",
+            background: colors.primary, color: colors.onGradient, cursor: saving ? "not-allowed" : "pointer",
             fontSize: 13, fontWeight: 500, opacity: saving ? 0.7 : 1,
           }}>
             {saving ? "Enregistrement..." : "Enregistrer les notes"}

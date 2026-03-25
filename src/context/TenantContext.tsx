@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useAuth } from "./AuthContext";
@@ -90,8 +90,13 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return () => unsub();
   }, [schoolId]);
 
+  const value = useMemo(
+    () => ({ schoolId, subscription, loading }),
+    [schoolId, subscription, loading]
+  );
+
   return (
-    <TenantContext.Provider value={{ schoolId, subscription, loading }}>
+    <TenantContext.Provider value={value}>
       {children}
     </TenantContext.Provider>
   );

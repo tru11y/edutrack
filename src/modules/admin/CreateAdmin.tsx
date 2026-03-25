@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { createUserSecure, getCloudFunctionErrorMessage } from "../../services/cloudFunctions";
+import { logger } from "@/utils/logger";
 
 export default function CreateAdmin() {
   const { colors } = useTheme();
@@ -52,7 +53,7 @@ export default function CreateAdmin() {
 
       navigate("/admin/admins");
     } catch (e: unknown) {
-      console.error(e);
+      logger.error(e);
       setError(getCloudFunctionErrorMessage(e));
     } finally {
       setLoading(false);

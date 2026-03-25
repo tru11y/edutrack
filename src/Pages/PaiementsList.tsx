@@ -14,6 +14,7 @@ import { downloadBase64File } from "../utils/download";
 import { exportToCSV } from "../utils/csvExport";
 import { exportRecuPaiementPDF } from "../modules/paiements/paiement.pdf";
 import type { Paiement } from "../modules/paiements/paiement.types";
+import { logger } from "@/utils/logger";
 
 function toDate(val: unknown): Date | null {
   if (!val) return null;
@@ -53,7 +54,7 @@ export default function PaiementsList() {
       const data = await getAllPaiements(schoolId);
       setPaiements(data.sort((a, b) => b.mois.localeCompare(a.mois)));
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
@@ -75,7 +76,7 @@ export default function PaiementsList() {
           await loadPaiements();
           toast.success("Paiement deplace dans la corbeille");
         } catch (err) {
-          console.error(err);
+          logger.error(err);
           toast.error("Erreur lors de la suppression");
         }
       },
@@ -107,7 +108,7 @@ export default function PaiementsList() {
         } catch { /* use empty strings if fetch fails */ }
       }
 
-      const filename = exportRecuPaiementPDF(p, {
+      const filename = await exportRecuPaiementPDF(p, {
         eleveNom: eleveNomFamille,
         elevePrenom,
         classe,
@@ -140,7 +141,7 @@ export default function PaiementsList() {
 
       toast.success("Reçu PDF généré");
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error("Erreur lors de la génération du PDF");
     } finally {
       setPdfLoading(null);

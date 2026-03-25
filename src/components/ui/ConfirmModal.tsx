@@ -61,7 +61,7 @@ export default function ConfirmModal({
             borderRadius: 8,
             border: "none",
             background: confirmBg,
-            color: "#fff",
+            color: colors.onGradient,
             cursor: "pointer",
             fontWeight: 600,
             fontSize: 14,

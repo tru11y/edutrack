@@ -17,7 +17,9 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, Er
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
+    if (import.meta.env.DEV) {
+      console.error("ErrorBoundary caught:", error, errorInfo);
+    }
   }
 
   render() {
@@ -50,7 +52,7 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, Er
             Une erreur est survenue
           </h2>
           <p style={{ color: colors.textMuted, fontSize: 14, margin: "0 0 16px" }}>
-            {this.state.error?.message || "Erreur inconnue"}
+            Une erreur inattendue s'est produite. Rechargez la page ou contactez le support.
           </p>
           <button
             onClick={() => window.location.reload()}

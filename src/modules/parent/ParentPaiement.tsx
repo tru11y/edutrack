@@ -174,8 +174,8 @@ export default function ParentPaiements() {
                 <StatusBadge statut={p.statut} />
 
                 <button
-                  onClick={() =>
-                    exportRecuPaiementPDF(p, {
+                  onClick={async () => {
+                    await exportRecuPaiementPDF(p, {
                       eleveNom: eleve?.nom || user?.email?.split("@")[0] || "Eleve",
                       elevePrenom: eleve?.prenom || "",
                       classe: eleve?.classe || "",
@@ -185,8 +185,8 @@ export default function ParentPaiements() {
                       schoolEmail: school?.email,
                       primaryColor: school?.primaryColor,
                       schoolLogo: school?.schoolLogo,
-                    })
-                  }
+                    });
+                  }}
                   style={{
                     padding: "10px 16px",
                     background: colors.bgSecondary,

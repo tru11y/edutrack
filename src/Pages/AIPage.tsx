@@ -6,8 +6,6 @@ import {
   getAtRiskStudentsSecure,
   type Recommendation,
 } from "../services/cloudFunctions";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 interface AtRiskStudent {
   eleveId: string;
@@ -76,9 +74,11 @@ export default function AIPage() {
 
   useEffect(() => { load(); }, []);
 
-  function handleDownloadPdf() {
+  async function handleDownloadPdf() {
     setGeneratingPdf(true);
     try {
+      const { default: jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
       const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const W = doc.internal.pageSize.getWidth();
       const printDate = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
@@ -198,7 +198,7 @@ export default function AIPage() {
           <button
             onClick={handleDownloadPdf}
             disabled={generatingPdf || loading}
-            style={{ padding: "10px 18px", background: colors.primary, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}
+            style={{ padding: "10px 18px", background: colors.primary, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, color: colors.onGradient, cursor: "pointer" }}
           >
             {generatingPdf ? "Génération…" : "⬇ Rapport PDF"}
           </button>
@@ -273,9 +273,9 @@ export default function AIPage() {
                               {cat.label}
                             </span>
                           </div>
-                          <p style={{ fontSize: 14, fontWeight: 700, color: "#1a1a2e", margin: "0 0 6px" }}>{r.titre}</p>
-                          <p style={{ fontSize: 12, color: "#555", margin: "0 0 10px", lineHeight: 1.5 }}>{r.detail}</p>
-                          <div style={{ background: "rgba(0,0,0,0.04)", borderRadius: 8, padding: "8px 10px", fontSize: 12, color: "#333" }}>
+                          <p style={{ fontSize: 14, fontWeight: 700, color: colors.text, margin: "0 0 6px" }}>{r.titre}</p>
+                          <p style={{ fontSize: 12, color: colors.textMuted, margin: "0 0 10px", lineHeight: 1.5 }}>{r.detail}</p>
+                          <div style={{ background: colors.bgHover, borderRadius: 8, padding: "8px 10px", fontSize: 12, color: colors.textSecondary }}>
                             <strong>→ Action :</strong> {r.action}
                           </div>
                         </div>

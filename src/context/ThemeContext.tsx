@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 type Theme = "light" | "dark";
 
@@ -118,16 +118,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const [primaryColor, setPrimaryColor] = useState("#6366f1");
 
-  const base = theme === "dark" ? themeColors.dark : themeColors.light;
-  const darker = darkenHex(primaryColor, 0.75);
-  const colors = {
-    ...base,
-    primary: primaryColor,
-    primaryBg: `${primaryColor}1a`,
-    primaryHover: darkenHex(primaryColor, 0.85),
-    gradientPrimary: `linear-gradient(135deg, ${primaryColor} 0%, ${darker} 100%)`,
-    shadowPrimary: `0 4px 14px -3px ${primaryColor}66`,
-  };
+  const colors = useMemo(() => {
+    const base = theme === "dark" ? themeColors.dark : themeColors.light;
+    const darker = darkenHex(primaryColor, 0.75);
+    return {
+      ...base,
+      primary: primaryColor,
+      primaryBg: `${primaryColor}1a`,
+      primaryHover: darkenHex(primaryColor, 0.85),
+      gradientPrimary: `linear-gradient(135deg, ${primaryColor} 0%, ${darker} 100%)`,
+      shadowPrimary: `0 4px 14px -3px ${primaryColor}66`,
+    };
+  }, [theme, primaryColor]);
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -136,10 +138,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.body.style.color = colors.text;
   }, [theme, colors]);
 
-  const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
+  const toggleTheme = useCallback(() => setTheme((t) => (t === "light" ? "dark" : "light")), []);
+
+  const value = useMemo(
+    () => ({ theme, toggleTheme, isDark: theme === "dark", colors, primaryColor, setPrimaryColor }),
+    [theme, toggleTheme, colors, primaryColor]
+  );
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === "dark", colors, primaryColor, setPrimaryColor }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

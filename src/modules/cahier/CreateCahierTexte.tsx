@@ -40,7 +40,7 @@ export default function CreateCahierTexte({
       setLoading(true);
       await createCahierEntry(cahier);
 
-      exportCahierTextePDF(cahier as CahierEntry);
+      await exportCahierTextePDF(cahier as CahierEntry);
 
       alert("Cahier de texte enregistré");
     } catch {

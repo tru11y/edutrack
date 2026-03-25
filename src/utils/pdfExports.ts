@@ -1,6 +1,3 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
 interface PresenceRow {
   date: string;
   eleveNom: string;
@@ -28,7 +25,9 @@ interface CreneauRow {
   salle?: string;
 }
 
-export function exportPresencesPDF(records: PresenceRow[], title = "Registre des presences") {
+export async function exportPresencesPDF(records: PresenceRow[], title = "Registre des presences") {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
 
   doc.setFontSize(14);
@@ -46,7 +45,9 @@ export function exportPresencesPDF(records: PresenceRow[], title = "Registre des
   doc.save(`presences_${Date.now()}.pdf`);
 }
 
-export function exportPaiementsPDF(records: PaiementRow[], title = "Recap paiements") {
+export async function exportPaiementsPDF(records: PaiementRow[], title = "Recap paiements") {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
 
   doc.setFontSize(14);
@@ -71,7 +72,9 @@ export function exportPaiementsPDF(records: PaiementRow[], title = "Recap paieme
   doc.save(`paiements_${Date.now()}.pdf`);
 }
 
-export function exportEmploiDuTempsPDF(creneaux: CreneauRow[], classe?: string) {
+export async function exportEmploiDuTempsPDF(creneaux: CreneauRow[], classe?: string) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF({ orientation: "landscape" });
 
   doc.setFontSize(14);
@@ -128,7 +131,9 @@ interface AnalyticsReport {
   correlations?: Array<{ classe: string; tauxPresence: number; moyenneNotes: number }>;
 }
 
-export function exportAnalyticsPDF(report: AnalyticsReport) {
+export async function exportAnalyticsPDF(report: AnalyticsReport) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
   let y = 20;
 

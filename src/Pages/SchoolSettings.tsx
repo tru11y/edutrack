@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useSchool } from "../context/SchoolContext";
 import { logActivity } from "../services/activityLogger";
+import { logger } from "@/utils/logger";
 
 interface SchoolForm {
   schoolName: string;
@@ -120,7 +121,7 @@ export default function SchoolSettings() {
       logActivity({ action: "update", entity: "school_settings", entityLabel: form.schoolName });
       setMessage({ type: "success", text: "Paramètres enregistrés avec succès." });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setMessage({ type: "error", text: "Erreur lors de la sauvegarde." });
     } finally {
       setSaving(false);
@@ -381,7 +382,7 @@ export default function SchoolSettings() {
             disabled={saving || uploading}
             style={{
               padding: "12px 28px", background: (saving || uploading) ? colors.border : colors.primary,
-              color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600,
+              color: colors.onGradient, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600,
               cursor: (saving || uploading) ? "not-allowed" : "pointer",
             }}
           >

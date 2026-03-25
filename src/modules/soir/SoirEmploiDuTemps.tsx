@@ -5,6 +5,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { useTenant } from "../../context/TenantContext";
 import { ALL_SOIR_CLASSES } from "./soir.constants";
+import { logger } from "@/utils/logger";
 
 interface Creneau {
   id: string;
@@ -46,7 +47,7 @@ export default function SoirEmploiDuTemps() {
       const snap = await getDocs(q);
       setCreneaux(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Creneau)));
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
@@ -71,7 +72,7 @@ export default function SoirEmploiDuTemps() {
       setShowForm(false);
       load();
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setSaving(false);
     }
@@ -99,7 +100,7 @@ export default function SoirEmploiDuTemps() {
         {canManage && (
           <button
             onClick={() => setShowForm(!showForm)}
-            style={{ padding: "10px 20px", background: colors.primary, color: "#fff", borderRadius: 8, fontWeight: 600, fontSize: 13, border: "none", cursor: "pointer" }}
+            style={{ padding: "10px 20px", background: colors.primary, color: colors.onGradient, borderRadius: 8, fontWeight: 600, fontSize: 13, border: "none", cursor: "pointer" }}
           >
             {showForm ? "Annuler" : "+ Ajouter un créneau"}
           </button>
@@ -154,7 +155,7 @@ export default function SoirEmploiDuTemps() {
                 <input style={inputStyle} value={form.professeur} onChange={(e) => setForm({ ...form, professeur: e.target.value })} placeholder="Nom du prof" />
               </div>
             </div>
-            <button type="submit" disabled={saving} style={{ marginTop: 14, padding: "10px 24px", background: saving ? colors.border : colors.success, color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
+            <button type="submit" disabled={saving} style={{ marginTop: 14, padding: "10px 24px", background: saving ? colors.border : colors.success, color: colors.onGradient, border: "none", borderRadius: 8, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
               {saving ? "Ajout..." : "Ajouter"}
             </button>
           </form>
@@ -167,7 +168,7 @@ export default function SoirEmploiDuTemps() {
       ) : creneaux.length === 0 ? (
         <div style={{ textAlign: "center", padding: 48, color: colors.textMuted, background: colors.bgCard, borderRadius: 12, border: `1px solid ${colors.border}` }}>
           <p>Aucun créneau pour {filterClasse}</p>
-          {canManage && <button onClick={() => setShowForm(true)} style={{ marginTop: 8, padding: "8px 16px", background: colors.primary, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13 }}>Ajouter un créneau</button>}
+          {canManage && <button onClick={() => setShowForm(true)} style={{ marginTop: 8, padding: "8px 16px", background: colors.primary, color: colors.onGradient, border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13 }}>Ajouter un créneau</button>}
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
@@ -176,7 +177,7 @@ export default function SoirEmploiDuTemps() {
             if (jCreneaux.length === 0) return null;
             return (
               <div key={jour} style={{ background: colors.bgCard, borderRadius: 12, border: `1px solid ${colors.border}`, overflow: "hidden" }}>
-                <div style={{ padding: "10px 16px", background: colors.primary, color: "#fff" }}>
+                <div style={{ padding: "10px 16px", background: colors.primary, color: colors.onGradient }}>
                   <span style={{ fontWeight: 700, fontSize: 13 }}>{jour}</span>
                 </div>
                 <div>

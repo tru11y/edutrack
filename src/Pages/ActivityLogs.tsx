@@ -12,6 +12,7 @@ import { db } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useTenant } from "../context/TenantContext";
+import { logger } from "@/utils/logger";
 
 interface LogEntry {
   id: string;
@@ -127,7 +128,7 @@ export default function ActivityLogs() {
         }))
       );
     } catch (err) {
-      console.error("ActivityLogs fetch error:", err);
+      logger.error("ActivityLogs fetch error:", err);
     } finally {
       setLoading(false);
     }

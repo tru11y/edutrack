@@ -6,6 +6,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useToast, ConfirmModal } from "../components/ui";
 import { useTenant } from "../context/TenantContext";
 import type { Timestamp } from "firebase/firestore";
+import { logger } from "@/utils/logger";
 
 interface TrashItem {
   id: string;
@@ -42,7 +43,7 @@ export default function Corbeille() {
         return bTime - aTime;
       }));
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
@@ -64,7 +65,7 @@ export default function Corbeille() {
           await loadItems();
           toast.success("Element restaure");
         } catch (err) {
-          console.error(err);
+          logger.error(err);
           toast.error("Erreur lors de la restauration");
         } finally {
           setRestoring(null);
@@ -83,7 +84,7 @@ export default function Corbeille() {
           await loadItems();
           toast.success("Element supprime");
         } catch (err) {
-          console.error(err);
+          logger.error(err);
           toast.error("Erreur lors de la suppression");
         }
       },
@@ -103,7 +104,7 @@ export default function Corbeille() {
           await loadItems();
           toast.success("Corbeille videe");
         } catch (err) {
-          console.error(err);
+          logger.error(err);
           toast.error("Erreur lors du vidage de la corbeille");
         }
       },

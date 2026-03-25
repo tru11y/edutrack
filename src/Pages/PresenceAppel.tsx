@@ -7,6 +7,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../components/ui";
 import type { Eleve } from "../modules/eleves/eleve.types";
 import type { PresenceItem, StatutMetier } from "../modules/presences/presence.types";
+import { logger } from "@/utils/logger";
 
 type PresenceStatut = "present" | "absent" | "retard";
 
@@ -38,7 +39,7 @@ export default function PresenceAppel() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
+        logger.error(err);
         setLoading(false);
       });
   }, []);
@@ -107,7 +108,7 @@ export default function PresenceAppel() {
       toast.success(`Appel enregistre (${presenceItems.length} eleves)`);
       navigate("/presences");
     } catch (err: unknown) {
-      console.error("Erreur sauvegarde presences:", err);
+      logger.error("Erreur sauvegarde presences:", err);
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
       toast.error(`Echec de l'enregistrement: ${msg}`);
     } finally {
@@ -242,6 +243,7 @@ export default function PresenceAppel() {
                   <button
                     type="button"
                     onClick={() => updateStatut(p.eleveId, "present")}
+                    aria-pressed={p.statut === "present"}
                     style={{
                       padding: "8px 16px",
                       background: p.statut === "present" ? colors.success : colors.bgSecondary,
@@ -258,6 +260,7 @@ export default function PresenceAppel() {
                   <button
                     type="button"
                     onClick={() => updateStatut(p.eleveId, "absent")}
+                    aria-pressed={p.statut === "absent"}
                     style={{
                       padding: "8px 16px",
                       background: p.statut === "absent" ? colors.danger : colors.bgSecondary,
@@ -274,6 +277,7 @@ export default function PresenceAppel() {
                   <button
                     type="button"
                     onClick={() => updateStatut(p.eleveId, "retard")}
+                    aria-pressed={p.statut === "retard"}
                     style={{
                       padding: "8px 16px",
                       background: p.statut === "retard" ? colors.warning : colors.bgSecondary,
