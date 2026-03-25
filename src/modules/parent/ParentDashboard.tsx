@@ -4,6 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs } from "firebase/firesto
 import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useTenant } from "../../context/TenantContext";
 import { CircularProgress } from "../../components/charts";
 import { logger } from "@/utils/logger";
 
@@ -23,6 +24,7 @@ interface Enfant {
 export default function ParentDashboard() {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { schoolId } = useTenant();
   const [enfants, setEnfants] = useState<Enfant[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,18 +38,23 @@ export default function ParentDashboard() {
       try {
         const results: Enfant[] = [];
 
+        // Fetch presences once for the whole school (not once per enfant)
+        const presencesQ = schoolId
+          ? query(collection(db, "presences"), where("schoolId", "==", schoolId))
+          : collection(db, "presences");
+        const allPresencesSnap = await getDocs(presencesQ);
+        const allPresencesDocs = allPresencesSnap.docs.map(d => d.data());
+
         for (const enfantId of user.enfantsIds) {
           const enfantDoc = await getDoc(doc(db, "eleves", enfantId));
           if (!enfantDoc.exists()) continue;
 
           const data = enfantDoc.data();
 
-          // Présences
-          const presencesSnap = await getDocs(collection(db, "presences"));
+          // Présences — filter from already-fetched snapshot
           let presences = 0, absences = 0, retards = 0;
 
-          presencesSnap.docs.forEach(d => {
-            const pData = d.data();
+          allPresencesDocs.forEach(pData => {
             const mine = pData.presences?.find((p: { eleveId: string }) => p.eleveId === enfantId);
             if (mine) {
               if (mine.statut === "present") presences++;

@@ -4,6 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs } from "firebase/firesto
 import { db } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useTenant } from "../../context/TenantContext";
 import { logger } from "@/utils/logger";
 
 interface EleveInfo {
@@ -24,6 +25,7 @@ interface Stats {
 export default function EleveDashboard() {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { schoolId } = useTenant();
   const [eleve, setEleve] = useState<EleveInfo | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,8 +44,11 @@ export default function EleveDashboard() {
           setEleve(eleveDoc.data() as EleveInfo);
         }
 
-        // Présences
-        const presencesSnap = await getDocs(collection(db, "presences"));
+        // Présences — filter by schoolId to avoid cross-tenant reads
+        const presencesQ = schoolId
+          ? query(collection(db, "presences"), where("schoolId", "==", schoolId))
+          : collection(db, "presences");
+        const presencesSnap = await getDocs(presencesQ);
         let presences = 0, absences = 0, retards = 0;
 
         presencesSnap.docs.forEach(d => {

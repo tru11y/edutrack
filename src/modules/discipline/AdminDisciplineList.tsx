@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getAllDiscipline } from "./discipline.service";
 import { exportDisciplinePDF } from "./discipline.pdf";
 import { useTheme } from "../../context/ThemeContext";
+import { logger } from "@/utils/logger";
 import type { DisciplineRecord } from "./discipline.types";
 
 export default function AdminDisciplineList() {
@@ -12,8 +13,7 @@ export default function AdminDisciplineList() {
   useEffect(() => {
     getAllDiscipline().then((d) => {
       setData(d);
-      setLoading(false);
-    });
+    }).catch(logger.error).finally(() => setLoading(false));
   }, []);
 
   const handleExport = async () => {
