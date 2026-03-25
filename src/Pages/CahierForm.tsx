@@ -109,6 +109,7 @@ export default function CahierForm() {
           profNom: user?.email?.split("@")[0] || "Utilisateur",
           eleves: elevesClasse.map((e) => e.id || ""),
           isSigned: false,
+          schoolId: user?.schoolId || "",
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         };
