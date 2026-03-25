@@ -21,5 +21,6 @@ export interface PresenceCoursPayload {
   coursId: string;
   classe: string;
   date: string;
+  schoolId?: string;
   presences: PresenceItem[];
 }

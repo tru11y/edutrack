@@ -11,6 +11,7 @@ export interface CahierEntry {
   date: string;
 
   eleves: string[];
+  schoolId?: string;
 
   contenu?: string;
   devoirs?: string;

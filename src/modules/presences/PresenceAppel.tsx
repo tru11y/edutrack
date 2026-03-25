@@ -231,6 +231,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
         coursId,
         date,
         classe,
+        schoolId: schoolId || "",
         presences: presences.map((p) => ({
           eleveId: p.eleveId,
           statut: p.statut,
@@ -246,6 +247,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
         profId: user!.uid,
         profNom: user?.email?.split("@")[0] || "Professeur",
         eleves: presents,
+        schoolId: schoolId || "",
         contenu: contenu.trim(),
         devoirs: devoirs.trim() || undefined,
       });

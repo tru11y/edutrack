@@ -89,7 +89,9 @@ export async function signCahierEntry(
     throw new Error("Signature non autorisée");
   }
 
-  const token = Math.random().toString(36).slice(2);
+  const token = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 
   await updateDoc(ref, {
     isSigned: true,

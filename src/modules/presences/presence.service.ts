@@ -6,6 +6,7 @@ import {
   collectionGroup,
   doc,
   writeBatch,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import type { PresenceCoursPayload, PresenceItem } from "./presence.types";
@@ -31,7 +32,7 @@ export interface AppelDocument {
 /* WRITE - batch atomique */
 
 export async function savePresencesForCours(payload: PresenceCoursPayload): Promise<void> {
-  const { coursId, presences, classe, date } = payload;
+  const { coursId, presences, classe, date, schoolId } = payload;
 
   if (!coursId || !classe || !date || presences.length === 0) {
     throw new Error("Donnees de presence invalides: coursId, classe, date et presences sont requis.");
@@ -45,6 +46,7 @@ export async function savePresencesForCours(payload: PresenceCoursPayload): Prom
     coursId,
     classe,
     date,
+    ...(schoolId ? { schoolId } : {}),
     presences: presences.map((item) => ({
       eleveId: item.eleveId,
       statut: item.statut,
@@ -53,7 +55,7 @@ export async function savePresencesForCours(payload: PresenceCoursPayload): Prom
       statutMetier: item.statutMetier ?? "autorise",
       message: item.message ?? "",
     })),
-    updatedAt: new Date(),
+    updatedAt: serverTimestamp(),
   }, { merge: true });
 
   // Ecrire chaque appel dans la subcollection

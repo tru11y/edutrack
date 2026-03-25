@@ -133,6 +133,7 @@ export async function createEleveWithAccount(data: {
   prenom: string;
   classe: string;
   sexe: "M" | "F";
+  schoolId?: string;
   parents?: import("./eleve.types").ParentContact[];
 }) {
   // 1️⃣ Création Auth
@@ -144,7 +145,7 @@ export async function createEleveWithAccount(data: {
 
   // 2️⃣ Création Firestore
 
-  const elevePayload: Eleve = {
+  const elevePayload: Eleve & { schoolId?: string } = {
     nom: data.nom,
     prenom: data.prenom,
     sexe: data.sexe,
@@ -153,6 +154,7 @@ export async function createEleveWithAccount(data: {
     parents: Array.isArray(data.parents) ? data.parents : [],
     ecoleOrigine: "",
     isBanned: false,
+    ...(data.schoolId ? { schoolId: data.schoolId } : {}),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };

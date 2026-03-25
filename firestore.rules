@@ -325,9 +325,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // ADMISSIONS - Soumission publique, admin de l'ecole gere
+    // ADMISSIONS - Soumission publique (schoolId requis), admin de l'ecole gere
     match /admissions/{admissionId} {
-      allow create: if true; // formulaire public
+      allow create: if request.resource.data.keys().hasAll(['schoolId', 'nom', 'prenom'])
+        && request.resource.data.schoolId is string
+        && request.resource.data.schoolId.size() > 0;
       allow read, update, delete: if isAdminOrGestionnaire() &&
         resource.data.schoolId == getUserData().schoolId;
     }
