@@ -1,4 +1,4 @@
-import { collection, getDocs, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { updateEleve } from "../eleves/eleve.service";
 import { notifyAdmin } from "../notifications/alert.service";
@@ -9,15 +9,19 @@ interface PaiementDoc {
   mois: string;
 }
 
-export async function banElevesNonPayesApres10() {
+export async function banElevesNonPayesApres10(schoolId?: string | null) {
   const now = new Date();
   const day = now.getDate();
   if (day < 10) return;
 
   const moisActuel = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const paiementsSnap = await getDocs(collection(db, "paiements"));
-  const elevesSnap = await getDocs(collection(db, "eleves"));
+  const paiementsSnap = await getDocs(
+    schoolId ? query(collection(db, "paiements"), where("schoolId", "==", schoolId)) : collection(db, "paiements")
+  );
+  const elevesSnap = await getDocs(
+    schoolId ? query(collection(db, "eleves"), where("schoolId", "==", schoolId)) : collection(db, "eleves")
+  );
 
   const paiements = paiementsSnap.docs.map((d) => d.data() as PaiementDoc);
   const eleves = elevesSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Eleve & { id: string }));

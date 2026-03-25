@@ -197,7 +197,10 @@ service cloud.firestore {
 
     // ONLINE USERS - Chaque utilisateur gere sa propre entree
     match /online_users/{userId} {
-      allow read: if isAdminOrGestionnaire();
+      allow read: if isAdminOrGestionnaire() && (
+        resource.data.schoolId == null ||
+        resource.data.schoolId == getUserSchoolId()
+      );
       allow create, update: if signedIn() && request.auth.uid == userId;
       allow delete: if signedIn() && (request.auth.uid == userId || isAdmin());
     }

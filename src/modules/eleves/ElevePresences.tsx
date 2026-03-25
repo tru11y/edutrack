@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { getPresenceHistoryForEleve, type AppelDocument } from "../presences/presence.service";
+import { logger } from "@/utils/logger";
 
 export default function ElevePresences() {
   const { user } = useAuth();
@@ -14,8 +15,7 @@ export default function ElevePresences() {
 
     getPresenceHistoryForEleve(user.eleveId).then((data) => {
       setHistory(data);
-      setLoading(false);
-    });
+    }).catch(logger.error).finally(() => setLoading(false));
   }, [user]);
 
   if (loading) return <div className="p-6" style={{ color: colors.textMuted }}>Chargement…</div>;

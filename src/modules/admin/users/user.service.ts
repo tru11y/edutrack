@@ -1,4 +1,4 @@
-import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, query, where, limit } from "firebase/firestore";
 import { db } from "../../../services/firebase";
 import type { UserRole } from "../../../types/User";
 
@@ -8,8 +8,11 @@ export interface CreateUserInput {
   role: UserRole;
 }
 
-export const getAllUsers = async () => {
-  const snap = await getDocs(collection(db, "users"));
+export const getAllUsers = async (schoolId?: string | null) => {
+  const q = schoolId
+    ? query(collection(db, "users"), where("schoolId", "==", schoolId), limit(200))
+    : query(collection(db, "users"), limit(200));
+  const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 

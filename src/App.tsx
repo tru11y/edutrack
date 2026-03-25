@@ -14,6 +14,7 @@ import OfflineBanner from "./components/OfflineBanner";
 import { retryQueue } from "./services/cloudFunctions";
 import { requestPushPermission, saveFCMToken, onForegroundMessage } from "./services/pushNotifications";
 import { OnboardingProvider } from "./components/onboarding/OnboardingProvider";
+import { logger } from "./utils/logger";
 
 const AdminLayout = lazy(() => import("./Layout/AdminLayout"));
 const LoginPage = lazy(() => import("./modules/auth/LoginPage"));
@@ -102,7 +103,7 @@ function PushNotificationInit() {
     if (pushEnabled === "false") return;
     requestPushPermission().then((granted) => {
       if (granted) saveFCMToken();
-    });
+    }).catch(logger.error);
     const unsub = onForegroundMessage(() => {
       // Toast handled by NotificationCenter
     });

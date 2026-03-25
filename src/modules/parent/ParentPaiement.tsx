@@ -7,6 +7,7 @@ import { getEleveById } from "../eleves/eleve.service";
 import { exportRecuPaiementPDF } from "../paiements/paiement.pdf";
 import type { Paiement } from "../paiements/paiement.types";
 import type { Eleve } from "../eleves/eleve.types";
+import { logger } from "@/utils/logger";
 
 export default function ParentPaiements() {
   const { colors } = useTheme();
@@ -34,8 +35,7 @@ export default function ParentPaiements() {
     ]).then(([p, e]) => {
       setPaiements(p);
       setEleve(e);
-      setLoading(false);
-    });
+    }).catch(logger.error).finally(() => setLoading(false));
   }, [user]);
 
   const stats = {

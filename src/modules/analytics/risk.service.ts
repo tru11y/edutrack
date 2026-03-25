@@ -1,4 +1,4 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import type { Eleve } from "../eleves/eleve.types";
 import type { PresenceCoursPayload, PresenceItem } from "../presences/presence.types";
@@ -18,9 +18,13 @@ interface EleveWithId extends Eleve {
   id: string;
 }
 
-export async function getElevesARisque(): Promise<EleveRisk[]> {
-  const elevesSnap = await getDocs(collection(db, "eleves"));
-  const presencesSnap = await getDocs(collection(db, "presences"));
+export async function getElevesARisque(schoolId?: string | null): Promise<EleveRisk[]> {
+  const elevesSnap = await getDocs(
+    schoolId ? query(collection(db, "eleves"), where("schoolId", "==", schoolId)) : collection(db, "eleves")
+  );
+  const presencesSnap = await getDocs(
+    schoolId ? query(collection(db, "presences"), where("schoolId", "==", schoolId)) : collection(db, "presences")
+  );
 
   const presences = presencesSnap.docs.map(d => d.data() as PresenceCoursPayload);
 

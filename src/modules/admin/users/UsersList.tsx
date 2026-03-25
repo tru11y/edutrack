@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getAllUsers } from "./user.service";
 import { toggleUserStatusSecure } from "../../../services/cloudFunctions";
 import { useTheme } from "../../../context/ThemeContext";
+import { useTenant } from "../../../context/TenantContext";
 import type { UserRole } from "../../../types/User";
 
 interface UserListItem {
@@ -14,12 +15,13 @@ interface UserListItem {
 
 export default function UsersList() {
   const { colors } = useTheme();
+  const { schoolId } = useTenant();
   const [users, setUsers] = useState<UserListItem[]>([]);
 
   const load = useCallback(async () => {
-    const data = await getAllUsers();
+    const data = await getAllUsers(schoolId);
     setUsers(data as UserListItem[]);
-  }, []);
+  }, [schoolId]);
 
   useEffect(() => {
     load();
