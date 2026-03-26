@@ -184,10 +184,9 @@ export default function AdminLayout() {
     if (userProgramme === "soir" && (user?.role === "gestionnaire" || user?.role === "prof")) return false;
     return true;
   });
-  const sidebarWidth = 260;
+  const sidebarWidth = 252;
 
   const accent = isProf ? themeColors.success : themeColors.primary;
-  const accentBg = isProf ? themeColors.successBg : themeColors.primaryBg;
 
   const colors = {
     bg: themeColors.bg,
@@ -197,7 +196,10 @@ export default function AdminLayout() {
     text: themeColors.text,
     textMuted: themeColors.textMuted,
     accent,
-    accentBg,
+    accentAlpha: `${accent}14`,
+    danger: themeColors.danger,
+    dangerBg: themeColors.dangerBg,
+    onGradient: themeColors.onGradient,
   };
 
   const getRoleLabel = (role: string) => {
@@ -212,28 +214,30 @@ export default function AdminLayout() {
       {/* Mobile Header */}
       {isMobile && (
         <header style={{
-          position: "fixed", top: 0, left: 0, right: 0, height: 60,
-          background: colors.bgCard, borderBottom: `1px solid ${colors.border}`,
+          position: "fixed", top: 0, left: 0, right: 0, height: 56,
+          background: colors.bgCard,
+          borderBottom: `1px solid ${colors.border}`,
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "0 16px", zIndex: 50,
+          boxShadow: "0 1px 0 0 rgba(0,0,0,0.04)",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 6, borderRadius: 8, display: "flex" }}>
               {icons.menu}
             </button>
             {school.schoolLogo ? (
-              <img src={school.schoolLogo} alt="" style={{ width: 32, height: 32, objectFit: "contain", borderRadius: 8 }} />
+              <img src={school.schoolLogo} alt="" style={{ width: 28, height: 28, objectFit: "contain", borderRadius: 7 }} />
             ) : (
-              <div style={{ width: 32, height: 32, background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ color: themeColors.onGradient, fontWeight: 700, fontSize: 14 }}>{school.schoolName?.[0]?.toUpperCase() || "E"}</span>
+              <div style={{ width: 28, height: 28, background: `linear-gradient(135deg, ${accent} 0%, ${themeColors.primaryHover} 100%)`, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ color: "#fff", fontWeight: 700, fontSize: 12 }}>{school.schoolName?.[0]?.toUpperCase() || "E"}</span>
               </div>
             )}
-            <span style={{ fontWeight: 600, color: colors.text, fontSize: 16 }}>{school.schoolName || "EDUTRACK"}</span>
+            <span style={{ fontWeight: 600, color: colors.text, fontSize: 15, letterSpacing: "-0.02em" }}>{school.schoolName || "EduTrack"}</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <GlobalSearch />
             <NotificationBell />
-            <button onClick={toggleTheme} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 4 }}>
+            <button onClick={toggleTheme} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 6, borderRadius: 8, display: "flex" }}>
               {isDark ? icons.sun : icons.moon}
             </button>
           </div>
@@ -242,141 +246,215 @@ export default function AdminLayout() {
 
       {/* Overlay */}
       {isMobile && sidebarOpen && (
-        <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 55 }} />
+        <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 55, backdropFilter: "blur(2px)" }} />
       )}
 
       {/* Sidebar */}
       <aside style={{
-        width: sidebarWidth, background: colors.bgCard, borderRight: `1px solid ${colors.border}`,
-        display: "flex", flexDirection: "column", position: "fixed", top: 0,
-        left: isMobile ? (sidebarOpen ? 0 : -sidebarWidth) : 0, bottom: 0, zIndex: 60,
-        transition: "left 0.3s ease-in-out", boxShadow: isMobile && sidebarOpen ? "4px 0 20px rgba(0,0,0,0.1)" : "none",
+        width: sidebarWidth,
+        background: colors.bgCard,
+        borderRight: `1px solid ${colors.border}`,
+        display: "flex", flexDirection: "column",
+        position: "fixed", top: 0, left: isMobile ? (sidebarOpen ? 0 : -sidebarWidth) : 0, bottom: 0,
+        zIndex: 60,
+        transition: "left 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
+        boxShadow: isMobile && sidebarOpen ? "8px 0 32px rgba(0,0,0,0.12)" : "none",
       }}>
-        {/* Logo */}
-        <div style={{ padding: "20px", borderBottom: `1px solid ${colors.border}` }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {/* Brand */}
+        <div style={{ padding: "16px 16px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {school.schoolLogo ? (
-                <img src={school.schoolLogo} alt="" style={{ width: 42, height: 42, objectFit: "contain", borderRadius: 12 }} />
+                <img src={school.schoolLogo} alt="" style={{ width: 36, height: 36, objectFit: "contain", borderRadius: 10 }} />
               ) : (
-                <div style={{ width: 42, height: 42, background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ color: themeColors.onGradient, fontWeight: 700, fontSize: 18 }}>{school.schoolName?.[0]?.toUpperCase() || "E"}</span>
+                <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, ${accent} 0%, ${themeColors.primaryHover} 100%)`, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: `0 2px 8px ${accent}40` }}>
+                  <span style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>{school.schoolName?.[0]?.toUpperCase() || "E"}</span>
                 </div>
               )}
-              <div>
-                <h1 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{school.schoolName || "EDUTRACK"}</h1>
-                <p style={{ fontSize: 11, color: colors.textMuted, margin: 0 }}>{isProf ? t("professorSpace") : t("schoolManagement")}</p>
+              <div style={{ minWidth: 0 }}>
+                <h1 style={{ fontSize: 15, fontWeight: 700, color: colors.text, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 148, letterSpacing: "-0.025em" }}>
+                  {school.schoolName || "EduTrack"}
+                </h1>
+                <p style={{ fontSize: 11, color: colors.textMuted, margin: 0, letterSpacing: "0.01em" }}>
+                  {isProf ? t("professorSpace") : t("schoolManagement")}
+                </p>
               </div>
             </div>
-            {isMobile && (
-              <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 4 }}>
+            {isMobile ? (
+              <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: colors.textMuted, padding: 4, borderRadius: 6, display: "flex" }}>
                 {icons.close}
               </button>
+            ) : (
+              <NotificationBell />
             )}
           </div>
 
-          {/* Notification Bell (desktop) */}
+          {/* Search + controls row */}
           {!isMobile && (
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-              <NotificationBell />
+            <div style={{ marginBottom: 10 }}>
+              <GlobalSearch />
             </div>
           )}
 
-          {/* Theme & Language Toggle */}
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button onClick={toggleTheme} style={{ flex: 1, padding: "8px", background: colors.bgHover, border: `1px solid ${colors.border}`, borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: colors.textMuted, fontSize: 12 }}>
+          {/* Theme / Language / Mode toggle */}
+          <div style={{ display: "flex", gap: 6, marginBottom: canSwitchMode || canSeeOnlineUsers ? 8 : 0 }}>
+            <button onClick={toggleTheme} style={{
+              flex: 1, padding: "7px 10px",
+              background: colors.bgHover, border: `1px solid ${colors.border}`,
+              borderRadius: 8, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+              color: colors.textMuted, fontSize: 11.5, fontWeight: 500,
+            }}>
               {isDark ? icons.sun : icons.moon}
               {isDark ? t("lightMode") : t("darkMode")}
             </button>
-            <button onClick={() => setLanguage(language === "fr" ? "en" : "fr")} style={{ padding: "8px 12px", background: colors.bgHover, border: `1px solid ${colors.border}`, borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: colors.textMuted, fontSize: 12 }}>
+            <button onClick={() => setLanguage(language === "fr" ? "en" : "fr")} style={{
+              padding: "7px 10px",
+              background: colors.bgHover, border: `1px solid ${colors.border}`,
+              borderRadius: 8, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 4,
+              color: colors.textMuted, fontSize: 11.5, fontWeight: 600,
+            }}>
               {icons.globe}
               {language.toUpperCase()}
             </button>
           </div>
 
           {canSwitchMode && (
-            <button onClick={() => setProfMode(!profMode)} style={{ marginTop: 12, width: "100%", padding: "10px 14px", background: `linear-gradient(135deg, ${profMode ? themeColors.primary : themeColors.success} 0%, ${profMode ? themeColors.primaryHover : themeColors.success} 100%)`, color: themeColors.onGradient, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M2 8l3-3M2 8l3 3M14 8l-3-3M14 8l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <button onClick={() => setProfMode(!profMode)} style={{
+              width: "100%", padding: "8px 12px",
+              background: profMode ? `${themeColors.primary}18` : `${themeColors.success}18`,
+              border: `1px solid ${profMode ? themeColors.primary : themeColors.success}30`,
+              borderRadius: 8, fontSize: 12.5, fontWeight: 500,
+              color: profMode ? themeColors.primary : themeColors.success,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+              marginBottom: canSeeOnlineUsers ? 6 : 0,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M2 8l3-3M2 8l3 3M14 8l-3-3M14 8l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {profMode ? t("adminMode") : t("profMode")}
             </button>
           )}
 
-          {/* Online Users Toggle */}
           {canSeeOnlineUsers && (
-            <button onClick={() => setShowOnlineUsers(!showOnlineUsers)} style={{ marginTop: 8, width: "100%", padding: "10px 14px", background: colors.bgHover, border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", color: colors.text }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: themeColors.success }} />
+            <button onClick={() => setShowOnlineUsers(!showOnlineUsers)} style={{
+              width: "100%", padding: "8px 12px",
+              background: colors.bgHover, border: `1px solid ${colors.border}`,
+              borderRadius: 8, fontSize: 12, fontWeight: 500,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between",
+              color: colors.textMuted,
+            }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: themeColors.success, boxShadow: `0 0 0 2px ${themeColors.success}30` }} />
                 {t("connectedUsers")}
               </span>
-              <span style={{ background: themeColors.success, color: themeColors.onGradient, padding: "2px 8px", borderRadius: 10, fontSize: 11 }}>{onlineCount}</span>
+              <span style={{ background: `${themeColors.success}20`, color: themeColors.success, padding: "1px 7px", borderRadius: 10, fontSize: 11, fontWeight: 600 }}>{onlineCount}</span>
             </button>
           )}
 
-          {/* Online Users List */}
           {showOnlineUsers && canSeeOnlineUsers && (
-            <div style={{ marginTop: 8, maxHeight: 150, overflowY: "auto", background: colors.bgHover, borderRadius: 8, padding: 8 }}>
+            <div style={{ marginTop: 6, maxHeight: 140, overflowY: "auto", background: colors.bgHover, borderRadius: 8, padding: "6px 8px" }}>
               {onlineUsers.filter(u => u.isOnline).map((u) => (
-                <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: `1px solid ${colors.border}` }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: themeColors.success }} />
-                  <span style={{ fontSize: 11, color: colors.text, flex: 1 }}>{u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email.split("@")[0]}</span>
-                  <span style={{ fontSize: 10, color: colors.textMuted }}>{getRoleLabel(u.role)}</span>
+                <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: `1px solid ${colors.border}` }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: themeColors.success, flexShrink: 0 }} />
+                  <span style={{ fontSize: 11.5, color: colors.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email.split("@")[0]}
+                  </span>
+                  <span style={{ fontSize: 10, color: colors.textMuted, flexShrink: 0 }}>{getRoleLabel(u.role)}</span>
                 </div>
               ))}
-              {onlineCount === 0 && <p style={{ fontSize: 11, color: colors.textMuted, textAlign: "center", margin: 8 }}>{t("noData")}</p>}
+              {onlineCount === 0 && <p style={{ fontSize: 11, color: colors.textMuted, textAlign: "center", padding: "8px 0" }}>{t("noData")}</p>}
             </div>
           )}
         </div>
 
+        {/* Divider */}
+        <div style={{ height: 1, background: colors.border, margin: "12px 0 0" }} />
+
         {/* Navigation */}
-        <nav aria-label="Navigation principale" style={{ flex: 1, padding: "20px 12px", overflowY: "auto" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <nav aria-label="Navigation principale" style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {filteredNavItems.map((item, idx) => (
               <span key={item.to}>
-              {/* Section separator for soir: show before first soir item if admin sees both */}
-              {user?.role === "admin" && item.programme === "soir" && (idx === 0 || filteredNavItems[idx - 1]?.programme !== "soir") && (
-                <div style={{ padding: "12px 14px 6px", fontSize: 10, fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.8px", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ flex: 1, height: 1, background: colors.border }} />
-                  COURS DU SOIR
-                  <span style={{ flex: 1, height: 1, background: colors.border }} />
-                </div>
-              )}
-              <NavLink key={item.to} to={item.to} end={item.end} data-tour={item.labelKey} style={({ isActive }) => ({
-                display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10,
-                fontSize: 14, fontWeight: 500, color: isActive ? colors.accent : colors.textMuted,
-                background: isActive ? colors.accentBg : "transparent", textDecoration: "none", transition: "all 0.15s"
-              })} aria-current={location.pathname === item.to || (item.end && location.pathname === item.to) ? "page" : undefined}>
-                <span aria-hidden="true" style={{ display: "flex", alignItems: "center" }}>{icons[item.icon]}</span>
-                <span style={{ flex: 1 }}>{t(item.labelKey)}</span>
-                {item.labelKey === "messages" && unreadMessages > 0 && (
-                  <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: colors.danger, color: colors.onGradient, fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
-                    {unreadMessages > 99 ? "99+" : unreadMessages}
-                  </span>
+                {user?.role === "admin" && item.programme === "soir" && (idx === 0 || filteredNavItems[idx - 1]?.programme !== "soir") && (
+                  <div style={{ padding: "14px 8px 6px", display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ flex: 1, height: 1, background: colors.border }} />
+                    <span style={{ fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>Cours du soir</span>
+                    <div style={{ flex: 1, height: 1, background: colors.border }} />
+                  </div>
                 )}
-              </NavLink>
+                <NavLink
+                  to={item.to}
+                  end={item.end}
+                  data-tour={item.labelKey}
+                  aria-current={location.pathname === item.to ? "page" : undefined}
+                  style={({ isActive }) => ({
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "8px 10px",
+                    borderRadius: 8,
+                    fontSize: 13.5, fontWeight: isActive ? 600 : 400,
+                    color: isActive ? colors.accent : colors.textMuted,
+                    background: isActive ? colors.accentAlpha : "transparent",
+                    textDecoration: "none",
+                    transition: "all 0.12s ease",
+                    boxShadow: isActive ? `inset 3px 0 0 0 ${colors.accent}` : "none",
+                  })}
+                >
+                  <span aria-hidden="true" style={{ display: "flex", alignItems: "center", flexShrink: 0, opacity: 0.9 }}>
+                    {icons[item.icon]}
+                  </span>
+                  <span style={{ flex: 1, letterSpacing: "-0.01em" }}>{t(item.labelKey)}</span>
+                  {item.labelKey === "messages" && unreadMessages > 0 && (
+                    <span style={{
+                      minWidth: 17, height: 17, borderRadius: 9,
+                      background: themeColors.danger, color: "#fff",
+                      fontSize: 10, fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px",
+                    }}>
+                      {unreadMessages > 99 ? "99+" : unreadMessages}
+                    </span>
+                  )}
+                </NavLink>
               </span>
             ))}
           </div>
         </nav>
 
-        {/* User */}
-        <div style={{ padding: 16, borderTop: `1px solid ${colors.border}` }}>
-          <div style={{ padding: 16, background: colors.bgHover, borderRadius: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg, ${accent} 0%, ${isProf ? themeColors.success : themeColors.primaryHover} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", color: themeColors.onGradient, fontWeight: 600, fontSize: 14 }}>
-                {user?.email?.[0]?.toUpperCase() || "A"}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 14, fontWeight: 500, color: colors.text, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {user?.prenom && user?.nom ? `${user.prenom} ${user.nom}` : user?.email?.split("@")[0] || "Utilisateur"}
-                </p>
-                <p style={{ fontSize: 12, color: colors.textMuted, margin: 0 }}>{getRoleLabel(isProf ? "prof" : (user?.role || ""))}</p>
-              </div>
+        {/* User card */}
+        <div style={{ padding: "12px 10px 16px", borderTop: `1px solid ${colors.border}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 10px", borderRadius: 10, background: colors.bgHover }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+              background: `linear-gradient(135deg, ${accent} 0%, ${themeColors.primaryHover} 100%)`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#fff", fontWeight: 700, fontSize: 13,
+              boxShadow: `0 2px 6px ${accent}40`,
+            }}>
+              {(user?.prenom?.[0] || user?.email?.[0] || "A").toUpperCase()}
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <NavLink to="/profil" data-tour="profile-btn" style={{ flex: 1, padding: "10px", background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 12, fontWeight: 500, color: colors.textMuted, textDecoration: "none", textAlign: "center" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: colors.text, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.015em" }}>
+                {user?.prenom && user?.nom ? `${user.prenom} ${user.nom}` : user?.email?.split("@")[0] || "Utilisateur"}
+              </p>
+              <p style={{ fontSize: 11, color: colors.textMuted, margin: 0 }}>
+                {getRoleLabel(isProf ? "prof" : (user?.role || ""))}
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 4 }}>
+              <NavLink to="/profil" style={{
+                display: "flex", padding: "6px 8px",
+                background: colors.bgCard, border: `1px solid ${colors.border}`,
+                borderRadius: 7, fontSize: 11.5, fontWeight: 500,
+                color: colors.textMuted, textDecoration: "none",
+              }}>
                 {t("profile")}
               </NavLink>
-              <button onClick={handleLogout} style={{ flex: 1, padding: "10px", background: themeColors.dangerBg, border: `1px solid ${themeColors.danger}40`, borderRadius: 8, fontSize: 12, fontWeight: 500, color: themeColors.danger, cursor: "pointer" }}>
+              <button onClick={handleLogout} style={{
+                display: "flex", padding: "6px 8px",
+                background: `${themeColors.danger}12`,
+                border: `1px solid ${themeColors.danger}25`,
+                borderRadius: 7, fontSize: 11.5, fontWeight: 500,
+                color: themeColors.danger, cursor: "pointer",
+              }}>
                 {t("logout")}
               </button>
             </div>
@@ -385,8 +463,14 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main */}
-      <main id="main-content" style={{ flex: 1, marginLeft: isMobile ? 0 : sidebarWidth, marginTop: isMobile ? 60 : 0, minHeight: isMobile ? "calc(100vh - 60px)" : "100vh", transition: "margin-left 0.3s ease-in-out" }}>
-        <div style={{ padding: isMobile ? 16 : 32, maxWidth: 1400, margin: "0 auto" }}>
+      <main id="main-content" style={{
+        flex: 1,
+        marginLeft: isMobile ? 0 : sidebarWidth,
+        marginTop: isMobile ? 56 : 0,
+        minHeight: isMobile ? "calc(100vh - 56px)" : "100vh",
+        transition: "margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
+      }}>
+        <div style={{ padding: isMobile ? "20px 16px" : "32px 36px", maxWidth: 1440, margin: "0 auto" }}>
           <SubscriptionBanner />
           <Breadcrumb />
           <PageTransition>
