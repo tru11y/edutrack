@@ -115,7 +115,7 @@ export default function ElevesList() {
                 { header: "Classe", accessor: (r) => r.classe },
                 { header: "Sexe", accessor: (r) => r.sexe },
                 { header: "Statut", accessor: (r) => r.statut },
-                { header: "Telephone", accessor: (r) => r.telephone },
+                { header: "Telephone", accessor: (r) => r.parents?.[0]?.telephone ?? "" },
               ], `eleves_${filterClasse || "tous"}.csv`)}
               style={{ padding: "12px 20px", background: colors.bgSecondary, color: colors.textSecondary, borderRadius: 10, border: "none", fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
             >

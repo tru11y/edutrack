@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage, type TranslationKey } from "../context/LanguageContext";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useSchool } from "../context/SchoolContext";
-import { useTenant } from "../context/TenantContext";
+
 import GlobalSearch from "../components/GlobalSearch";
 import Breadcrumb from "../components/Breadcrumb";
 import PageTransition from "../components/PageTransition";

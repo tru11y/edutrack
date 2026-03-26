@@ -51,7 +51,7 @@ export default function PaiementsList() {
 
   const loadPaiements = async () => {
     try {
-      const data = await getAllPaiements(schoolId);
+      const data = await getAllPaiements(schoolId ?? undefined);
       setPaiements(data.sort((a, b) => b.mois.localeCompare(a.mois)));
     } catch (err) {
       logger.error(err);

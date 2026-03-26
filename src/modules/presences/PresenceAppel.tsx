@@ -144,7 +144,7 @@ export default function PresenceAppel({ coursId, classe, date, heureDebut, heure
       }
 
       // 4. Charger tous les élèves pour l'ajout manuel
-      const eligibles = await getElevesEligibles(schoolId);
+      const eligibles = await getElevesEligibles(schoolId ?? undefined);
       setAllEleves(eligibles);
 
       setInitialLoading(false);

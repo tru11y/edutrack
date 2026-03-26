@@ -57,6 +57,8 @@ export interface Eleve {
   statutPaiementMensuel?: StatutPaiementMensuel;
   dernierMoisPaye?: string;
 
+  schoolId?: string;
+
   createdAt?: FirestoreDate;
   updatedAt?: FirestoreDate;
 }

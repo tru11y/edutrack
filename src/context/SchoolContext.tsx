@@ -11,6 +11,7 @@ export interface SchoolConfig {
   adresse: string;
   telephone: string;
   email: string;
+  backupWebhookUrl?: string;
 }
 
 const DEFAULT_CONFIG: SchoolConfig = {

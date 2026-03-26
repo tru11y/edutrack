@@ -158,7 +158,7 @@ export async function exportAnalyticsPDF(report: AnalyticsReport) {
         body: Object.entries(report.attendance.byClasse).map(([cl, d]) => [cl, d.present, d.absent, d.retard, `${d.taux}%`]),
         styles: { fontSize: 9 },
       });
-      y = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y + 30;
+      y = (doc as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y + 30;
       y += 10;
     }
   }
@@ -176,7 +176,7 @@ export async function exportAnalyticsPDF(report: AnalyticsReport) {
         body: Object.entries(report.grades.byMatiere).map(([m, d]) => [m, d.moyenne.toFixed(1), d.min.toFixed(1), d.max.toFixed(1), `${d.tauxReussite}%`]),
         styles: { fontSize: 9 },
       });
-      y = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y + 30;
+      y = (doc as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y + 30;
       y += 10;
     }
   }

@@ -195,6 +195,7 @@ export interface MarquerPresenceBatchParams {
   coursId: string;
   date: string;
   classe: string;
+  schoolId?: string;
   presences: Array<{
     eleveId: string;
     statut: "present" | "absent" | "retard" | "excuse";

@@ -68,7 +68,7 @@ export default function AdminComptaDashboard() {
     setError("");
 
     const [paiementsRes, profsRes, depensesRes, salairesRes] = await Promise.allSettled([
-      getAllPaiements(schoolId),
+      getAllPaiements(schoolId ?? undefined),
       getAllProfesseurs(schoolId),
       getDepensesSecure(mois),
       getSalairesSecure(mois),

@@ -7,7 +7,6 @@ import { useTenant } from "../context/TenantContext";
 import { useToast } from "../components/ui";
 import { logger } from "@/utils/logger";
 import {
-  getUserPermissionsSecure,
   updateUserPermissionsSecure,
   getCloudFunctionErrorMessage,
 } from "../services/cloudFunctions";
