@@ -33,19 +33,20 @@ export function Card({
         borderRadius: 16,
         border: `1px solid ${colors.border}`,
         padding: paddingMap[padding],
+        boxShadow: colors.shadowCard,
         cursor: onClick ? "pointer" : "default",
         transition: "all 0.2s",
         ...style,
       }}
       onMouseEnter={(e) => {
         if (hover || onClick) {
-          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+          e.currentTarget.style.boxShadow = colors.shadowMd;
           e.currentTarget.style.borderColor = colors.borderLight;
         }
       }}
       onMouseLeave={(e) => {
         if (hover || onClick) {
-          e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.boxShadow = colors.shadowCard;
           e.currentTarget.style.borderColor = colors.border;
         }
       }}

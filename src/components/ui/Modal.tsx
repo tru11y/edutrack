@@ -114,7 +114,7 @@ export default function Modal({
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+            boxShadow: colors.shadowLg,
             animation: "modalSlideUp 0.3s ease-out",
           }}
         >

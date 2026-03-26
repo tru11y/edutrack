@@ -56,7 +56,7 @@ export default function LoginPage() {
         maxWidth: 420,
         background: colors.bgCard,
         borderRadius: 24,
-        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        boxShadow: colors.shadowLg,
         overflow: "hidden"
       }}>
         {/* Header */}
