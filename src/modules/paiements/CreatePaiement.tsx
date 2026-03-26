@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
+import { useToast } from "../../components/ui";
 import { ajouterVersementSecure, getCloudFunctionErrorMessage } from "../../services/cloudFunctions";
 import type { Paiement, MethodePaiement } from "./paiement.types";
 
 export default function CreatePaiement({ paiement, onSuccess }: { paiement: Paiement & { id: string }; onSuccess?: () => void }) {
   const { colors } = useTheme();
+  const toast = useToast();
   const [montant, setMontant] = useState(0);
   const [methode, setMethode] = useState<MethodePaiement>("especes");
   const [datePaiement, setDatePaiement] = useState(
@@ -15,7 +17,7 @@ export default function CreatePaiement({ paiement, onSuccess }: { paiement: Paie
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (montant <= 0) {
-      alert("Le montant doit être supérieur à 0");
+      toast.warning("Le montant doit être supérieur à 0");
       return;
     }
 
@@ -28,11 +30,11 @@ export default function CreatePaiement({ paiement, onSuccess }: { paiement: Paie
         datePaiement,
       });
 
-      alert("Paiement enregistré");
+      toast.success("Paiement enregistré");
       setMontant(0);
       onSuccess?.();
     } catch (error) {
-      alert(getCloudFunctionErrorMessage(error));
+      toast.error(getCloudFunctionErrorMessage(error));
     } finally {
       setLoading(false);
     }

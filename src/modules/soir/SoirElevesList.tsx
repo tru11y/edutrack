@@ -5,6 +5,7 @@ import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
 import { useTenant } from "../../context/TenantContext";
 import { useAuth } from "../../context/AuthContext";
+import { ConfirmModal } from "../../components/ui";
 import { logger } from "@/utils/logger";
 
 interface SoirEleve {
@@ -25,6 +26,9 @@ export default function SoirElevesList() {
   const [search, setSearch] = useState("");
   const [filterClasse, setFilterClasse] = useState("");
   const canManage = user?.role === "admin" || user?.role === "gestionnaire";
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", onConfirm: () => {} });
 
   const load = async () => {
     try {
@@ -43,10 +47,17 @@ export default function SoirElevesList() {
 
   useEffect(() => { load(); }, [schoolId]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer cet élève ?")) return;
-    await deleteDoc(doc(db, "eleves", id));
-    setEleves((prev) => prev.filter((e) => e.id !== id));
+  const handleDelete = (id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: "Supprimer l'élève",
+      message: "Supprimer cet élève des cours du soir ?",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        await deleteDoc(doc(db, "eleves", id));
+        setEleves((prev) => prev.filter((e) => e.id !== id));
+      },
+    });
   };
 
   const classes = [...new Set(eleves.map((e) => e.classe).filter(Boolean))].sort();
@@ -136,6 +147,15 @@ export default function SoirElevesList() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant="danger"
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

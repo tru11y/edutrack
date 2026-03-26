@@ -5,6 +5,7 @@ import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
 import { useTenant } from "../../context/TenantContext";
 import { useAuth } from "../../context/AuthContext";
+import { ConfirmModal } from "../../components/ui";
 import { logger } from "@/utils/logger";
 
 interface CahierEntry {
@@ -25,6 +26,9 @@ export default function SoirCahier() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterClasse, setFilterClasse] = useState("");
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", onConfirm: () => {} });
   const canManage = user?.role === "admin" || user?.role === "gestionnaire" || user?.role === "prof";
 
   const load = async () => {
@@ -44,10 +48,17 @@ export default function SoirCahier() {
 
   useEffect(() => { load(); }, [schoolId]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer cette entrée ?")) return;
-    await deleteDoc(doc(db, "cahier", id));
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+  const handleDelete = (id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: "Supprimer l'entrée",
+      message: "Supprimer cette entrée du cahier ?",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        await deleteDoc(doc(db, "cahier", id));
+        setEntries((prev) => prev.filter((e) => e.id !== id));
+      },
+    });
   };
 
   const classes = [...new Set(entries.map((e) => e.classe).filter(Boolean))].sort();
@@ -112,6 +123,15 @@ export default function SoirCahier() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant="danger"
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

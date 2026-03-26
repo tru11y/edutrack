@@ -257,7 +257,7 @@ export default function AdminPaiementsList() {
                 {f.label}
                 <span style={{
                   background: filter === f.value ? (f.color || colors.primary) : colors.border,
-                  color: filter === f.value ? "#fff" : colors.textMuted,
+                  color: filter === f.value ? colors.onGradient : colors.textMuted,
                   padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 600,
                 }}>
                   {f.count}

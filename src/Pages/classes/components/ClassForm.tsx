@@ -12,16 +12,18 @@ export function ClassForm({ onSubmit, onCancel, existingNames }: ClassFormProps)
   const { colors } = useTheme();
   const [form, setForm] = useState({ nom: "", niveau: "", description: "" });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nom.trim()) return;
 
     if (existingNames.some((c) => c.toLowerCase() === form.nom.trim().toLowerCase())) {
-      alert("Cette classe existe deja");
+      setError("Cette classe existe déjà");
       return;
     }
 
+    setError("");
     setSaving(true);
     try {
       await onSubmit(form);
@@ -33,9 +35,11 @@ export function ClassForm({ onSubmit, onCancel, existingNames }: ClassFormProps)
 
   const isDisabled = saving || !form.nom.trim();
 
+
   return (
     <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginBottom: 24 }}>
       <h2 style={{ fontSize: 18, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>Ajouter une classe</h2>
+      {error && <p style={{ fontSize: 13, color: colors.danger, margin: "0 0 12px", padding: "8px 12px", background: colors.dangerBg, borderRadius: 8 }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr", gap: 16, marginBottom: 20 }}>
           <div>

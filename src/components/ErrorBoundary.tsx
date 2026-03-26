@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from "react";
 import { themeColors } from "../context/ThemeContext";
+import { logger } from "@/utils/logger";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -17,9 +18,7 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, Er
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    if (import.meta.env.DEV) {
-      console.error("ErrorBoundary caught:", error, errorInfo);
-    }
+    logger.error("ErrorBoundary caught:", error, errorInfo);
   }
 
   render() {

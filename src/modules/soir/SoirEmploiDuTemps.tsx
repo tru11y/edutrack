@@ -5,6 +5,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { useTenant } from "../../context/TenantContext";
 import { ALL_SOIR_CLASSES } from "./soir.constants";
+import { ConfirmModal } from "../../components/ui";
 import { logger } from "@/utils/logger";
 
 interface Creneau {
@@ -29,6 +30,9 @@ export default function SoirEmploiDuTemps() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const canManage = user?.role === "admin" || user?.role === "gestionnaire";
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", onConfirm: () => {} });
 
   const [form, setForm] = useState({
     jour: "Lundi",
@@ -78,10 +82,17 @@ export default function SoirEmploiDuTemps() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer ce créneau ?")) return;
-    await deleteDoc(doc(db, "emploi_du_temps", id));
-    setCreneaux((prev) => prev.filter((c) => c.id !== id));
+  const handleDelete = (id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: "Supprimer le créneau",
+      message: "Supprimer ce créneau de l'emploi du temps ?",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        await deleteDoc(doc(db, "emploi_du_temps", id));
+        setCreneaux((prev) => prev.filter((c) => c.id !== id));
+      },
+    });
   };
 
   const inputStyle = { width: "100%", padding: "10px 12px", border: `1px solid ${colors.border}`, borderRadius: 8, fontSize: 13, background: colors.bgInput, color: colors.text, boxSizing: "border-box" as const };
@@ -117,7 +128,7 @@ export default function SoirEmploiDuTemps() {
               style={{
                 padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", border: "none",
                 background: filterClasse === c ? colors.primary : colors.bgHover,
-                color: filterClasse === c ? "#fff" : colors.textMuted,
+                color: filterClasse === c ? colors.onGradient : colors.textMuted,
               }}
             >
               {c}
@@ -201,6 +212,15 @@ export default function SoirEmploiDuTemps() {
           })}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant="danger"
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

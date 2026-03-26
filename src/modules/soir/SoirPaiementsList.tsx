@@ -7,6 +7,7 @@ import { useTenant } from "../../context/TenantContext";
 import { useAuth } from "../../context/AuthContext";
 import { useSchool } from "../../context/SchoolContext";
 import { exportRecuPaiementPDF } from "../paiements/paiement.pdf";
+import { ConfirmModal } from "../../components/ui";
 import type { Paiement } from "../paiements/paiement.types";
 import { logger } from "@/utils/logger";
 
@@ -46,6 +47,9 @@ export default function SoirPaiementsList() {
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
   const canManage = user?.role === "admin" || user?.role === "gestionnaire";
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", onConfirm: () => {} });
 
   const load = async () => {
     try {
@@ -64,10 +68,17 @@ export default function SoirPaiementsList() {
 
   useEffect(() => { load(); }, [schoolId]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer ce paiement ?")) return;
-    await deleteDoc(doc(db, "paiements", id));
-    setPaiements((prev) => prev.filter((p) => p.id !== id));
+  const handleDelete = (id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: "Supprimer le paiement",
+      message: "Supprimer ce paiement ? Cette action est irréversible.",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        await deleteDoc(doc(db, "paiements", id));
+        setPaiements((prev) => prev.filter((p) => p.id !== id));
+      },
+    });
   };
 
   const filtered = paiements.filter((p) => {
@@ -175,6 +186,15 @@ export default function SoirPaiementsList() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant="danger"
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((s) => ({ ...s, isOpen: false }))}
+      />
     </div>
   );
 }

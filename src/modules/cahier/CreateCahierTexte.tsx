@@ -3,6 +3,7 @@ import { createCahierEntry } from "./cahier.service";
 import type { CahierEntry } from "./cahier.types";
 import { exportCahierTextePDF } from "./cahier.pdf";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../components/ui";
 
 interface Props {
   coursId: string;
@@ -16,14 +17,15 @@ export default function CreateCahierTexte({
   elevesPresents,
 }: Props) {
   const { user } = useAuth();
+  const toast = useToast();
 
   const [contenu, setContenu] = useState("");
   const [devoirs, setDevoirs] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
-    if (!user?.uid) return alert("Prof non identifié");
-    if (!contenu.trim()) return alert("Contenu obligatoire");
+    if (!user?.uid) { toast.error("Prof non identifié"); return; }
+    if (!contenu.trim()) { toast.warning("Contenu obligatoire"); return; }
 
     const cahier: Omit<CahierEntry, "id" | "createdAt" | "updatedAt" | "isSigned" | "signedAt"> = {
       coursId,
@@ -42,9 +44,9 @@ export default function CreateCahierTexte({
 
       await exportCahierTextePDF(cahier as CahierEntry);
 
-      alert("Cahier de texte enregistré");
+      toast.success("Cahier de texte enregistré");
     } catch {
-      alert("Erreur lors de l’enregistrement");
+      toast.error("Erreur lors de l’enregistrement");
     } finally {
       setLoading(false);
     }

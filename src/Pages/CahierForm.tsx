@@ -6,11 +6,13 @@ import { getAllEleves } from "../modules/eleves/eleve.service";
 import { getCahierById, updateCahierEntry } from "../modules/cahier/cahier.service";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useToast } from "../components/ui";
 import type { Eleve } from "../modules/eleves/eleve.types";
 import { logger } from "@/utils/logger";
 
 export default function CahierForm() {
   const { colors } = useTheme();
+  const toast = useToast();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
@@ -39,7 +41,7 @@ export default function CahierForm() {
           const cahier = await getCahierById(id);
           if (cahier) {
             if (cahier.isSigned) {
-              alert("Cette entree est signee et ne peut plus etre modifiee");
+              toast.warning("Cette entrée est signée et ne peut plus être modifiée");
               navigate("/cahier");
               return;
             }
@@ -50,7 +52,7 @@ export default function CahierForm() {
               devoirs: cahier.devoirs || ""
             });
           } else {
-            alert("Entree introuvable");
+            toast.error("Entrée introuvable");
             navigate("/cahier");
           }
         }

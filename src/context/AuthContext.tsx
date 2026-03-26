@@ -26,6 +26,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../services/firebase";
 import { cacheActorMeta } from "../services/activityLogger";
+import { logger } from "@/utils/logger";
 
 /* =========================
    TYPES
@@ -335,7 +336,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setLoading(false);
       } catch (err) {
-        if (import.meta.env.DEV) console.error("Auth state error:", err);
+        logger.error("Auth state error:", err);
         setUser(null);
         setLoading(false);
       }

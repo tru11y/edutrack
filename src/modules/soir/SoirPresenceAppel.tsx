@@ -108,7 +108,7 @@ export default function SoirPresenceAppel() {
     background: current === variant
       ? variant === "present" ? colors.success : variant === "absent" ? colors.danger : colors.warning
       : colors.bgHover,
-    color: current === variant ? "#fff" : colors.textMuted,
+    color: current === variant ? colors.onGradient : colors.textMuted,
     transition: "all 0.15s",
   });
 

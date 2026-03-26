@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { getAllEleves } from "../eleves/eleve.service";
 import { exclureEleve } from "./discipline.service";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../components/ui";
 import { logger } from "@/utils/logger";
 import type { Eleve } from "../eleves/eleve.types";
 
 export default function ExclureEleve() {
   const { user } = useAuth();
+  const toast = useToast();
 
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [selected, setSelected] = useState("");
@@ -34,11 +36,11 @@ export default function ExclureEleve() {
         user.email || "Professeur"
       );
 
-      alert("Élève exclu");
+      toast.success("Élève exclu");
       setSelected("");
       setMotif("");
     } catch {
-      alert("Erreur exclusion");
+      toast.error("Erreur exclusion");
     } finally {
       setLoading(false);
     }
