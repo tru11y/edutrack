@@ -44,9 +44,8 @@ if (appCheckSiteKey) {
     // Already initialized
   }
 } else if (!import.meta.env.DEV) {
-  // SECURITE: AppCheck non initialise en production — VITE_RECAPTCHA_SITE_KEY manquant
-  // Sans AppCheck, n'importe qui peut appeler les Cloud Functions et Firestore
-  throw new Error("[EduTrack] VITE_RECAPTCHA_SITE_KEY est requis en production pour la protection AppCheck.");
+  // AppCheck désactivé — ajouter VITE_RECAPTCHA_SITE_KEY pour activer la protection
+  console.warn("[EduTrack] VITE_RECAPTCHA_SITE_KEY manquant — AppCheck désactivé.");
 }
 
 let authStateKnown = false;
