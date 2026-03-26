@@ -104,6 +104,7 @@ export const getAdminDashboardStats = functions
           totalProfesseurs,
           totalClasses: classesSnap.size,
           totalMatieres: matieresSnap?.size ?? 0,
+          totalCreneaux: emploiSnap?.size ?? 0,
           totalSalles: sallesSet.size,
           totalUsers: usersSnap?.size ?? 0,
           roleBreakdown,

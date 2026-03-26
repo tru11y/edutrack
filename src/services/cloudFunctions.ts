@@ -140,6 +140,7 @@ export interface AdminDashboardStats {
   totalProfesseurs: number;
   totalClasses: number;
   totalMatieres?: number;
+  totalCreneaux?: number;
   totalSalles?: number;
   totalUsers?: number;
   roleBreakdown?: Record<string, number>;
