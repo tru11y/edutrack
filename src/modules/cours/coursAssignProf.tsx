@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCoursById, assignProfesseurToCours } from "./cours.service";
 import { getAllProfesseurs } from "../professeurs/professeur.service";
+import { useTenant } from "../../context/TenantContext";
 import type { Cours } from "./cours.types";
 import type { Professeur } from "../professeurs/professeur.types";
 
@@ -12,6 +13,7 @@ interface ProfesseurWithId extends Professeur {
 export default function CoursAssignProf() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { schoolId } = useTenant();
 
   const [cours, setCours] = useState<Cours | null>(null);
   const [profs, setProfs] = useState<ProfesseurWithId[]>([]);
@@ -25,7 +27,7 @@ export default function CoursAssignProf() {
         if (!id) return;
 
         const c = await getCoursById(id);
-        const p = await getAllProfesseurs();
+        const p = await getAllProfesseurs(schoolId);
 
         setCours(c);
         setProfs(p as ProfesseurWithId[]);

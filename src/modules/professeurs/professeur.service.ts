@@ -57,13 +57,19 @@ export async function createProfesseurWithAccount(
    READ
 ====================== */
 
-export async function getAllProfesseurs(_schoolId?: string): Promise<Professeur[]> {
+export async function getAllProfesseurs(schoolId?: string | null): Promise<Professeur[]> {
   // Fetch from both sources in parallel:
   // 1. professeurs collection (created via createProfesseurWithAccount)
   // 2. users with role=prof (created via Users page — no professeurs doc)
+  const profsQuery = schoolId
+    ? query(profsRef, where("schoolId", "==", schoolId))
+    : profsRef;
+  const usersProfsQuery = schoolId
+    ? query(usersRef, where("role", "==", "prof"), where("schoolId", "==", schoolId))
+    : query(usersRef, where("role", "==", "prof"));
   const [profsSnap, usersProfsSnap] = await Promise.all([
-    getDocs(profsRef),
-    getDocs(query(usersRef, where("role", "==", "prof"))),
+    getDocs(profsQuery),
+    getDocs(usersProfsQuery),
   ]);
 
   const profsMap = new Map<string, Professeur>();

@@ -4,7 +4,6 @@ import { exclureEleve } from "./discipline.service";
 import { useAuth } from "../../context/AuthContext";
 import { logger } from "@/utils/logger";
 import type { Eleve } from "../eleves/eleve.types";
-import { logger } from "@/utils/logger";
 
 export default function ExclureEleve() {
   const { user } = useAuth();

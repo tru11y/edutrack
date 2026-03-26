@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
-import { collection, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, setDoc, addDoc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, setDoc, addDoc, query, where, limit } from "firebase/firestore";
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, getAuth } from "firebase/auth";
 import { initializeApp, deleteApp } from "firebase/app";
 import { db, auth } from "../../services/firebase";
 import { toggleUserStatusSecure } from "../../services/cloudFunctions";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useTenant } from "../../context/TenantContext";
 import { logActivity } from "../../services/activityLogger";
 import { LoadingSpinner } from "../../components/ui/Skeleton";
 import { useToast, ConfirmModal } from "../../components/ui";
@@ -17,6 +18,7 @@ import { logger } from "@/utils/logger";
 export default function Users() {
   const { user: currentUser } = useAuth();
   const { colors } = useTheme();
+  const { schoolId } = useTenant();
 
   // Data state
   const [users, setUsers] = useState<UserData[]>([]);
@@ -46,7 +48,10 @@ export default function Users() {
   const loadUsers = useCallback(async () => {
     try {
       setLoadError(null);
-      const snap = await getDocs(collection(db, "users"));
+      const q = schoolId
+        ? query(collection(db, "users"), where("schoolId", "==", schoolId), limit(200))
+        : query(collection(db, "users"), limit(200));
+      const snap = await getDocs(q);
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as UserData[];
       setUsers(data.sort((a, b) => (a.email || "").localeCompare(b.email || "")));
     } catch (err) {
@@ -55,17 +60,20 @@ export default function Users() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [schoolId]);
 
   const loadClasses = useCallback(async () => {
     try {
-      const snap = await getDocs(collection(db, "classes"));
+      const q = schoolId
+        ? query(collection(db, "classes"), where("schoolId", "==", schoolId), limit(200))
+        : query(collection(db, "classes"), limit(200));
+      const snap = await getDocs(q);
       const data = snap.docs.map((d) => ({ id: d.id, nom: d.data().nom })) as ClasseData[];
       setAvailableClasses(data.sort((a, b) => a.nom.localeCompare(b.nom)));
     } catch (err) {
       logger.error("Erreur chargement classes:", err);
     }
-  }, []);
+  }, [schoolId]);
 
   useEffect(() => {
     loadUsers();

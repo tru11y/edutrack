@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { useTheme } from "../../context/ThemeContext";
+import { useTenant } from "../../context/TenantContext";
 import { useToast, ConfirmModal } from "../../components/ui";
 import { toggleUserStatusSecure, getCloudFunctionErrorMessage } from "../../services/cloudFunctions";
 
@@ -19,6 +20,7 @@ interface Admin {
 
 export default function AdminsList() {
   const { colors } = useTheme();
+  const { schoolId } = useTenant();
   const toast = useToast();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,10 @@ export default function AdminsList() {
 
   useEffect(() => {
     const load = async () => {
-      const snap = await getDocs(collection(db, "users"));
+      const q = schoolId
+        ? query(collection(db, "users"), where("schoolId", "==", schoolId), limit(200))
+        : query(collection(db, "users"), limit(200));
+      const snap = await getDocs(q);
       const data: Admin[] = [];
 
       snap.forEach((d) => {

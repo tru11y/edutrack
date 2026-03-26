@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useTenant } from "../context/TenantContext";
 import { useToast } from "../components/ui";
+import { logger } from "@/utils/logger";
 import {
   getUserPermissionsSecure,
   updateUserPermissionsSecure,
   getCloudFunctionErrorMessage,
 } from "../services/cloudFunctions";
 import {
-import { logger } from "@/utils/logger";
   ALL_PERMISSIONS,
   PERMISSION_LABELS,
   DEFAULT_PERMISSIONS_BY_ROLE,
@@ -29,6 +30,7 @@ interface UserRow {
 export default function PermissionManagement() {
   const { colors } = useTheme();
   const { t, language } = useLanguage();
+  const { schoolId } = useTenant();
   const toast = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +39,10 @@ export default function PermissionManagement() {
   useEffect(() => {
     const load = async () => {
       try {
-        const snap = await getDocs(collection(db, "users"));
+        const q = schoolId
+          ? query(collection(db, "users"), where("schoolId", "==", schoolId), limit(200))
+          : query(collection(db, "users"), limit(200));
+        const snap = await getDocs(q);
         const rows: UserRow[] = snap.docs
           .map((d) => {
             const data = d.data();
@@ -60,7 +65,7 @@ export default function PermissionManagement() {
       }
     };
     load();
-  }, []);
+  }, [schoolId]);
 
   const togglePermission = (userId: string, perm: Permission) => {
     setUsers((prev) =>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "../../context/ThemeContext";
 import { createCreneau } from "./emploi.service";
 import { getAllProfesseurs } from "../professeurs/professeur.service";
+import { useTenant } from "../../context/TenantContext";
 import { JOURS } from "../../constants";
 import type { Creneau } from "./emploi.types";
 import type { Jour } from "../../constants";
@@ -11,6 +12,7 @@ type CreneauForm = Omit<Creneau, "id" | "createdAt">;
 
 export default function CreateCreneau({ onCreated }: { onCreated?: () => void }) {
   const { colors } = useTheme();
+  const { schoolId } = useTenant();
   const [profs, setProfs] = useState<Professeur[]>([]);
   const [form, setForm] = useState<CreneauForm>({
     jour: "lundi",
@@ -25,7 +27,7 @@ export default function CreateCreneau({ onCreated }: { onCreated?: () => void })
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    getAllProfesseurs().then((data) => setProfs(data.filter((p) => p.statut === "actif")));
+    getAllProfesseurs(schoolId).then((data) => setProfs(data.filter((p) => p.statut === "actif")));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

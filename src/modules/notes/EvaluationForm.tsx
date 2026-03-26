@@ -8,14 +8,16 @@ import {
   getEvaluationsByClasseSecure,
   getCloudFunctionErrorMessage,
 } from "../../services/cloudFunctions";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
+import { useTenant } from "../../context/TenantContext";
 import type { Trimestre, EvaluationType } from "./notes.types";
 
 export default function EvaluationForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { colors } = useTheme();
+  const { schoolId } = useTenant();
   const toast = useToast();
   const isEdit = !!id;
 
@@ -41,12 +43,18 @@ export default function EvaluationForm() {
   }, [id]);
 
   async function loadClasses() {
-    const snap = await getDocs(collection(db, "classes"));
+    const q = schoolId
+      ? query(collection(db, "classes"), where("schoolId", "==", schoolId))
+      : collection(db, "classes");
+    const snap = await getDocs(q);
     setClasses(snap.docs.map((d) => d.data().nom || d.id).sort());
   }
 
   async function loadMatieres() {
-    const snap = await getDocs(collection(db, "matieres"));
+    const q = schoolId
+      ? query(collection(db, "matieres"), where("schoolId", "==", schoolId))
+      : collection(db, "matieres");
+    const snap = await getDocs(q);
     setMatieres(snap.docs.map((d) => d.data().nom || d.id).sort());
   }
 

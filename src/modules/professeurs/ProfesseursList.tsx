@@ -2,17 +2,19 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAllProfesseurs } from "./professeur.service";
 import { useTheme } from "../../context/ThemeContext";
+import { useTenant } from "../../context/TenantContext";
 import type { Professeur } from "./professeur.types";
 import { logger } from "@/utils/logger";
 
 export default function ProfesseursList() {
   const { colors } = useTheme();
+  const { schoolId } = useTenant();
   const [profs, setProfs] = useState<Professeur[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    getAllProfesseurs().then((data) => {
+    getAllProfesseurs(schoolId).then((data) => {
       setProfs(data);
       }).catch(logger.error).finally(() => setLoading(false));
   }, []);

@@ -11,13 +11,15 @@ import {
   type EvaluationResult,
 } from "../../services/cloudFunctions";
 import { downloadBase64File } from "../../utils/download";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
+import { useTenant } from "../../context/TenantContext";
 import { EVALUATION_TYPE_LABELS, TRIMESTRE_LABELS, type EvaluationType, type Trimestre } from "./notes.types";
 
 export default function EvaluationsList() {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { schoolId } = useTenant();
   const toast = useToast();
   const isAdmin = user?.role === "admin" || user?.role === "gestionnaire";
 
@@ -43,12 +45,18 @@ export default function EvaluationsList() {
   }, [filterClasse, filterMatiere, filterTrimestre]);
 
   async function loadClasses() {
-    const snap = await getDocs(collection(db, "classes"));
+    const q = schoolId
+      ? query(collection(db, "classes"), where("schoolId", "==", schoolId))
+      : collection(db, "classes");
+    const snap = await getDocs(q);
     setClasses(snap.docs.map((d) => d.data().nom || d.id).sort());
   }
 
   async function loadMatieres() {
-    const snap = await getDocs(collection(db, "matieres"));
+    const q = schoolId
+      ? query(collection(db, "matieres"), where("schoolId", "==", schoolId))
+      : collection(db, "matieres");
+    const snap = await getDocs(q);
     setMatieres(snap.docs.map((d) => d.data().nom || d.id).sort());
   }
 
