@@ -24,6 +24,7 @@ export default function AdminsList() {
   const toast = useToast();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean; title: string; message: string; variant: "danger" | "warning" | "info"; onConfirm: () => void;
   }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
@@ -66,6 +67,7 @@ export default function AdminsList() {
       variant: currentStatus ? "warning" : "info",
       onConfirm: async () => {
         setConfirmState((s) => ({ ...s, isOpen: false }));
+        setToggling(adminId);
         try {
           await toggleUserStatusSecure({ userId: adminId, isActive: !currentStatus });
           setAdmins((prev) =>
@@ -73,6 +75,8 @@ export default function AdminsList() {
           );
         } catch (e) {
           toast.error(getCloudFunctionErrorMessage(e));
+        } finally {
+          setToggling(null);
         }
       },
     });
@@ -217,6 +221,7 @@ export default function AdminsList() {
 
                 <button
                   onClick={() => toggleActive(admin.id, admin.isActive)}
+                  disabled={toggling === admin.id}
                   style={{
                     width: "100%",
                     padding: "10px 16px",
@@ -226,10 +231,11 @@ export default function AdminsList() {
                     fontSize: 13,
                     fontWeight: 500,
                     color: admin.isActive ? colors.danger : colors.success,
-                    cursor: "pointer"
+                    cursor: toggling === admin.id ? "not-allowed" : "pointer",
+                    opacity: toggling === admin.id ? 0.6 : 1,
                   }}
                 >
-                  {admin.isActive ? "Desactiver" : "Reactiver"}
+                  {toggling === admin.id ? "..." : admin.isActive ? "Desactiver" : "Reactiver"}
                 </button>
               </div>
             </div>
