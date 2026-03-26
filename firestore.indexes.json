@@ -16,7 +16,16 @@
     { "collectionGroup": "salaires",      "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "mois",      "order": "ASCENDING"  }] },
     { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "recipientId","order": "ASCENDING"}, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
     { "collectionGroup": "notes",         "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "evaluationId","order":"ASCENDING"  }] },
-    { "collectionGroup": "bulletins",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "classe",    "order": "ASCENDING"  }] }
+    { "collectionGroup": "bulletins",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "classe",    "order": "ASCENDING"  }] },
+    { "collectionGroup": "eleves",        "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "programme", "order": "ASCENDING"  }] },
+    { "collectionGroup": "eleves",        "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "programme", "order": "ASCENDING"  }, { "fieldPath": "classe",    "order": "ASCENDING"  }] },
+    { "collectionGroup": "presences",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "programme", "order": "ASCENDING"  }] },
+    { "collectionGroup": "presences",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "programme", "order": "ASCENDING"  }, { "fieldPath": "date",      "order": "ASCENDING"  }] },
+    { "collectionGroup": "paiements",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "programme", "order": "ASCENDING"  }] },
+    { "collectionGroup": "paiements",     "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "programme", "order": "ASCENDING"  }, { "fieldPath": "statut",    "order": "ASCENDING"  }] },
+    { "collectionGroup": "cahier",        "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "programme", "order": "ASCENDING"  }] },
+    { "collectionGroup": "connection_logs","queryScope":"COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "loginAt",   "order": "DESCENDING" }] },
+    { "collectionGroup": "users",         "queryScope": "COLLECTION", "fields": [{ "fieldPath": "schoolId", "order": "ASCENDING" }, { "fieldPath": "lastSeen",  "order": "DESCENDING" }] }
   ],
   "fieldOverrides": [
     {
