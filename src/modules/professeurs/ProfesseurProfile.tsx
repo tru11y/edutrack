@@ -8,6 +8,7 @@ import {
 import { useTheme } from "../../context/ThemeContext";
 import { useToast, ConfirmModal } from "../../components/ui";
 import type { Professeur } from "./professeur.types";
+import { logger } from "@/utils/logger";
 
 export default function ProfesseurProfile() {
   const { id } = useParams<{ id: string }>();
@@ -46,8 +47,7 @@ export default function ProfesseurProfile() {
         matieres: (data.matieres || []).join(", "),
         classes: (data.classes || []).join(", "),
       });
-      setLoading(false);
-    });
+      }).catch(logger.error).finally(() => setLoading(false));
   }, [id]);
 
   const handleSave = async () => {

@@ -6,6 +6,7 @@ import ExclureEleve from "../discipline/ExclureEleve";
 import { getCoursById } from "../cours/cours.service";
 import { useTheme } from "../../context/ThemeContext";
 import type { Cours } from "../cours/cours.types";
+import { logger } from "@/utils/logger";
 
 export default function ProfCoursDetail() {
   const { colors } = useTheme();
@@ -17,7 +18,7 @@ export default function ProfCoursDetail() {
 
   useEffect(() => {
     if (id) {
-      getCoursById(id).then(setCours);
+      getCoursById(id).then(setCours).catch(logger.error);
     }
   }, [id]);
 

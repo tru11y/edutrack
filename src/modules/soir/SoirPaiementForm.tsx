@@ -79,7 +79,7 @@ export default function SoirPaiementForm() {
           notes: d.notes || "",
         });
       }
-    });
+    }).catch(logger.error);
   }, [id]);
 
   const handleEleveChange = (eleveId: string) => {

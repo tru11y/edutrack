@@ -55,7 +55,7 @@ export default function SoirEleveForm() {
           notes: d.notes || "",
         });
       }
-    });
+    }).catch(logger.error);
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {

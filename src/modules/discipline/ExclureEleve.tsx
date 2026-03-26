@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { getAllEleves } from "../eleves/eleve.service";
 import { exclureEleve } from "./discipline.service";
 import { useAuth } from "../../context/AuthContext";
+import { logger } from "@/utils/logger";
 import type { Eleve } from "../eleves/eleve.types";
+import { logger } from "@/utils/logger";
 
 export default function ExclureEleve() {
   const { user } = useAuth();
@@ -15,7 +17,7 @@ export default function ExclureEleve() {
   useEffect(() => {
     getAllEleves().then((d) => {
       setEleves(d.filter((e) => e.statut === "actif"));
-    });
+    }).catch(logger.error);
   }, []);
 
   const handleExclude = async () => {

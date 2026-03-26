@@ -5,6 +5,7 @@ import { unbanEleve } from "../paiements/paiement.service";
 import { useTheme } from "../../context/ThemeContext";
 import { ConfirmModal } from "../../components/ui";
 import type { Eleve } from "./eleve.types";
+import { logger } from "@/utils/logger";
 
 interface EleveBanni {
   id: string;
@@ -40,6 +41,7 @@ export default function AdminBansList() {
           }));
         setEleves(bannis);
       })
+      .catch(logger.error)
       .finally(() => setLoading(false));
   }, []);
 

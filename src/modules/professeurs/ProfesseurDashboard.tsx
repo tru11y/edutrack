@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { getCoursByProfesseur } from "../cours/cours.service";
 import type { Cours } from "../cours/cours.types";
+import { logger } from "@/utils/logger";
 
 export default function ProfesseurDashboard() {
   const { user } = useAuth();
@@ -25,8 +26,7 @@ export default function ProfesseurDashboard() {
         return a.heureDebut.localeCompare(b.heureDebut);
       });
       setCours(sorted);
-      setLoading(false);
-    });
+      }).catch(logger.error).finally(() => setLoading(false));
   }, [user]);
 
   if (loading) {

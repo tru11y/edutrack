@@ -2,13 +2,14 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getEleveById } from "./eleve.service";
 import type { Eleve } from "./eleve.types";
+import { logger } from "@/utils/logger";
 
 export default function EleveProfile() {
   const { id } = useParams();
   const [eleve, setEleve] = useState<Eleve | null>(null);
 
   useEffect(() => {
-    if (id) getEleveById(id).then(setEleve);
+    if (id) getEleveById(id).then(setEleve).catch(logger.error);
   }, [id]);
 
   if (!eleve) return <div>Chargement...</div>;

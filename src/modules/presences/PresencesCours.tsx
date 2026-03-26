@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { getPresencesByCours } from "./presence.service";
 import { useTheme } from "../../context/ThemeContext";
 import type { PresenceCoursPayload, PresenceItem } from "./presence.types";
+import { logger } from "@/utils/logger";
 
 export default function PresencesCours() {
   const { colors } = useTheme();
@@ -15,8 +16,7 @@ export default function PresencesCours() {
 
     getPresencesByCours(id).then((res) => {
       setData(res);
-      setLoading(false);
-    });
+      }).catch(logger.error).finally(() => setLoading(false));
   }, [id]);
 
   if (loading) return <p style={{ color: colors.textMuted }} className="p-6">Chargement…</p>;

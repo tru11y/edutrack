@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getAllEleves } from "./eleve.service";
 import { useTheme } from "../../context/ThemeContext";
 import type { Eleve } from "./eleve.types";
+import { logger } from "@/utils/logger";
 
 export default function ElevesList() {
   const { colors } = useTheme();
@@ -15,8 +16,7 @@ export default function ElevesList() {
   useEffect(() => {
     getAllEleves().then((data) => {
       setEleves(data.filter((e) => !!e.id));
-      setLoading(false);
-    });
+    }).catch(logger.error).finally(() => setLoading(false));
   }, []);
 
   const classes = [...new Set(eleves.map(e => e.classe))].sort();

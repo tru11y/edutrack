@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { getCoursById } from "./cours.service";
 import type { Cours } from "./cours.types";
 import PresenceAppel from "../presences/PresenceAppel";
+import { logger } from "@/utils/logger";
 
 export default function CoursDetail() {
   const { id } = useParams<{ id: string }>();
@@ -20,8 +21,7 @@ export default function CoursDetail() {
       })
       .catch(() => {
         setCours(null);
-        setLoading(false);
-      });
+        }).catch(logger.error).finally(() => setLoading(false));
   }, [id]);
 
   if (loading) return <div className="p-6">Chargement…</div>;

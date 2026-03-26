@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getAllPresences } from "./presence.service";
 import { useTheme } from "../../context/ThemeContext";
 import type { PresenceCoursPayload } from "./presence.types";
+import { logger } from "@/utils/logger";
 
 export default function AdminPresences() {
   const { colors } = useTheme();
@@ -11,8 +12,7 @@ export default function AdminPresences() {
   useEffect(() => {
     getAllPresences().then((data) => {
       setRows(data);
-      setLoading(false);
-    });
+      }).catch(logger.error).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="p-6" style={{ color: colors.textMuted }}>Chargement…</div>;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCreneaux } from "./emploi.service";
 import type { Creneau } from "./emploi.types";
+import { logger } from "@/utils/logger";
 
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
@@ -8,7 +9,7 @@ export default function EmploiDuTemps() {
   const [creneaux, setCreneaux] = useState<Creneau[]>([]);
 
   useEffect(() => {
-    getCreneaux().then(setCreneaux);
+    getCreneaux().then(setCreneaux).catch(logger.error);
   }, []);
 
   return (

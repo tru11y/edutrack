@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getAllProfesseurs } from "./professeur.service";
 import { useTheme } from "../../context/ThemeContext";
 import type { Professeur } from "./professeur.types";
+import { logger } from "@/utils/logger";
 
 export default function ProfesseursList() {
   const { colors } = useTheme();
@@ -13,8 +14,7 @@ export default function ProfesseursList() {
   useEffect(() => {
     getAllProfesseurs().then((data) => {
       setProfs(data);
-      setLoading(false);
-    });
+      }).catch(logger.error).finally(() => setLoading(false));
   }, []);
 
   const filteredProfs = profs.filter((p) => {

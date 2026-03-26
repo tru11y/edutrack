@@ -3,13 +3,14 @@ import { getAllEleves } from "./eleve.service";
 import { Link } from "react-router-dom";
 import { useTheme } from "../../../../context/ThemeContext";
 import type { Eleve } from "./eleve.types";
+import { logger } from "@/utils/logger";
 
 export default function ElevesList() {
   const { colors } = useTheme();
   const [eleves, setEleves] = useState<Eleve[]>([]);
 
   useEffect(() => {
-    getAllEleves().then(setEleves);
+    getAllEleves().then(setEleves).catch(logger.error);
   }, []);
 
   return (

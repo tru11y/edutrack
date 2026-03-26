@@ -46,7 +46,7 @@ export default function SoirCahierForm() {
           date: d.date || EMPTY.date,
         });
       }
-    });
+    }).catch(logger.error);
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
