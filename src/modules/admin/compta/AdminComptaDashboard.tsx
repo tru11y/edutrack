@@ -131,7 +131,7 @@ export default function AdminComptaDashboard() {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, [mois]);
+  useEffect(() => { loadData(); }, [mois, schoolId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreateDepense = async (e: React.FormEvent) => {
     e.preventDefault();

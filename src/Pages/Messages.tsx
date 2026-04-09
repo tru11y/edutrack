@@ -61,6 +61,7 @@ export default function Messages() {
 
   // Listener temps reel pour les utilisateurs
   useEffect(() => {
+    if (!schoolId) return;
     const unsubUsers = onSnapshot(query(collection(db, "users"), where("schoolId", "==", schoolId)), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as UserData[];
       setUsers(data.filter((u) => u.isActive !== false));
@@ -69,11 +70,11 @@ export default function Messages() {
     });
 
     return () => unsubUsers();
-  }, []);
+  }, [schoolId]);
 
   // Listener temps reel pour les messages
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || !schoolId) return;
 
     const q = query(collection(db, "messages"), where("schoolId", "==", schoolId), orderBy("createdAt", "desc"));
     const unsubMessages = onSnapshot(q, (snap) => {
@@ -110,7 +111,7 @@ export default function Messages() {
     });
 
     return () => unsubMessages();
-  }, [user?.uid, isAdminOrGest, isProf]);
+  }, [user?.uid, isAdminOrGest, isProf, schoolId]);
 
   const getDestinataireNom = (dest: string): string => {
     if (dest === "tous") return "Tout le monde";

@@ -116,6 +116,7 @@ export default function Users() {
         prenom: form.prenom || "",
         role: form.role,
         isActive: true,
+        schoolId: schoolId || "",
         createdAt: serverTimestamp(),
       };
 

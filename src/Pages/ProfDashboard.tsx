@@ -69,7 +69,7 @@ export default function ProfDashboard() {
       }
     };
     load();
-  }, [user?.uid]);
+  }, [user?.uid, schoolId]);
 
   const cardStyle = {
     background: colors.bgCard,

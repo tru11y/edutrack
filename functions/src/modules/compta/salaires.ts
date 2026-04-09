@@ -32,7 +32,16 @@ export const createSalaire = functions
     const schoolId = await getSchoolId(context.auth!.uid);
 
     const profDoc = await db.collection("professeurs").doc(data.profId).get();
-    if (!profDoc.exists) notFound("Professeur non trouve.");
+    let profData: FirebaseFirestore.DocumentData | undefined;
+    if (profDoc.exists) {
+      profData = profDoc.data();
+    } else {
+      // Fallback: prof créé via admin UI (users collection, sans doc professeurs)
+      const userDoc = await db.collection("users").doc(data.profId).get();
+      if (!userDoc.exists || userDoc.data()?.role !== "prof") notFound("Professeur non trouve.");
+      const u = userDoc.data()!;
+      profData = { prenom: u.prenom || "", nom: u.nom || "" };
+    }
 
     const existing = await db.collection("salaires")
       .where("profId", "==", data.profId)
@@ -43,7 +52,7 @@ export const createSalaire = functions
       throw new functions.https.HttpsError("already-exists", "Un salaire existe deja pour ce professeur ce mois.");
     }
 
-    const profData = profDoc.data();
+    // profData already set above
 
     try {
       const salaireData: Record<string, unknown> = {
