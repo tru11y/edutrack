@@ -32,6 +32,7 @@ export default function Classes() {
 
   // UI state
   const [showForm, setShowForm] = useState(false);
+  const [editingClasse, setEditingClasse] = useState<ClasseData | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showMatieresModal, setShowMatieresModal] = useState(false);
   const [selectedClasse, setSelectedClasse] = useState<ClasseData | null>(null);
@@ -106,6 +107,17 @@ export default function Classes() {
       schoolId: schoolId || "",
     });
     setShowForm(false);
+    await loadData();
+  };
+
+  const handleEditClasse = async (data: { nom: string; niveau: string; description: string }) => {
+    if (!editingClasse?.id) return;
+    await updateDoc(doc(db, "classes", editingClasse.id), {
+      nom: data.nom.trim(),
+      niveau: data.niveau.trim() || null,
+      description: data.description.trim() || null,
+    });
+    setEditingClasse(null);
     await loadData();
   };
 
@@ -299,6 +311,15 @@ export default function Classes() {
 
       {/* Form */}
       {showForm && <ClassForm onSubmit={handleAddClasse} onCancel={() => setShowForm(false)} existingNames={classes.map((c) => c.nom)} />}
+      {editingClasse && (
+        <ClassForm
+          onSubmit={handleEditClasse}
+          onCancel={() => setEditingClasse(null)}
+          existingNames={classes.filter((c) => c.id !== editingClasse.id).map((c) => c.nom)}
+          initialValues={{ nom: editingClasse.nom, niveau: editingClasse.niveau || "", description: editingClasse.description || "" }}
+          isEditing
+        />
+      )}
 
       {/* Liste */}
       {classes.length === 0 ? (
@@ -323,6 +344,7 @@ export default function Classes() {
                   setShowScheduleModal(true);
                 }}
                 onDelete={() => handleDeleteClasse(classe)}
+                onEdit={() => { setEditingClasse(classe); setShowForm(false); }}
               />
             );
           })}

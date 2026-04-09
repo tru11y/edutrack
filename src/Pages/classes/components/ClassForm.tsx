@@ -6,11 +6,13 @@ interface ClassFormProps {
   onSubmit: (data: { nom: string; niveau: string; description: string }) => Promise<void>;
   onCancel: () => void;
   existingNames: string[];
+  initialValues?: { nom: string; niveau: string; description: string };
+  isEditing?: boolean;
 }
 
-export function ClassForm({ onSubmit, onCancel, existingNames }: ClassFormProps) {
+export function ClassForm({ onSubmit, onCancel, existingNames, initialValues, isEditing }: ClassFormProps) {
   const { colors } = useTheme();
-  const [form, setForm] = useState({ nom: "", niveau: "", description: "" });
+  const [form, setForm] = useState(initialValues ?? { nom: "", niveau: "", description: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -18,7 +20,7 @@ export function ClassForm({ onSubmit, onCancel, existingNames }: ClassFormProps)
     e.preventDefault();
     if (!form.nom.trim()) return;
 
-    if (existingNames.some((c) => c.toLowerCase() === form.nom.trim().toLowerCase())) {
+    if (!isEditing && existingNames.some((c) => c.toLowerCase() === form.nom.trim().toLowerCase())) {
       setError("Cette classe existe déjà");
       return;
     }
@@ -38,7 +40,7 @@ export function ClassForm({ onSubmit, onCancel, existingNames }: ClassFormProps)
 
   return (
     <div style={{ background: colors.bgCard, borderRadius: 16, border: `1px solid ${colors.border}`, padding: 24, marginBottom: 24 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>Ajouter une classe</h2>
+      <h2 style={{ fontSize: 18, fontWeight: 600, color: colors.text, margin: "0 0 20px" }}>{isEditing ? "Modifier la classe" : "Ajouter une classe"}</h2>
       {error && <p style={{ fontSize: 13, color: colors.danger, margin: "0 0 12px", padding: "8px 12px", background: colors.dangerBg, borderRadius: 8 }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr", gap: 16, marginBottom: 20 }}>
@@ -52,6 +54,7 @@ export function ClassForm({ onSubmit, onCancel, existingNames }: ClassFormProps)
               onChange={(e) => setForm({ ...form, nom: e.target.value })}
               placeholder="Ex: CP, CE1, 6eme..."
               required
+              disabled={isEditing}
               style={{
                 width: "100%",
                 padding: "12px 14px",
@@ -59,8 +62,9 @@ export function ClassForm({ onSubmit, onCancel, existingNames }: ClassFormProps)
                 borderRadius: 10,
                 fontSize: 14,
                 boxSizing: "border-box",
-                background: colors.bgInput,
+                background: isEditing ? colors.bgSecondary : colors.bgInput,
                 color: colors.text,
+                opacity: isEditing ? 0.7 : 1,
               }}
             />
           </div>
@@ -122,7 +126,7 @@ export function ClassForm({ onSubmit, onCancel, existingNames }: ClassFormProps)
               cursor: isDisabled ? "not-allowed" : "pointer",
             }}
           >
-            {saving ? "Enregistrement..." : "Ajouter la classe"}
+            {saving ? "Enregistrement..." : isEditing ? "Enregistrer" : "Ajouter la classe"}
           </button>
           <button
             type="button"

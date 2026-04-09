@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../services/firebase";
+import { useTenant } from "../../context/TenantContext";
 import { logger } from "@/utils/logger";
 
 export default function CreateProfesseur() {
   const navigate = useNavigate();
+  const { schoolId } = useTenant();
 
   const [form, setForm] = useState({
     nom: "",
@@ -41,14 +43,18 @@ export default function CreateProfesseur() {
       await addDoc(collection(db, "professeurs"), {
         ...form,
         isActive: true,
+        schoolId: schoolId || "",
         createdAt: serverTimestamp(),
       });
 
       // 2) Créer l'utilisateur dans la collection users
       await addDoc(collection(db, "users"), {
         email: form.email,
+        nom: form.nom,
+        prenom: form.prenom,
         role: "prof",
         isActive: true,
+        schoolId: schoolId || "",
         createdAt: serverTimestamp(),
       });
 

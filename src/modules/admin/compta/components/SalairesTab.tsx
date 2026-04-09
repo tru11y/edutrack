@@ -15,7 +15,7 @@ function formatDate(d: string): string {
 }
 
 export default function SalairesTab({
-  salaires, profs, colors, showForm, setShowForm, form, setForm, onSubmit, onToggleStatut, submitting, mois,
+  salaires, profs, colors, showForm, setShowForm, form, setForm, onSubmit, onToggleStatut, onDelete, onEdit, isEditing, submitting, mois,
 }: {
   salaires: Salaire[];
   profs: Professeur[];
@@ -26,6 +26,9 @@ export default function SalairesTab({
   setForm: (v: CreateSalaireParams) => void;
   onSubmit: (e: React.FormEvent) => void;
   onToggleStatut: (s: Salaire) => void;
+  onDelete: (id: string) => void;
+  onEdit: (s: Salaire) => void;
+  isEditing: boolean;
   submitting: boolean;
   mois: string;
 }) {
@@ -45,7 +48,7 @@ export default function SalairesTab({
       </div>
 
       {showForm && (
-        <SalaireForm form={form} setForm={setForm} onSubmit={onSubmit} submitting={submitting} profs={profs} colors={colors} />
+        <SalaireForm form={form} setForm={setForm} onSubmit={onSubmit} submitting={submitting} profs={profs} isEditing={isEditing} colors={colors} />
       )}
 
       {salaires.length === 0 ? (
@@ -80,16 +83,24 @@ export default function SalairesTab({
                     </td>
                     <td style={{ padding: "14px 20px", textAlign: "right", color: colors.textMuted, fontSize: 14 }}>{s.datePaiement ? formatDate(s.datePaiement) : "-"}</td>
                     <td style={{ padding: "14px 20px", textAlign: "right" }}>
-                      <button onClick={() => onToggleStatut(s)} style={{
-                        padding: "6px 12px",
-                        background: s.statut === "paye" ? colors.warningBg : colors.successBg,
-                        border: `1px solid ${s.statut === "paye" ? colors.warning : colors.success}40`,
-                        borderRadius: 6, fontSize: 12,
-                        color: s.statut === "paye" ? colors.warning : colors.success,
-                        cursor: "pointer",
-                      }}>
-                        {s.statut === "paye" ? "Annuler" : "Marquer paye"}
-                      </button>
+                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                        <button onClick={() => onEdit(s)} style={{ padding: "6px 12px", background: colors.primaryBg, border: `1px solid ${colors.primary}40`, borderRadius: 6, fontSize: 12, color: colors.primary, cursor: "pointer" }}>
+                          Modifier
+                        </button>
+                        <button onClick={() => onToggleStatut(s)} style={{
+                          padding: "6px 12px",
+                          background: s.statut === "paye" ? colors.warningBg : colors.successBg,
+                          border: `1px solid ${s.statut === "paye" ? colors.warning : colors.success}40`,
+                          borderRadius: 6, fontSize: 12,
+                          color: s.statut === "paye" ? colors.warning : colors.success,
+                          cursor: "pointer",
+                        }}>
+                          {s.statut === "paye" ? "Annuler paiement" : "Marquer paye"}
+                        </button>
+                        <button onClick={() => onDelete(s.id)} style={{ padding: "6px 12px", background: colors.dangerBg, border: `1px solid ${colors.danger}40`, borderRadius: 6, fontSize: 12, color: colors.danger, cursor: "pointer" }}>
+                          Supprimer
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -103,13 +114,14 @@ export default function SalairesTab({
 }
 
 function SalaireForm({
-  form, setForm, onSubmit, submitting, profs, colors,
+  form, setForm, onSubmit, submitting, profs, isEditing, colors,
 }: {
   form: CreateSalaireParams;
   setForm: (v: CreateSalaireParams) => void;
   onSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
   profs: Professeur[];
+  isEditing: boolean;
   colors: ReturnType<typeof useTheme>["colors"];
 }) {
   const inputStyle = {
@@ -122,7 +134,7 @@ function SalaireForm({
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
           <label style={{ display: "block", fontSize: 13, color: colors.textMuted, marginBottom: 6 }}>Professeur</label>
-          <select value={form.profId} onChange={(e) => setForm({ ...form, profId: e.target.value })} required style={inputStyle}>
+          <select value={form.profId} onChange={(e) => setForm({ ...form, profId: e.target.value })} required disabled={isEditing} style={{ ...inputStyle, opacity: isEditing ? 0.6 : 1 }}>
             <option value="">Choisir un professeur</option>
             {profs.map((p) => <option key={p.id} value={p.id}>{p.prenom} {p.nom}</option>)}
           </select>
@@ -144,7 +156,7 @@ function SalaireForm({
         </div>
       </div>
       <button type="submit" disabled={submitting} style={{ padding: "10px 24px", background: colors.primary, color: colors.bgCard, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.7 : 1 }}>
-        {submitting ? "Enregistrement..." : "Enregistrer"}
+        {submitting ? "Enregistrement..." : isEditing ? "Enregistrer les modifications" : "Enregistrer"}
       </button>
     </form>
   );

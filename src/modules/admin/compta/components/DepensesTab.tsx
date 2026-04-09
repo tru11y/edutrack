@@ -18,7 +18,7 @@ function formatDate(d: string): string {
 }
 
 export default function DepensesTab({
-  depenses, colors, showForm, setShowForm, form, setForm, onSubmit, onDelete, submitting,
+  depenses, colors, showForm, setShowForm, form, setForm, onSubmit, onDelete, onEdit, isEditing, submitting,
 }: {
   depenses: Depense[];
   colors: ReturnType<typeof useTheme>["colors"];
@@ -28,6 +28,8 @@ export default function DepensesTab({
   setForm: (v: CreateDepenseParams) => void;
   onSubmit: (e: React.FormEvent) => void;
   onDelete: (id: string) => void;
+  onEdit: (d: Depense) => void;
+  isEditing: boolean;
   submitting: boolean;
 }) {
   const totalDepenses = depenses.reduce((s, d) => s + d.montant, 0);
@@ -44,7 +46,7 @@ export default function DepensesTab({
       </div>
 
       {showForm && (
-        <DepenseForm form={form} setForm={setForm} onSubmit={onSubmit} submitting={submitting} colors={colors} />
+        <DepenseForm form={form} setForm={setForm} onSubmit={onSubmit} submitting={submitting} isEditing={isEditing} colors={colors} />
       )}
 
       {depenses.length === 0 ? (
@@ -72,9 +74,14 @@ export default function DepensesTab({
                     </td>
                     <td style={{ padding: "14px 20px", textAlign: "right", fontWeight: 600, color: colors.danger, fontSize: 14, fontVariantNumeric: "tabular-nums" }}>{formatMontant(d.montant)}</td>
                     <td style={{ padding: "14px 20px", textAlign: "right" }}>
-                      <button onClick={() => onDelete(d.id)} style={{ padding: "6px 12px", background: colors.dangerBg, border: `1px solid ${colors.danger}40`, borderRadius: 6, fontSize: 12, color: colors.danger, cursor: "pointer" }}>
-                        Supprimer
-                      </button>
+                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                        <button onClick={() => onEdit(d)} style={{ padding: "6px 12px", background: colors.primaryBg, border: `1px solid ${colors.primary}40`, borderRadius: 6, fontSize: 12, color: colors.primary, cursor: "pointer" }}>
+                          Modifier
+                        </button>
+                        <button onClick={() => onDelete(d.id)} style={{ padding: "6px 12px", background: colors.dangerBg, border: `1px solid ${colors.danger}40`, borderRadius: 6, fontSize: 12, color: colors.danger, cursor: "pointer" }}>
+                          Supprimer
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -88,12 +95,13 @@ export default function DepensesTab({
 }
 
 function DepenseForm({
-  form, setForm, onSubmit, submitting, colors,
+  form, setForm, onSubmit, submitting, isEditing, colors,
 }: {
   form: CreateDepenseParams;
   setForm: (v: CreateDepenseParams) => void;
   onSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
+  isEditing: boolean;
   colors: ReturnType<typeof useTheme>["colors"];
 }) {
   const inputStyle = {
@@ -124,7 +132,7 @@ function DepenseForm({
         </div>
       </div>
       <button type="submit" disabled={submitting} style={{ padding: "10px 24px", background: colors.primary, color: colors.bgCard, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.7 : 1 }}>
-        {submitting ? "Enregistrement..." : "Enregistrer"}
+        {submitting ? "Enregistrement..." : isEditing ? "Enregistrer les modifications" : "Enregistrer"}
       </button>
     </form>
   );

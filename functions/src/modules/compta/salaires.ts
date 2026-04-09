@@ -43,12 +43,14 @@ export const createSalaire = functions
       profData = { prenom: u.prenom || "", nom: u.nom || "" };
     }
 
-    const existing = await db.collection("salaires")
-      .where("profId", "==", data.profId)
+    // Use the (schoolId, mois) composite index — filter profId in memory to avoid a 3-field index
+    const sameMonthSnap = await db.collection("salaires")
+      .where("schoolId", "==", schoolId)
       .where("mois", "==", data.mois)
       .get();
+    const alreadyExists = sameMonthSnap.docs.some((d) => d.data().profId === data.profId);
 
-    if (!existing.empty) {
+    if (alreadyExists) {
       throw new functions.https.HttpsError("already-exists", "Un salaire existe deja pour ce professeur ce mois.");
     }
 
@@ -173,5 +175,66 @@ export const updateSalaireStatut = functions
       return { success: true, message: "Statut du salaire mis a jour." };
     } catch (error) {
       handleError(error, "Erreur lors de la mise a jour du salaire.");
+    }
+  });
+
+export const updateSalaire = functions
+  .region("europe-west1")
+  .https.onCall(async (data: { salaireId: string; mois?: string; montant?: number; statut?: "paye" | "non_paye"; datePaiement?: string }, context) => {
+    requireAuth(context.auth?.uid);
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent modifier des salaires.");
+    requireArgument(!!data.salaireId, "ID du salaire requis.");
+
+    if (data.montant !== undefined) requireArgument(isPositiveNumber(data.montant), "Le montant doit etre un nombre positif.");
+    if (data.mois !== undefined) requireArgument(isValidMonth(data.mois), "Format de mois invalide (attendu: YYYY-MM).");
+    if (data.statut !== undefined) requireArgument(VALID_SALARY_STATUTS.includes(data.statut), "Statut invalide (paye ou non_paye).");
+    if (data.datePaiement !== undefined) requireArgument(isValidDate(data.datePaiement), "Format de date de paiement invalide (attendu: YYYY-MM-DD).");
+
+    const schoolId = await getSchoolId(context.auth!.uid);
+
+    try {
+      const docSnap = await db.collection("salaires").doc(data.salaireId).get();
+      if (!docSnap.exists) notFound("Salaire non trouve.");
+      if (docSnap.data()?.schoolId !== schoolId) notFound("Salaire non trouve.");
+
+      const updates: Record<string, unknown> = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+      if (data.mois !== undefined) updates.mois = data.mois;
+      if (data.montant !== undefined) updates.montant = data.montant;
+      if (data.statut !== undefined) updates.statut = data.statut;
+      if (data.datePaiement !== undefined) updates.datePaiement = data.datePaiement;
+
+      await db.collection("salaires").doc(data.salaireId).update(updates);
+      return { success: true, message: "Salaire mis a jour." };
+    } catch (error) {
+      handleError(error, "Erreur lors de la mise a jour du salaire.");
+    }
+  });
+
+export const deleteSalaire = functions
+  .region("europe-west1")
+  .https.onCall(async (data: { salaireId: string }, context) => {
+    requireAuth(context.auth?.uid);
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent supprimer des salaires.");
+    requireArgument(!!data.salaireId, "ID du salaire requis.");
+
+    const schoolId = await getSchoolId(context.auth!.uid);
+    const docSnap = await db.collection("salaires").doc(data.salaireId).get();
+    if (!docSnap.exists) notFound("Salaire non trouve.");
+    if (docSnap.data()?.schoolId !== schoolId) notFound("Salaire non trouve.");
+
+    try {
+      await db.collection("salaires").doc(data.salaireId).delete();
+      await db.collection("audit_logs").add({
+        action: "SALAIRE_DELETED",
+        salaireId: data.salaireId,
+        performedBy: context.auth!.uid,
+        schoolId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { success: true, message: "Salaire supprime." };
+    } catch (error) {
+      handleError(error, "Erreur lors de la suppression du salaire.");
     }
   });

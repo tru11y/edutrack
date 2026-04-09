@@ -24,7 +24,8 @@ const usersRef = collection(db, "users");
 export async function createProfesseurWithAccount(
   profData: Omit<Professeur, "id" | "createdAt" | "updatedAt">,
   email: string,
-  password: string
+  password: string,
+  schoolId?: string
 ) {
   // 1. Auth account
   const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -34,6 +35,7 @@ export async function createProfesseurWithAccount(
   const profRef = await addDoc(profsRef, {
     ...profData,
     statut: "actif",
+    schoolId: schoolId || "",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -47,6 +49,7 @@ export async function createProfesseurWithAccount(
     role: "prof",
     isActive: true,
     professeurId,
+    schoolId: schoolId || "",
     createdAt: serverTimestamp(),
   });
 
@@ -61,29 +64,33 @@ export async function getAllProfesseurs(schoolId?: string | null): Promise<Profe
   // Fetch from both sources in parallel:
   // 1. professeurs collection (created via createProfesseurWithAccount)
   // 2. users with role=prof (created via Users page — no professeurs doc)
-  const profsQuery = schoolId
-    ? query(profsRef, where("schoolId", "==", schoolId))
-    : profsRef;
-  const usersProfsQuery = schoolId
-    ? query(usersRef, where("role", "==", "prof"), where("schoolId", "==", schoolId))
-    : query(usersRef, where("role", "==", "prof"));
-  const [profsSnap, usersProfsSnap] = await Promise.all([
-    getDocs(profsQuery),
-    getDocs(usersProfsQuery),
-  ]);
+  // Include profs with correct schoolId, empty schoolId, or missing schoolId (legacy data)
+  const [profsSnap, profsNoSchoolSnap, usersProfsSnap, usersProfsNoSchoolSnap] = schoolId
+    ? await Promise.all([
+        getDocs(query(profsRef, where("schoolId", "==", schoolId))),
+        getDocs(query(profsRef, where("schoolId", "==", ""))),
+        getDocs(query(usersRef, where("role", "==", "prof"), where("schoolId", "==", schoolId))),
+        getDocs(query(usersRef, where("role", "==", "prof"), where("schoolId", "==", ""))),
+      ])
+    : await Promise.all([
+        getDocs(profsRef),
+        Promise.resolve({ docs: [] } as { docs: never[] }),
+        getDocs(query(usersRef, where("role", "==", "prof"))),
+        Promise.resolve({ docs: [] } as { docs: never[] }),
+      ]);
 
   const profsMap = new Map<string, Professeur>();
 
-  // Add professeurs docs
-  profsSnap.docs.forEach((d) => {
-    profsMap.set(d.id, { id: d.id, ...(d.data() as Professeur) });
+  // Add professeurs docs (with or without schoolId)
+  [...profsSnap.docs, ...profsNoSchoolSnap.docs].forEach((d) => {
+    if (!profsMap.has(d.id)) profsMap.set(d.id, { id: d.id, ...(d.data() as Professeur) });
   });
 
   // Track professeurIds already covered by professeurs docs
   const coveredProfIds = new Set<string>(profsMap.keys());
 
   // Synthesize Professeur entries for users with role=prof who don't have a professeurs doc
-  usersProfsSnap.docs.forEach((d) => {
+  [...usersProfsSnap.docs, ...usersProfsNoSchoolSnap.docs].forEach((d) => {
     const u = d.data();
     const professeurId = u.professeurId as string | undefined;
     // Skip if already covered by an existing professeurs doc

@@ -5,6 +5,7 @@ import { useToast, ConfirmModal } from "../components/ui";
 import {
   getDisciplineRecordsSecure,
   createDisciplineRecordSecure,
+  updateDisciplineRecordSecure,
   deleteDisciplineRecordSecure,
   getCloudFunctionErrorMessage,
   type DisciplineRecordResult,
@@ -42,6 +43,7 @@ export default function Discipline() {
   }>({ isOpen: false, title: "", message: "", variant: "info", onConfirm: () => {} });
 
   // Form state
+  const [editRecordId, setEditRecordId] = useState<string | null>(null);
   const [formEleveId, setFormEleveId] = useState("");
   const [formType, setFormType] = useState("indiscipline");
   const [formDescription, setFormDescription] = useState("");
@@ -67,9 +69,48 @@ export default function Discipline() {
     loadData();
   }, [filterClasse, filterType]);
 
+  const resetForm = () => {
+    setShowForm(false);
+    setEditRecordId(null);
+    setFormEleveId("");
+    setFormType("indiscipline");
+    setFormDescription("");
+    setFormMotif("");
+    setFormSanction("");
+  };
+
+  const handleEdit = (record: DisciplineRecordResult) => {
+    setEditRecordId(record.id);
+    setFormType(record.type);
+    setFormDescription(record.description);
+    setFormMotif(record.motif || "");
+    setFormSanction(record.sanction || "");
+    setShowForm(true);
+  };
+
   const handleSubmit = async () => {
-    if (!formEleveId || !formDescription) {
-      toast.error("Selectionnez un eleve et remplissez la description.");
+    if (!formDescription) {
+      toast.error("Remplissez la description.");
+      return;
+    }
+
+    if (editRecordId) {
+      setSaving(true);
+      try {
+        await updateDisciplineRecordSecure({ id: editRecordId, type: formType, description: formDescription, motif: formMotif, sanction: formSanction });
+        toast.success("Incident mis a jour.");
+        resetForm();
+        await loadData();
+      } catch (err) {
+        toast.error(getCloudFunctionErrorMessage(err));
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    if (!formEleveId) {
+      toast.error("Selectionnez un eleve.");
       return;
     }
     const eleve = eleves.find((e) => e.id === formEleveId);
@@ -88,11 +129,7 @@ export default function Discipline() {
         sanction: formSanction,
       });
       toast.success("Incident enregistre.");
-      setShowForm(false);
-      setFormEleveId("");
-      setFormDescription("");
-      setFormMotif("");
-      setFormSanction("");
+      resetForm();
       await loadData();
     } catch (err) {
       toast.error(getCloudFunctionErrorMessage(err));
@@ -166,7 +203,7 @@ export default function Discipline() {
           <button onClick={handleExportPDF} style={{ ...btnPrimary, background: colors.bgCard, color: colors.text, border: `1px solid ${colors.border}` }}>
             Export PDF
           </button>
-          <button onClick={() => setShowForm(!showForm)} style={btnPrimary}>
+          <button onClick={() => { if (showForm) resetForm(); else setShowForm(true); }} style={btnPrimary}>
             {showForm ? "Fermer" : "+ Nouvel incident"}
           </button>
         </div>
@@ -190,8 +227,9 @@ export default function Discipline() {
       {/* Form */}
       {showForm && (
         <div style={{ background: colors.bgCard, borderRadius: 12, border: `1px solid ${colors.border}`, padding: 24, marginBottom: 24 }}>
-          <h3 style={{ color: colors.text, margin: "0 0 16px", fontSize: 16 }}>Nouvel incident</h3>
+          <h3 style={{ color: colors.text, margin: "0 0 16px", fontSize: 16 }}>{editRecordId ? "Modifier l'incident" : "Nouvel incident"}</h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            {!editRecordId && (
             <div>
               <label style={{ fontSize: 13, color: colors.textSecondary, display: "block", marginBottom: 6 }}>Eleve *</label>
               <select value={formEleveId} onChange={(e) => setFormEleveId(e.target.value)} style={inputStyle}>
@@ -201,6 +239,7 @@ export default function Discipline() {
                 ))}
               </select>
             </div>
+            )}
             <div>
               <label style={{ fontSize: 13, color: colors.textSecondary, display: "block", marginBottom: 6 }}>Type *</label>
               <select value={formType} onChange={(e) => setFormType(e.target.value)} style={inputStyle}>
@@ -228,9 +267,9 @@ export default function Discipline() {
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 16 }}>
-            <button onClick={() => setShowForm(false)} style={{ ...btnPrimary, background: "transparent", color: colors.textMuted, border: `1px solid ${colors.border}` }}>Annuler</button>
+            <button onClick={resetForm} style={{ ...btnPrimary, background: "transparent", color: colors.textMuted, border: `1px solid ${colors.border}` }}>Annuler</button>
             <button onClick={handleSubmit} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}>
-              {saving ? "Enregistrement..." : "Enregistrer"}
+              {saving ? "Enregistrement..." : editRecordId ? "Modifier" : "Enregistrer"}
             </button>
           </div>
         </div>
@@ -283,12 +322,20 @@ export default function Discipline() {
                   </td>
                   <td style={{ padding: 12 }}>
                     {isAdmin && (
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        style={{ background: "none", border: "none", color: colors.danger, cursor: "pointer", fontSize: 13 }}
-                      >
-                        Supprimer
-                      </button>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          onClick={() => handleEdit(r)}
+                          style={{ background: "none", border: "none", color: colors.primary, cursor: "pointer", fontSize: 13 }}
+                        >
+                          Modifier
+                        </button>
+                        <button
+                          onClick={() => handleDelete(r.id)}
+                          style={{ background: "none", border: "none", color: colors.danger, cursor: "pointer", fontSize: 13 }}
+                        >
+                          Supprimer
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>

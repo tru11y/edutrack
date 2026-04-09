@@ -28,6 +28,13 @@ export function getDepensesSecure(
   return callFunction("getDepenses", { mois });
 }
 
+export function updateDepenseSecure(
+  depenseId: string,
+  params: Partial<CreateDepenseParams>
+): Promise<{ success: boolean; message: string }> {
+  return callFunction("updateDepense", { depenseId, ...params });
+}
+
 export function deleteDepenseSecure(
   depenseId: string
 ): Promise<{ success: boolean; message: string }> {
@@ -45,6 +52,19 @@ export function getSalairesSecure(
   mois?: string
 ): Promise<{ success: boolean; salaires: Salaire[] }> {
   return callFunction("getSalaires", { mois });
+}
+
+export function updateSalaireSecure(
+  salaireId: string,
+  params: { mois?: string; montant?: number; statut?: "paye" | "non_paye"; datePaiement?: string }
+): Promise<{ success: boolean; message: string }> {
+  return callFunction("updateSalaire", { salaireId, ...params });
+}
+
+export function deleteSalaireSecure(
+  salaireId: string
+): Promise<{ success: boolean; message: string }> {
+  return callFunction("deleteSalaire", { salaireId });
 }
 
 export function updateSalaireStatutSecure(

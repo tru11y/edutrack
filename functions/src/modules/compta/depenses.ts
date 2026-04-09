@@ -100,6 +100,37 @@ export const getDepenses = functions
     }
   });
 
+export const updateDepense = functions
+  .region("europe-west1")
+  .https.onCall(async (data: { depenseId: string; libelle?: string; categorie?: string; montant?: number; date?: string }, context) => {
+    requireAuth(context.auth?.uid);
+    const isAuthorized = await verifyAdminOrGestionnaire(context.auth!.uid);
+    requirePermission(isAuthorized, "Seuls les administrateurs et gestionnaires peuvent modifier des depenses.");
+    requireArgument(!!data.depenseId, "ID de la depense requis.");
+
+    if (data.montant !== undefined) requireArgument(isPositiveNumber(data.montant), "Le montant doit etre un nombre positif.");
+    if (data.date !== undefined) requireArgument(isValidDate(data.date), "Format de date invalide (attendu: YYYY-MM-DD).");
+
+    const schoolId = await getSchoolId(context.auth!.uid);
+
+    try {
+      const docSnap = await db.collection("depenses").doc(data.depenseId).get();
+      if (!docSnap.exists) notFound("Depense non trouvee.");
+      if (docSnap.data()?.schoolId !== schoolId) notFound("Depense non trouvee.");
+
+      const updates: Record<string, unknown> = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+      if (data.libelle !== undefined) updates.libelle = data.libelle;
+      if (data.categorie !== undefined) updates.categorie = data.categorie;
+      if (data.montant !== undefined) updates.montant = data.montant;
+      if (data.date !== undefined) updates.date = data.date;
+
+      await db.collection("depenses").doc(data.depenseId).update(updates);
+      return { success: true, message: "Depense mise a jour." };
+    } catch (error) {
+      handleError(error, "Erreur lors de la mise a jour de la depense.");
+    }
+  });
+
 export const deleteDepense = functions
   .region("europe-west1")
   .https.onCall(async (data: { depenseId: string }, context) => {

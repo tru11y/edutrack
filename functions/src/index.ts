@@ -15,8 +15,8 @@ export { resetStatutPaiementMensuel } from "./modules/paiements/paiements.reset"
 export { getStatsPaiementMensuel } from "./modules/paiements/paiements.stats";
 
 // Comptabilite
-export { createDepense, getDepenses, deleteDepense } from "./modules/compta/depenses";
-export { createSalaire, getSalaires, updateSalaireStatut } from "./modules/compta/salaires";
+export { createDepense, getDepenses, updateDepense, deleteDepense } from "./modules/compta/depenses";
+export { createSalaire, getSalaires, updateSalaire, updateSalaireStatut, deleteSalaire } from "./modules/compta/salaires";
 export { getComptaStats } from "./modules/compta/compta.stats";
 
 // Presences

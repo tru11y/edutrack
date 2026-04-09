@@ -12,6 +12,7 @@ interface ClassCardProps {
   isAdmin: boolean;
   onOpenSchedule: () => void;
   onDelete: () => void;
+  onEdit: () => void;
 }
 
 export function ClassCard({
@@ -23,6 +24,7 @@ export function ClassCard({
   isAdmin,
   onOpenSchedule,
   onDelete,
+  onEdit,
 }: ClassCardProps) {
   const { colors } = useTheme();
 
@@ -82,6 +84,28 @@ export function ClassCard({
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" strokeWidth="1.5" />
                   <path d="M2 6H14M5 1V4M11 1V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            )}
+            {classe.id && isAdmin && (
+              <button
+                onClick={onEdit}
+                title="Modifier"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  background: colors.primaryBg,
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: colors.primary,
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M11.33 2.67L13.33 4.67L5.33 12.67H3.33V10.67L11.33 2.67Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
             )}

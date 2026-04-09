@@ -5,13 +5,17 @@ import {
   getDepensesSecure,
   getSalairesSecure,
   createDepenseSecure,
+  updateDepenseSecure,
   deleteDepenseSecure,
   createSalaireSecure,
+  updateSalaireSecure,
   updateSalaireStatutSecure,
+  deleteSalaireSecure,
 } from "./compta.service";
 import { getAllPaiements } from "../../paiements/paiement.service";
 import { getAllProfesseurs } from "../../professeurs/professeur.service";
 import { useToast, ConfirmModal } from "../../../components/ui";
+import { getCloudFunctionErrorMessage } from "../../../services/cloudFunctions";
 import type { ComptaStats, Depense, Salaire, CreateDepenseParams, CreateSalaireParams } from "./compta.types";
 import type { Paiement } from "../../paiements/paiement.types";
 import type { Professeur } from "../../professeurs/professeur.types";
@@ -62,6 +66,12 @@ export default function AdminComptaDashboard() {
   const [salaireForm, setSalaireForm] = useState<CreateSalaireParams>({
     profId: "", mois: getCurrentMonth(), montant: 0, statut: "non_paye",
   });
+
+  const [editingDepense, setEditingDepense] = useState<Depense | null>(null);
+  const [editingSalaire, setEditingSalaire] = useState<Salaire | null>(null);
+
+  const defaultDepenseForm: CreateDepenseParams = { libelle: "", categorie: "Fournitures", montant: 0, date: new Date().toISOString().split("T")[0] };
+  const defaultSalaireForm: CreateSalaireParams = { profId: "", mois: getCurrentMonth(), montant: 0, statut: "non_paye" };
 
   const loadData = async () => {
     setLoading(true);
@@ -133,18 +143,36 @@ export default function AdminComptaDashboard() {
 
   useEffect(() => { loadData(); }, [mois, schoolId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleEditDepense = (d: Depense) => {
+    setEditingDepense(d);
+    setDepenseForm({ libelle: d.libelle, categorie: d.categorie, montant: d.montant, date: d.date });
+    setShowDepenseForm(true);
+  };
+
+  const handleSetShowDepenseForm = (v: boolean) => {
+    if (!v) { setEditingDepense(null); setDepenseForm(defaultDepenseForm); }
+    setShowDepenseForm(v);
+  };
+
   const handleCreateDepense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!depenseForm.libelle || !depenseForm.montant) return;
     setSubmitting(true);
     try {
-      await createDepenseSecure(depenseForm);
+      if (editingDepense) {
+        await updateDepenseSecure(editingDepense.id, depenseForm);
+        setEditingDepense(null);
+      } else {
+        await createDepenseSecure(depenseForm);
+      }
       setShowDepenseForm(false);
-      setDepenseForm({ libelle: "", categorie: "Fournitures", montant: 0, date: new Date().toISOString().split("T")[0] });
+      setDepenseForm(defaultDepenseForm);
       await loadData();
     } catch (err) {
       logger.error(err);
-      setError("Erreur lors de la creation de la depense.");
+      const msg = getCloudFunctionErrorMessage(err);
+      toast.error(msg);
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -160,23 +188,59 @@ export default function AdminComptaDashboard() {
     });
   };
 
+  const handleEditSalaire = (s: Salaire) => {
+    setEditingSalaire(s);
+    setSalaireForm({ profId: s.profId, mois: s.mois, montant: s.montant, statut: s.statut, datePaiement: s.datePaiement || undefined });
+    setShowSalaireForm(true);
+  };
+
+  const handleSetShowSalaireForm = (v: boolean) => {
+    if (!v) { setEditingSalaire(null); setSalaireForm(defaultSalaireForm); }
+    setShowSalaireForm(v);
+  };
+
   const handleCreateSalaire = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!salaireForm.profId || !salaireForm.montant) return;
+    if (!salaireForm.profId) { toast.error("Selectionnez un professeur."); return; }
+    if (!salaireForm.montant) { toast.error("Entrez un montant valide."); return; }
     setSubmitting(true);
     try {
-      const params: CreateSalaireParams = { ...salaireForm };
-      if (salaireForm.statut === "paye") params.datePaiement = new Date().toISOString().split("T")[0];
-      await createSalaireSecure(params);
+      if (editingSalaire) {
+        await updateSalaireSecure(editingSalaire.id, {
+          mois: salaireForm.mois,
+          montant: salaireForm.montant,
+          statut: salaireForm.statut,
+          datePaiement: salaireForm.datePaiement,
+        });
+        setEditingSalaire(null);
+        toast.success("Salaire mis a jour.");
+      } else {
+        const params: CreateSalaireParams = { ...salaireForm };
+        if (salaireForm.statut === "paye") params.datePaiement = new Date().toISOString().split("T")[0];
+        await createSalaireSecure(params);
+        toast.success("Salaire enregistre.");
+      }
       setShowSalaireForm(false);
-      setSalaireForm({ profId: "", mois: getCurrentMonth(), montant: 0, statut: "non_paye" });
+      setSalaireForm(defaultSalaireForm);
       await loadData();
     } catch (err) {
       logger.error(err);
-      setError("Erreur lors de la creation du salaire.");
+      const msg = getCloudFunctionErrorMessage(err);
+      toast.error(msg);
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleDeleteSalaire = (id: string) => {
+    setConfirmState({
+      isOpen: true, title: "Supprimer le salaire", message: "Supprimer ce salaire définitivement ?", variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((s) => ({ ...s, isOpen: false }));
+        try { await deleteSalaireSecure(id); await loadData(); toast.success("Salaire supprimé"); } catch (err) { logger.error(err); toast.error("Erreur lors de la suppression"); }
+      },
+    });
   };
 
   const handleToggleSalaireStatut = async (salaire: Salaire) => {
@@ -246,8 +310,8 @@ export default function AdminComptaDashboard() {
       </div>
 
       {tab === "paiements" && <PaiementsTab paiements={paiements} colors={colors} />}
-      {tab === "depenses" && <DepensesTab depenses={depenses} colors={colors} showForm={showDepenseForm} setShowForm={setShowDepenseForm} form={depenseForm} setForm={setDepenseForm} onSubmit={handleCreateDepense} onDelete={handleDeleteDepense} submitting={submitting} />}
-      {tab === "salaires" && <SalairesTab salaires={salaires} profs={profs} colors={colors} showForm={showSalaireForm} setShowForm={setShowSalaireForm} form={salaireForm} setForm={setSalaireForm} onSubmit={handleCreateSalaire} onToggleStatut={handleToggleSalaireStatut} submitting={submitting} mois={mois} />}
+      {tab === "depenses" && <DepensesTab depenses={depenses} colors={colors} showForm={showDepenseForm} setShowForm={handleSetShowDepenseForm} form={depenseForm} setForm={setDepenseForm} onSubmit={handleCreateDepense} onDelete={handleDeleteDepense} onEdit={handleEditDepense} isEditing={!!editingDepense} submitting={submitting} />}
+      {tab === "salaires" && <SalairesTab salaires={salaires} profs={profs} colors={colors} showForm={showSalaireForm} setShowForm={handleSetShowSalaireForm} form={salaireForm} setForm={setSalaireForm} onSubmit={handleCreateSalaire} onToggleStatut={handleToggleSalaireStatut} onDelete={handleDeleteSalaire} onEdit={handleEditSalaire} isEditing={!!editingSalaire} submitting={submitting} mois={mois} />}
       {tab === "journal" && <JournalTab paiements={paiements} depenses={depenses} salaires={salaires} colors={colors} />}
 
       <ConfirmModal
